@@ -1,0 +1,22 @@
+#V2
+INFO FOR DB;
+SELECT * FROM user;
+INFO FOR DB;
+SELECT * FROM user;
+CREATE user SET id = "user:rooq92et0uyain1lt50v", mail = "haha@gmail.com", password = "string";\n
+SELECT * FROM user;\n
+INFO FOR DB;
+CREATE user SET id = "user", mail = "haha@gmail.com", password = "string";\n
+SELECT * FROM user;\n
+CREATE user SET id = "user", mail = "haha@gmail.com", password = "string";\n
+SELECT * FROM user;\n
+CREATE user SET id = "user", mail = "haha2@gmail.com", password = "string2";\n
+CREATE user SET id = "user2", mail = "haha2@gmail.com", password = "string2";\n
+SELECT * FROM user;\n
+SELECT * FROM person;\n
+CREATE user SET id = "user2", mail = "haha2@gmail.com", password = "string2";\n
+SELECT * FROM person;\n
+SELECT * FROM user;\n
+SELECT * FROM person;\n
+SELECT * FROM plants;
+SELECT * FROM person;

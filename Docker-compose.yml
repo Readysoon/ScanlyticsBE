@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports: 
+      - "8001:8001"  # what does it do?
+    volumes:
+      - ./app:/usr/src/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    env_file:
+      - ./.env
+    environment:
+      - SURREALDB_URL=ws://surrealdb:8000/rpc
+      - SURREALDB_USER=${SURREALDB_USER}
+      - SURREALDB_PASS=${SURREALDB_PASS}
+    depends_on:
+      - surrealdb
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: surrealdb
+    ports:
+      - '8000:8000'
+    command:
+      - start #start the SurrealDB server
+      - --log=trace #no idea what this does :(
+      - --user=root #default user
+      - --pass=root #default password
+    restart: always
