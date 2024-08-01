@@ -69,6 +69,24 @@ async def surreal_db_operations():
             # "delete_query_response": delete_query_response,
             "select_response": select_response,
         }
+    
+async def CreateUserService():
+    async with Surreal("ws://surrealdb:8000/rpc") as db:
+        await db.signin({"user": "root", "pass": "root"})
+        await db.use("test", "test")
+        logging.info("Connected to SurrealDB with namespace 'test' and database 'test'")
+
+        create_response = await db.query(
+            "DEFINE TABLE user schemafull;"
+            "DEFINE FIELD mail on user type string;"
+        )
+        
+        logging.info(f"Create response: {create_response}")
+    
+@app.get("/create_user")
+async def create_user():
+    result = await CreateUserService()
+    return result
 
 @app.get("/surrealdbOP")
 async def surrealdb_handler():
@@ -93,6 +111,8 @@ async def landing_page():
             <a href="/surrealdbOP">Go to SurrealDB Operations</a>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">Go to SurrealDB Operations</a>
+            <p>To try creating the user table, visit:</p>
+            <a href="/create_user">Create the user table</a>
         </body>
     </html>
     """
