@@ -5,7 +5,7 @@ To install and run the project on your local machine, please follow these steps:
 1. Clone the repository to your local machine by running the following command in your terminal:
 
       ```
-      git clone https://github.com/julklingel/ScanlyticsBE
+      git clone git clone https://<your_token>@github.com/Readysoon/ScanlyticsBE
    
       ```
 
