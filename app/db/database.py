@@ -14,8 +14,7 @@ async def initializedb():
 
             "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
             "DEFINE FIELD out ON TABLE works_at TYPE record<praxis>;"
-
-            
+              
             "DEFINE TABLE user schemafull;"
             "DEFINE FIELD mail on user type string;"
             "DEFINE FIELD password on user type string;"
