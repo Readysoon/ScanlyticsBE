@@ -44,6 +44,11 @@ async def initializedb():
             "DEFINE FIELD name ON doctor_report TYPE string;"
             "DEFINE FIELD text ON doctor_report TYPE string;"
 
+            # Radreport_Report table
+            # -> in contrast this is our collection of reports, therefore not connected to the other tables (so far)
+            "DEFINE TABLE radreport_report schemafull;"
+            "DEFINE FIELD name ON radreport_report TYPE string;"
+            "DEFINE FIELD text ON radreport_report TYPE string;"
         )
         
         logging.info(f"Create response: {create_response}")
