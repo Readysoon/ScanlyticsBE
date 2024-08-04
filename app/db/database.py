@@ -27,12 +27,27 @@ async def initializedb():
 
             # Patient table
             # -> doctors have patients
+            # -> is related to the radreport_reports which then links to the doctor_report table 
+            # so doctors can replace it with their own
             "DEFINE FIELD in ON TABLE cares_for TYPE record<user>;"
             "DEFINE FIELD out ON TABLE cares_for TYPE record<patient>;"
 
             "DEFINE TABLE patient schemafull;"
             "DEFINE FIELD name ON patient TYPE string;"
             "DEFINE FIELD email ON patient TYPE string;"
+
+            # Scan table
+            "DEFINE FIELD in ON TABLE was_scanned TYPE record<patient>;"
+            "DEFINE FIELD out ON TABLE was_scanned TYPE record<scan>;"
+
+            "DEFINE TABLE scan schemafull;"
+            "DEFINE FIELD name ON scan TYPE string;"
+            # this looks like this because i dont know better
+            "DEFINE FIELD image ON scan TYPE array;"
+
+            "DEFINE FIELD in ON TABLE categorized_to TYPE record<scan>;"
+            "DEFINE FIELD out ON TABLE categorized_to TYPE record<radreport_report>;"
+
 
             # Doctor_Report table
             # -> to enable the doctors to have their personal collection of templates with which they can replace ours 
