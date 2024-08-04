@@ -17,6 +17,7 @@ async def initializedb():
             "DEFINE FIELD password on user TYPE string;"
             "DEFINE FIELD praxis ON user TYPE record(praxis);"
 
+
             # Practice table
             # -> doctors collaborate in practices
             "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
@@ -24,6 +25,7 @@ async def initializedb():
 
             "DEFINE TABLE praxis schemafull;"
             "DEFINE FIELD name ON praxis TYPE string;"
+
 
             # Patient table
             # -> doctors have patients
@@ -36,6 +38,7 @@ async def initializedb():
             "DEFINE FIELD name ON patient TYPE string;"
             "DEFINE FIELD email ON patient TYPE string;"
 
+
             # Scan table
             "DEFINE FIELD in ON TABLE was_scanned TYPE record<patient>;"
             "DEFINE FIELD out ON TABLE was_scanned TYPE record<scan>;"
@@ -45,6 +48,7 @@ async def initializedb():
             # this looks like this because i dont know better
             "DEFINE FIELD image ON scan TYPE array;"
 
+            # a scan will be categorized by our ML model written by the wonderfull Julius K. to the correct radreport_report
             "DEFINE FIELD in ON TABLE categorized_to TYPE record<scan>;"
             "DEFINE FIELD out ON TABLE categorized_to TYPE record<radreport_report>;"
 
@@ -58,6 +62,9 @@ async def initializedb():
             "DEFINE TABLE doctor_report schemafull;"
             "DEFINE FIELD name ON doctor_report TYPE string;"
             "DEFINE FIELD text ON doctor_report TYPE string;"
+
+            "DEFINE FIELD in ON TABLE replaces TYPE record<doctor_report>;"
+            "DEFINE FIELD out ON TABLE replaces TYPE record<radreport_report>;"
 
             # Radreport_Report table
             # -> in contrast this is our collection of reports, therefore not connected to the other tables (so far)
