@@ -30,3 +30,12 @@ To install and run the project on your local machine, please follow these steps:
      pip install -r requirements.txt
      
      ```
+
+5. Make sure to have the Docker application up and ready (free of any containers/images with the same name)
+
+6. Run Docker
+
+     ```
+     docker-compose up && docker-docker-compose down
+     
+     ```
