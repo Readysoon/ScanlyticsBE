@@ -15,11 +15,15 @@ async def initializedb():
             "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
             "DEFINE FIELD out ON TABLE works_at TYPE record<praxis>;"
 
-            
             "DEFINE TABLE user schemafull;"
             "DEFINE FIELD mail on user type string;"
             "DEFINE FIELD password on user type string;"
-            "DEFINE FIELD praxis ON user type record(praxis)"
+            "DEFINE FIELD praxis ON user type record(praxis);"
+
+            "DEFINE FIELD in ON TABLE treats TYPE record<user>;"
+            "DEFINE FIELD out ON TABLE treats TYPE record<patient>;"
+
+            "DEFINE FIELD name on patient type string;"
         )
         
         logging.info(f"Create response: {create_response}")
