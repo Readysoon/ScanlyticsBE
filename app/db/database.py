@@ -29,6 +29,10 @@ async def initializedb():
             "DEFINE FIELD name ON patient TYPE string;"
             "DEFINE FIELD email ON patient TYPE string;"
 
+            # Doctor_Report table
+            "DEFINE FIELD in ON TABLE writes TYPE record<user>;"
+            "DEFINE FIELD out ON TABLE writes TYPE record<doctor_report>;"
+
             
 
 
