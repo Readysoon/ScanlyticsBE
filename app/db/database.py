@@ -9,6 +9,14 @@ async def initializedb():
         logging.info("Connected to SurrealDB with namespace 'test' and database 'test'")
 
         create_response = await db.query(
+            # Practice table
+            # -> doctors collaborate in practices
+            "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
+            "DEFINE FIELD out ON TABLE works_at TYPE record<praxis>;"
+
+            "DEFINE TABLE praxis schemafull;"
+            "DEFINE FIELD name ON praxis TYPE string;"
+
 
             # User table 
             # -> users are doctors
@@ -18,13 +26,16 @@ async def initializedb():
             "DEFINE FIELD praxis ON user TYPE record(praxis);"
 
 
-            # Practice table
-            # -> doctors collaborate in practices
-            "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
-            "DEFINE FIELD out ON TABLE works_at TYPE record<praxis>;"
+            # Note table
+            # -> doctors write notes for every patient
+            "DEFINE FIELD in ON TABLE takes TYPE record<user>;"
+            "DEFINE FIELD out ON TABLE takes TYPE record<note>;"
 
-            "DEFINE TABLE praxis schemafull;"
-            "DEFINE FIELD name ON praxis TYPE string;"
+            "DEFINE TABLE note schemafull;"
+            "DEFINE FIELD text ON note TYPE string;"
+
+            "DEFINE FIELD in ON TABLE is_for TYPE record<note>;"
+            "DEFINE FIELD out ON TABLE is_for TYPE record<patient>;"
 
 
             # Patient table
@@ -65,6 +76,7 @@ async def initializedb():
 
             "DEFINE FIELD in ON TABLE replaces TYPE record<doctor_report>;"
             "DEFINE FIELD out ON TABLE replaces TYPE record<radreport_report>;"
+
 
             # Radreport_Report table
             # -> in contrast this is our collection of reports, therefore not connected to the other tables (so far)
