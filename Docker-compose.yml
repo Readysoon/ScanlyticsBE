@@ -9,9 +9,11 @@ services:
     env_file:
       - ./.env
     environment:
-      - SURREALDB_URL=ws://surrealdb:8000/rpc
+      - SURREALDB_URL=${SURREALDB_URL}
       - SURREALDB_USER=${SURREALDB_USER}
       - SURREALDB_PASS=${SURREALDB_PASS}
+      - SURREALDB_NAMESPACE=${SURREALDB_NAMESPACE}
+      - SURREALDB_DATABASE=${SURREALDB_DATABASE}
     depends_on:
       - surrealdb
 
