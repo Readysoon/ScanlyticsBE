@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from surreal.surrealdbController import router as surrealdb_router
 
 import logging
 
-from db.database import initializedb
-from surreal.surrealdbController import router as surrealdb_router
+from .db.models import initializedb
 from user.userController import router as user_router
 from praxis.praxisController import router as praxis_router
 
