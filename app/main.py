@@ -4,7 +4,7 @@ from surreal.surrealdbController import router as surrealdb_router
 
 import logging
 
-from .db.models import initializedb
+from db.models import initializedb
 from user.userController import router as user_router
 from praxis.praxisController import router as praxis_router
 
