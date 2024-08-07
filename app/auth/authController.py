@@ -19,6 +19,9 @@ router = APIRouter(
 async def signup(
     username: EmailStr = Form(...),
     password: str = Form(...),
+    # testwise hardcoded (uncomment above lines later):
+    # username: "Hans",
+    # password: "12234"
     db: Surreal = Depends(get_db)  # Use SurrealDB connection instead of SQLAlchemy session
     ):
     return await signup_service(db, username, password)
