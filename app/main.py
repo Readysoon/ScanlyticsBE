@@ -7,6 +7,7 @@ import logging
 from db.models import initializedb
 from user.userController import router as user_router
 from praxis.praxisController import router as praxis_router
+from auth.authController import router as auth_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,7 @@ app = FastAPI()
 app.include_router(surrealdb_router)
 app.include_router(user_router)
 app.include_router(praxis_router)
+app.include_router(auth_router)
 
 @app.on_event("startup")
 async def startup_event():
