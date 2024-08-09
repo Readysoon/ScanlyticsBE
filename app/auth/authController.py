@@ -15,13 +15,17 @@ router = APIRouter(
     tags=["auth"],
 )
 # ''', response_model=authSchema.Token'''
-@router.post("/signup" )
-async def signup(
-    username: EmailStr = Form(...),
-    password: str = Form(...),
-    # testwise hardcoded (uncomment above lines later):
-    # username: "Hans",
-    # password: "12234"
+@router.post("/orga_signup" )
+async def orga_signup(
+    user_email: EmailStr = Form(...),
+    user_name:  str = Form(...),
+    user_password: str = Form(...),
+    user_role: str = Form(...),
+
+    orga_address: str = Form(...),
+    orga_email: EmailStr = Form(...),
+    orga_name: str = Form(...),
+    
     db: Surreal = Depends(get_db)  # Use SurrealDB connection instead of SQLAlchemy session
     ):
-    return await signup_service(username, password, db)
+    return await signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db)

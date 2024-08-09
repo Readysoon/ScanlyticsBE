@@ -8,80 +8,114 @@ async def initializedb():
         logging.info("Connected to SurrealDB with namespace 'test' and database 'test'")
 
         create_response = await db.query(
-            # Practice table
-            # -> doctors collaborate in practices
-            "DEFINE FIELD in ON TABLE works_at TYPE record<user>;"
-            "DEFINE FIELD out ON TABLE works_at TYPE record<praxis>;"
+            # "-- Define Organization"
+            "DEFINE TABLE Organization SCHEMAFULL;"
+            "DEFINE FIELD name ON Organization TYPE string;"
+            "DEFINE FIELD address ON Organization TYPE string;"
+            "DEFINE FIELD email ON Organization TYPE string ASSERT string::is::email($value);"
+            "DEFINE FIELD created_at ON Organization TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON Organization TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--MTO--"
+            "DEFINE FIELD user ON Organization TYPE option<array>;"
+            "DEFINE FIELD user.* ON Organization TYPE option<record(User)>;"
 
-            "DEFINE TABLE praxis schemafull;"
-            "DEFINE FIELD name ON praxis TYPE string;"
+            # "-- Define User (Doctor) table with auto-generated UUID"
+            "DEFINE TABLE User SCHEMAFULL;"
+            "DEFINE FIELD name ON User TYPE string;"
+            "DEFINE FIELD email ON User TYPE string ASSERT string::is::email($value);"
+            "DEFINE FIELD password ON User TYPE string;"
+            "DEFINE FIELD role ON User TYPE string;"
+            "DEFINE FIELD created_at ON User TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON User TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--MTO--"
+            "DEFINE FIELD notes ON User TYPE option<array>;"
+            "DEFINE FIELD notes.* ON User TYPE option<record(PatientNote)>;"
+            "DEFINE FIELD Statement ON User TYPE option<array>;"
+            "DEFINE FIELD Statement.* ON User TYPE option<record(Statement)>;"
+            "DEFINE FIELD Image ON User TYPE option<array>;"
+            "DEFINE FIELD Image.* ON User TYPE option<record(Image)>;"
+            # "--OTM--"
+            "DEFINE FIELD organization ON User TYPE record(Organization);"
+            # "--MTM--"
+            "DEFINE FIELD in ON TABLE Write_Reports TYPE record<User>;"
+            "DEFINE FIELD out ON TABLE Write_Reports TYPE record<Report>;"
+            "DEFINE FIELD in ON TABLE Access_Statements TYPE record<User>;"
+            "DEFINE FIELD out ON TABLE Access_Statements TYPE record<Statement>;"
 
+            # "-- Define Patient table with auto-generated UUID"
+            "DEFINE TABLE Patient SCHEMAFULL;"
+            "DEFINE FIELD name ON Patient TYPE string;"
+            "DEFINE FIELD date_of_birth ON Patient TYPE datetime;"
+            "DEFINE FIELD gender ON Patient TYPE string;"
+            "DEFINE FIELD contact_number ON Patient TYPE string;"
+            "DEFINE FIELD address ON Patient TYPE string;"
+            "DEFINE FIELD created_at ON Patient TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON Patient TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--MTO--"
+            "DEFINE FIELD notes ON Patient TYPE option<array>;"
+            "DEFINE FIELD notes.* ON Patient TYPE option<record(PatientNote)>;"
+            "DEFINE FIELD report ON Patient TYPE option<array>;"
+            "DEFINE FIELD report.* ON Patient TYPE option<record(Report)>;"
+            "DEFINE FIELD image ON Patient TYPE option<array>;"
+            "DEFINE FIELD image.* ON Patient TYPE option<record(Image)>;"
+            # "--MTM--"
+            "DEFINE FIELD in ON TABLE Treated_By TYPE record<User> ;"
+            "DEFINE FIELD out ON TABLE Treated_By TYPE record<Patient>;"
 
-            # User table 
-            # -> users are doctors
-            "DEFINE TABLE user schemafull;"
-            "DEFINE FIELD mail on user TYPE string;"
-            "DEFINE FIELD password on user TYPE string;"
-            "DEFINE FIELD praxis ON user TYPE record(praxis);"
+            # "-- Define PatientNote table with auto-generated UUID"
+            "DEFINE TABLE PatientNote SCHEMAFULL;"
+            "DEFINE FIELD symptoms ON PatientNote TYPE string;"
+            "DEFINE FIELD diagnosis ON PatientNote TYPE string;"
+            "DEFINE FIELD treatment ON PatientNote TYPE string;"
+            "DEFINE FIELD created_at ON PatientNote TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON PatientNote TYPE datetime DEFAULT time::now() VALUE time::now();"
+            "DEFINE FIELD severity ON PatientNote TYPE string ASSERT $value IN ['low', 'medium', 'high'];"
+            "DEFINE FIELD is_urgent ON PatientNote TYPE bool;"
+            # "--OTM--"
+            "DEFINE FIELD patient ON PatientNote TYPE record(Patient);"
+            "DEFINE FIELD user_owner ON PatientNote TYPE record(User);"
+            # "--MTM--"
+            "DEFINE FIELD in ON TABLE PatientNotes_Reports_Join TYPE record<User>;"
+            "DEFINE FIELD out ON TABLE PatientNotes_Reports_Join TYPE record<PatientNote>;"
 
+            # "-- Define Statement table with auto-generated UUID"
+            "DEFINE TABLE Statement SCHEMAFULL;"
+            "DEFINE FIELD statement ON Statement TYPE string;"
+            "DEFINE FIELD body_type ON Statement TYPE string;"
+            "DEFINE FIELD disease on Statement TYPE string;"
+            "DEFINE FIELD created_at ON Statement TYPE datetime  DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON Statement TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--OTM--"
+            "DEFINE FIELD user_owner ON Statement TYPE record(User);"
 
-            # Note table
-            # -> doctors write notes for every patient
-            "DEFINE FIELD in ON TABLE takes TYPE record<user>;"
-            "DEFINE FIELD out ON TABLE takes TYPE record<note>;"
-
-            "DEFINE TABLE note schemafull;"
-            "DEFINE FIELD text ON note TYPE string;"
-
-            "DEFINE FIELD in ON TABLE is_for TYPE record<note>;"
-            "DEFINE FIELD out ON TABLE is_for TYPE record<patient>;"
-
-
-            # Patient table
-            # -> doctors have patients
-            # -> is related to the radreport_reports which then links to the doctor_report table 
-            # so doctors can replace it with their own
-            "DEFINE FIELD in ON TABLE cares_for TYPE record<user>;"
-            "DEFINE FIELD out ON TABLE cares_for TYPE record<patient>;"
-
-            "DEFINE TABLE patient schemafull;"
-            "DEFINE FIELD name ON patient TYPE string;"
-            "DEFINE FIELD email ON patient TYPE string;"
-
-
-            # Scan table
-            "DEFINE FIELD in ON TABLE was_scanned TYPE record<patient>;"
-            "DEFINE FIELD out ON TABLE was_scanned TYPE record<scan>;"
-
-            "DEFINE TABLE scan schemafull;"
-            "DEFINE FIELD name ON scan TYPE string;"
-            # this looks like this because i dont know better
-            "DEFINE FIELD image ON scan TYPE array;"
-
-            # a scan will be categorized by our ML model written by the wonderfull Julius K. to the correct radreport_report
-            "DEFINE FIELD in ON TABLE categorized_to TYPE record<scan>;"
-            "DEFINE FIELD out ON TABLE categorized_to TYPE record<radreport_report>;"
-
-
-            # Doctor_Report table
-            # -> to enable the doctors to have their personal collection of templates with which they can replace ours 
-            # -> in contrast to radreport_report which are the 433 report templates we take from radreport (or somewhere else)
-            "DEFINE FIELD in ON TABLE writes TYPE record<user>;"
-            "DEFINE FIELD out ON TABLE writes TYPE record<doctor_report>;"
-
-            "DEFINE TABLE doctor_report schemafull;"
-            "DEFINE FIELD name ON doctor_report TYPE string;"
-            "DEFINE FIELD text ON doctor_report TYPE string;"
-
-            "DEFINE FIELD in ON TABLE replaces TYPE record<doctor_report>;"
-            "DEFINE FIELD out ON TABLE replaces TYPE record<radreport_report>;"
-
-
-            # Radreport_Report table
-            # -> in contrast this is our collection of reports, therefore not connected to the other tables (so far)
-            "DEFINE TABLE radreport_report schemafull;"
-            "DEFINE FIELD name ON radreport_report TYPE string;"
-            "DEFINE FIELD text ON radreport_report TYPE string;"
+            # "-- Define Report table with auto-generated UUID"
+            "DEFINE TABLE Report SCHEMAFULL;"
+            "DEFINE FIELD body_type ON Report TYPE string;"
+            "DEFINE FIELD condition on Report TYPE string;"
+            "DEFINE FIELD report_text on Report TYPE string;"
+            "DEFINE FIELD created_at ON Report TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON Report TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--MTM--"
+            "DEFINE FIELD in ON TABLE Statements_Reports_Join TYPE record<Statement>;"
+            "DEFINE FIELD out ON TABLE Statements_Reports_Join TYPE record<Report>;"
+            # "--OTM--"
+            "DEFINE FIELD patient ON Report TYPE record(Patient);"
+            
+            # "-- Define Image table with auto-generated UUID"
+            "DEFINE TABLE Image SCHEMAFULL;"
+            "DEFINE FIELD name ON Image TYPE string;"
+            "DEFINE FIELD path ON Image TYPE string;"
+            "DEFINE FIELD body_type ON Image TYPE string;"
+            "DEFINE FIELD modal_type on Image TYPE string ASSERT $value IN ['xray', 'mri', 'ct'];"
+            "DEFINE FIELD file_type on Image TYPE string;"
+            "DEFINE FIELD created_at ON Image TYPE datetime DEFAULT time::now();"
+            "DEFINE FIELD updated_at ON Image TYPE datetime DEFAULT time::now() VALUE time::now();"
+            # "--OTM--"
+            "DEFINE FIELD patient ON Image TYPE record(Patient);"
+            "DEFINE FIELD user ON Image TYPE record(User);"
+            # "--MTM--"
+            "DEFINE FIELD in ON TABLE Images_Reports_Join TYPE record<Image> ;"
+            "DEFINE FIELD out ON TABLE Images_Reports_Join TYPE record<Report>;"
         )
         
         logging.info(f"Create response: {create_response}")
