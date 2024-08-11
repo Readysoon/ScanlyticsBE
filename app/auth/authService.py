@@ -36,14 +36,14 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         
         try:
             select_orga_result = await db.query(f"SELECT VALUE id FROM Organization WHERE email = '{orga_email}';")
-            orga_id = select_orga_result[0]['result'][0]
-            print(orga_id)
+            select_orga_info = select_user_result[0]['result']
+            select_orga_id = select_orga_result[0]['result'][0]
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the just created Organization didnt work: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the just created Organization didnt work: {select_orga_info}")
         
         hashed_password = pwd_context.hash(user_password)
         try:
-            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
+            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{select_orga_id}';")
             create_user_status = create_user_result[0]['status']
             create_user_info = create_user_result[0]['result']
             if create_user_status == "ERR":
@@ -51,8 +51,14 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the User didnt work: {e}")
         
+        try:
+            select_user_result = await db.query(f"SELECT VALUE id FROM User WHERE email = '{user_email}';")
+            select_user_id = select_user_result[0]['result'][0]
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
-        
+        access_token = create_access_token(data={"sub": select_user_id})
+
         
         return HTTPException(status_code=status.HTTP_201_CREATED, detail = 
                             f"Orga_address: '{orga_address}'"
