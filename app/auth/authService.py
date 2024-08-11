@@ -21,8 +21,7 @@ async def check_mail_service(user_email, db):
          
     except: 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something querying the email didnt work")
-     
-
+      
 
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
     try: 
