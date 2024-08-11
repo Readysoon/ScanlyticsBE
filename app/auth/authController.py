@@ -6,7 +6,7 @@ from db.database import get_db
 
 from .authService import check_mail_service, signup_service
 
-from .authSchema import Token
+from . import authSchema
 from app.user.UserSchema import UserIn
 
 router = APIRouter(
@@ -22,17 +22,15 @@ async def check_mail(
     ):
     return await check_mail_service(user_email, db)
 
-
 # Use SurrealDB connection instead of SQLAlchemy session
-''', response_model=authSchema.Token'''
-@router.post("/orga_signup")
+@router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(userin: UserIn, db: Surreal = Depends(get_db)):
     return await signup_service(
         userin.user_email, 
         userin.user_name, 
         userin.user_password, 
-        userin.user_role, 
-        userin.orga_address, 
-        userin.orga_email, 
-        userin.orga_name, 
+        userin.user_role,
+        userin.orga_address,
+        userin.orga_email,
+        userin.orga_name,
         db)

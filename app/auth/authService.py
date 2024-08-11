@@ -15,7 +15,7 @@ async def check_mail_service(user_email, db):
         print(email)
 
         if email:
-            return HTTPException(status_code=status.HTTP_226_IM_USED, detail="Email in use")
+            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Email in use")
         else:
             return HTTPException(status_code=status.HTTP_202_ACCEPTED, detail="Email can be registered")         
          
@@ -47,9 +47,11 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
             create_user_status = create_user_result[0]['status']
             create_user_info = create_user_result[0]['result']
             if create_user_status == "ERR":
-                raise HTTPException(status_code=status.HTTP_226_IM_USED, detail=f"{create_user_info}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{create_user_info}")
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the User didnt work: {e}")
+        
+        
         
         
         return HTTPException(status_code=status.HTTP_201_CREATED, detail = 
