@@ -1,12 +1,21 @@
 from fastapi import Depends, HTTPException, status
 from surrealdb import Surreal
-
 from passlib.context import CryptContext
+
+import os
+import datetime
 
 from db.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
+def create_access_token():
+    # data: dict
+    # to_encode = data.copy()
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    expire = datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=15)
+    return SECRET_KEY
 
 async def check_mail_service(user_email, db):
     try:
@@ -36,14 +45,14 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         
         try:
             select_orga_result = await db.query(f"SELECT VALUE id FROM Organization WHERE email = '{orga_email}';")
-            select_orga_info = select_user_result[0]['result']
-            select_orga_id = select_orga_result[0]['result'][0]
+            select_orga_info = select_orga_result[0]['result']
+            orga_id = select_orga_result[0]['result'][0]
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the just created Organization didnt work: {select_orga_info}")
         
         hashed_password = pwd_context.hash(user_password)
         try:
-            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{select_orga_id}';")
+            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
             create_user_status = create_user_result[0]['status']
             create_user_info = create_user_result[0]['result']
             if create_user_status == "ERR":
@@ -53,13 +62,15 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         
         try:
             select_user_result = await db.query(f"SELECT VALUE id FROM User WHERE email = '{user_email}';")
-            select_user_id = select_user_result[0]['result'][0]
+            user_id = select_user_result[0]['result'][0]
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
-        access_token = create_access_token(data={"sub": select_user_id})
+        access_token = create_access_token(data={"sub": user_id})
 
-        
+        print("haha")
+        print(create_access_token())
+
         return HTTPException(status_code=status.HTTP_201_CREATED, detail = 
                             f"Orga_address: '{orga_address}'"
                             f"Orga_name: '{orga_name}'"
@@ -69,6 +80,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
                             f"User_name: '{user_name}'"
                             f"Orga_role '{user_role}'"
                             )
+
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user didnt work: {e}")
