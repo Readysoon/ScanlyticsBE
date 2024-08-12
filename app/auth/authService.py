@@ -41,9 +41,11 @@ async def check_mail_service(user_email, db):
       
 
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
+
     orga_id = None  
     user_id = None  
     try: 
+        # Creates the Organizaion part
         try:
             create_orga_result = await db.query(f"CREATE Organization Set address = '{orga_address}', name = '{orga_name}', email = '{orga_email}';") 
             create_orga_status = create_orga_result[0]['status']
@@ -53,6 +55,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Organization didnt work: {e}")
         
+        # Retrieves the Organization ID to be entered into the User
         try:
             select_orga_result = await db.query(f"SELECT VALUE id FROM Organization WHERE email = '{orga_email}';")
             select_orga_info = select_orga_result[0]['result']
@@ -60,6 +63,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the just created Organization didnt work: {select_orga_info}")
         
+        # Creates the user together with the hashed password
         hashed_password = pwd_context.hash(user_password)
         try:
             create_user_result = await db.query(f"CREATE User:uuid() Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
@@ -70,14 +74,17 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the User didnt work: {e}")
         
+        # Retrieves the User ID for access token creation
         try:
             select_user_result = await db.query(f"SELECT VALUE id FROM User WHERE email = '{user_email}';")
             user_id = select_user_result[0]['result'][0]
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
+        # create the access token
         access_token = create_access_token(data={"sub": user_id})
 
+        # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as e:
