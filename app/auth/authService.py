@@ -41,6 +41,8 @@ async def check_mail_service(user_email, db):
       
 
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
+    orga_id = None  
+    user_id = None  
     try: 
         try:
             create_orga_result = await db.query(f"CREATE Organization Set address = '{orga_address}', name = '{orga_name}', email = '{orga_email}';") 
@@ -74,22 +76,29 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
-        print(create_access_token(data={"sub": user_id}))
-        
-        return HTTPException(status_code=status.HTTP_201_CREATED, detail = 
-                            f"Orga_address: '{orga_address}'"
-                            f"Orga_name: '{orga_name}'"
-                            f"Orga_email: '{orga_email}'"
-                            f"Orga_id: '{orga_id}'"
-                            f"User_email: '{user_email}'"
-                            f"User_name: '{user_name}'"
-                            f"Orga_role '{user_role}'"
-                            )
+        access_token = create_access_token(data={"sub": user_id})
 
+        return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as e:
+        # Manual rollback: If user or organization was created, delete them
+        try:
+            if orga_id:
+                await db.query(f"DELETE FROM Organization WHERE id = '{orga_id}';")
+                print(f"Rollback deleted Organization: {orga_id}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Rollback deletion of Organization didnt work: {e}")
+
+        try:
+            if user_id:
+                await db.query(f"DELETE FROM User WHERE id = '{user_id}';")
+                print(f"Rollback deleted User: {user_id}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Rollback deletion of User didnt work: {e}")
+        
+
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user didnt work: {e}")
 
 
 
-        
+    
