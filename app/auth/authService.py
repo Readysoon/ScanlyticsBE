@@ -10,6 +10,26 @@ from db.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+async def login_service(db, user_data):
+    try:
+        query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
+        print(query_result)
+        if not query_result[0]['result'][0]:
+            # user not found
+            print("user not found")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
+        
+        if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
+            print("wrong password")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
+
+        access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didnt work: {e}")
+    
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     SECRET_KEY = os.getenv("SECRET_KEY")
@@ -66,7 +86,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         # Creates the user together with the hashed password
         hashed_password = pwd_context.hash(user_password)
         try:
-            create_user_result = await db.query(f"CREATE User:uuid() Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
+            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
             create_user_status = create_user_result[0]['status']
             create_user_info = create_user_result[0]['result']
             if create_user_status == "ERR":
@@ -87,8 +107,8 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
 
+    # If anything goes wrong: Main Exception and rollback deletion for Organization and User 
     except Exception as e:
-        # Manual rollback: If user or organization was created, delete them
         try:
             if orga_id:
                 await db.query(f"DELETE FROM Organization WHERE id = '{orga_id}';")
