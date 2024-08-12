@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from surrealdb import Surreal
 from passlib.context import CryptContext
+from jose import jwt
 
 import os
 import datetime
@@ -9,13 +10,20 @@ from db.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-def create_access_token():
-    # data: dict
-    # to_encode = data.copy()
+def create_access_token(data: dict):
+    to_encode = data.copy()
     SECRET_KEY = os.getenv("SECRET_KEY")
-    expire = datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=15)
-    return SECRET_KEY
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
+
+    # surreal creates an ID wrapped in ankle brackets which the following line extracts
+    to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
+
+    to_encode.update({"exp": expire})
+
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
+
+    return encoded_jwt
+
 
 async def check_mail_service(user_email, db):
     try:
@@ -52,7 +60,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         
         hashed_password = pwd_context.hash(user_password)
         try:
-            create_user_result = await db.query(f"CREATE User Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
+            create_user_result = await db.query(f"CREATE User:uuid() Set email = '{user_email}', name = '{user_name}', password = '{hashed_password}', role = '{user_role}', organization = '{orga_id}';")
             create_user_status = create_user_result[0]['status']
             create_user_info = create_user_result[0]['result']
             if create_user_status == "ERR":
@@ -66,11 +74,8 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
-        access_token = create_access_token(data={"sub": user_id})
-
-        print("haha")
-        print(create_access_token())
-
+        print(create_access_token(data={"sub": user_id}))
+        
         return HTTPException(status_code=status.HTTP_201_CREATED, detail = 
                             f"Orga_address: '{orga_address}'"
                             f"Orga_name: '{orga_name}'"
