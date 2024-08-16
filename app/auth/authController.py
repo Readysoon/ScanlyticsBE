@@ -6,10 +6,10 @@ from typing_extensions import Annotated
 
 from db.database import get_db
 
-from .authService import check_mail_service, signup_service, login_service
+from .authService import check_mail_service, signup_service, login_service, get_current_user
 
 from . import authSchema
-from user.UserSchema import UserIn
+from user.UserSchema import UserSignup
 
 router = APIRouter(
     prefix="/auth",
@@ -29,7 +29,7 @@ async def check_mail(
 
 @router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(
-    userin: UserIn, 
+    userin: UserSignup, 
     db: Surreal = Depends(get_db)
     ):
     return await signup_service(
@@ -54,5 +54,5 @@ async def login(
         user_data
         )
 
-# @router.post("/validate")
-# async def validate()
+@router.post("/validate")
+async def validate(current_user: UserIn)
