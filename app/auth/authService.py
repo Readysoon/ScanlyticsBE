@@ -1,7 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from surrealdb import Surreal
 from passlib.context import CryptContext
-from jose import jwt
+from jose import jwt, JWTError
+
+from fastapi.security import OAuth2PasswordBearer
 
 import os
 import datetime
@@ -10,10 +12,11 @@ from db.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# this takes email and password and "logs in" meaning it checks in the database 
+# if the two match and then returns the access token valid for 15 min
 async def login_service(db, user_data):
     try:
         query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
-        print(query_result)
         if not query_result[0]['result'][0]:
             # user not found
             print("user not found")
@@ -44,7 +47,19 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+# this verifies the access token
+# def verify_access_token(token: str = Depends(oauth2_scheme)):
+#     SECRET_KEY = os.getenv("SECRET_KEY")
+# 
+#     try:
+#         return print("haaaaaallooooooo", token, oauth2_scheme)
+#     except JWTError:
+#         raise  HTTPException(status_code=401, detail="Invalid token")
+
+
+# before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
 async def check_mail_service(user_email, db):
     try:
         result = await db.query(f"SELECT VALUE email FROM User WHERE email = '{user_email}';")
@@ -60,6 +75,8 @@ async def check_mail_service(user_email, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something querying the email didnt work")
       
 
+# an user can only exist within an organization -> the first creates it the others join
+# logic for joining has to be yet implemented
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
 
     orga_id = None  

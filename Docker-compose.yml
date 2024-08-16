@@ -14,6 +14,8 @@ services:
       - SURREALDB_PASS=${SURREALDB_PASS}
       - SURREALDB_NAMESPACE=${SURREALDB_NAMESPACE}
       - SURREALDB_DATABASE=${SURREALDB_DATABASE}
+      # Docker probably mixed up the Secret keys when they where both written 
+      # in capital case so this was written in small case
       - SECRET_KEY=${secret_key}
     depends_on:
       - surrealdb
