@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 import logging
 
-async def CreatePraxisService():
+async def CreatePatientService():
     async with Surreal("ws://surrealdb:8000/rpc") as db:
         await db.signin({"user": "root", "pass": "root"})
         await db.use("test", "test")

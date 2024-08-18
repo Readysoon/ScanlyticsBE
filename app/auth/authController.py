@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Form, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic.networks import EmailStr
-from surrealdb import Surreal
 from typing_extensions import Annotated
 
 from db.database import get_db
+from surrealdb import Surreal
 
 from .authService import check_mail_service, signup_service, login_service, get_current_user
 
@@ -55,8 +55,7 @@ async def login(
         )
 
 # get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
-# current_user saves everything from get_current_user in the form of UserOut
-# in user_out everything is saved in the variables id, email and admin coming from current_user
+# current_user saves everything from get_current_user
 @router.post("/validate")
 def validate(current_user = Depends(get_current_user)):
     return current_user

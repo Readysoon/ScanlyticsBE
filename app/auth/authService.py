@@ -79,7 +79,6 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail=f"Querying the user in get_current_user didnt work: {e}")
 
-
     return user
 
 

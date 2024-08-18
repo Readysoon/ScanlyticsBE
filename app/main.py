@@ -6,7 +6,7 @@ import logging
 
 from db.models import initializedb
 from user.userController import router as user_router
-from praxis.praxisController import router as praxis_router
+from patient.patientController import router as patient_router
 from auth.authController import router as auth_router
 
 
@@ -16,7 +16,7 @@ app = FastAPI()
 
 app.include_router(surrealdb_router)
 app.include_router(user_router)
-app.include_router(praxis_router)
+app.include_router(patient_router)
 app.include_router(auth_router)
 
 @app.on_event("startup")
