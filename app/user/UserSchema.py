@@ -9,6 +9,7 @@ class UserSignup(BaseModel):
     orga_email: EmailStr
     orga_name: str
 
-class UserIn(BaseModel):
+class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str
+

@@ -9,7 +9,7 @@ from db.database import get_db
 from .authService import check_mail_service, signup_service, login_service, get_current_user
 
 from . import authSchema
-from user.UserSchema import UserSignup
+from user.UserSchema import UserSignup, UserSimple
 
 router = APIRouter(
     prefix="/auth",
@@ -54,5 +54,14 @@ async def login(
         user_data
         )
 
+# get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
+# current_user saves everything from get_current_user in the form of UserOut
+# in user_out everything is saved in the variables id, email and admin coming from current_user
 @router.post("/validate")
-async def validate(current_user: UserIn)
+def validate(current_user = Depends(get_current_user)):
+    return current_user
+
+
+
+
+

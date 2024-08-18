@@ -10,6 +10,8 @@ import datetime
 
 from db.database import get_db
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # this takes email and password and "logs in" meaning it checks in the database 
@@ -47,16 +49,38 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+def verify_access_token(token):
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
-# this verifies the access token
-# def verify_access_token(token: str = Depends(oauth2_scheme)):
-#     SECRET_KEY = os.getenv("SECRET_KEY")
-# 
-#     try:
-#         return print("haaaaaallooooooo", token, oauth2_scheme)
-#     except JWTError:
-#         raise  HTTPException(status_code=401, detail="Invalid token")
+    try: 
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        id: str = payload.get("sub")
+        # commented out because id looks like this: 66qw4jxwh113byfq4lka and is no UUID
+        # token_data = TokenData(id=id)
+        token_data = id
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                            detail=f"JWTError excpetion: Something in verify_access_token didnt work: {e}")
+    
+    return token_data
+
+
+async def get_current_user(
+        token = Depends(oauth2_scheme), 
+        db: Surreal = Depends(get_db)
+        ):
+    # verify_access_token returns the id when given the token
+    token_id = verify_access_token(token)
+    # from the id given by verify_access_token the user is selected in the database
+    try: 
+        user = await db.query(f"SELECT * FROM User WHERE id = 'User:{token_id}';")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                            detail=f"Querying the user in get_current_user didnt work: {e}")
+
+
+    return user
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
