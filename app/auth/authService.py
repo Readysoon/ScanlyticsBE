@@ -81,6 +81,15 @@ async def get_current_user(
 
     return user
 
+async def get_current_user_id(
+        token = Depends(oauth2_scheme),
+        ):
+    
+    token_id = verify_access_token(token)
+
+    return token_id
+
+
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
 async def check_mail_service(user_email, db):
