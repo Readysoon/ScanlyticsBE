@@ -35,7 +35,6 @@ async def get_patient_id(
 async def update_patient(
     patient_id: str,
     patientin: CreatePatient,
-    current_user_id = Depends(get_current_user_id),
     db: Surreal = Depends(get_db)
     ):
-    return await UpdatePatientService(patientin, current_user_id, patient_id, db)
+    return await UpdatePatientService(patientin, patient_id, db)

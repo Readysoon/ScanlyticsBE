@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from surrealdb import Surreal
 from passlib.context import CryptContext
-from jose import jwt, JWTError
+from jose import jwt
 
 from fastapi.security import OAuth2PasswordBearer
 
@@ -16,6 +16,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # this takes email and password and "logs in" meaning it checks in the database 
 # if the two match and then returns the access token valid for 15 min
+
+'''Correct: out of range ERROR for user not in database!!!'''
+
 async def login_service(db, user_data):
     try:
         query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
@@ -40,6 +43,8 @@ def create_access_token(data: dict):
     SECRET_KEY = os.getenv("SECRET_KEY")
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
 
+    print(data)
+
     # surreal creates an ID wrapped in ankle brackets which the following line extracts
     to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
 
@@ -49,12 +54,17 @@ def create_access_token(data: dict):
 
     return encoded_jwt
 
+
 def verify_access_token(token):
     SECRET_KEY = os.getenv("SECRET_KEY")
 
     try: 
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         id: str = payload.get("sub")
+        print(token)
+        print(f"token: {token}")
+        print(f"payload: {payload}")
+        print(f"id: {id}")
         # commented out because id looks like this: 66qw4jxwh113byfq4lka and is no UUID
         # token_data = TokenData(id=id)
         token_data = id
