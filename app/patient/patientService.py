@@ -1,4 +1,4 @@
-from auth.authService import create_access_token
+from auth.authService import create_access_token, get_current_user_id
 from fastapi import HTTPException, status
 
 
@@ -6,7 +6,7 @@ async def CreatePatientService(patientin, current_user_id, db):
         try:
             create_patient_result = await db.query(
                 f"CREATE Patient SET name = '{patientin.patient_name}', "
-                f"date_of_birth = '{patientin.date_of_birth}', "  # Note the use of {date_of_birth} without quotes
+                f"date_of_birth = '{patientin.date_of_birth}', "
                 f"gender = '{patientin.gender}', "
                 f"contact_number = '{patientin.contact_number}', "
                 f"address = '{patientin.address}';"
@@ -41,67 +41,56 @@ async def CreatePatientService(patientin, current_user_id, db):
         # # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}, create_patient_result
 
-
+# Looks with the patient_id and current_user_id which patients are to user 
+# with the id and returns information about the patient
 async def get_patient_by_id(patient_id, current_user_id, db):
     # Checking if patient is user's patient
     try:
-        check_treated_by_result = await db.query(
-            f"SELECT * FROM Treated_By WHERE in = 'Patient:{patient_id}' AND out = 'User:{current_user_id}';"
+        try: 
+            check_treated_by_result = await db.query(
+                f"SELECT VALUE id FROM Treated_By WHERE in = 'Patient:{patient_id}' AND out = 'User:{current_user_id}';"
+            )
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Some error occured in querying the patient: {e}")
+
+        if not check_treated_by_result[0]['result']:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient and user")
+        
+        patient_data = await db.query(
+            f"SELECT * FROM Patient WHERE id = 'Patient:{patient_id}';"
         )
-        # change this chatgpt code to your own!!! -understand it too
+        return patient_data
 
-        # Accessing the first item in the result
-        check_treated_by_status = check_treated_by_result[0]['status']
-        check_treated_by_info = check_treated_by_result[0]['result']
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")       
+
+
+async def UpdatePatientService(patientin, patient_id, current_user_id, db):
+        # initialize and load variables with input from patientin
+        name = patientin.patient_name
+        date_of_birth = patientin.date_of_birth
+        gender = patientin.gender
+        contact_number = patientin.contact_number
+        address = patientin.address
+        set_string = "SET "
+
+        # elongate the update_string
+        if name:
+            set_string += f"name = '{name}', "
+        if date_of_birth:
+            set_string += f"date_of_birth = '{date_of_birth}', "
+        if gender:
+            set_string += f"gender = '{gender}', "
+        if contact_number:
+            set_string += f"contact_number = '{contact_number}', "
+        if address:
+            set_string += f"address = '{address}'"
         
-        # Check if the status indicates an error
-        if check_treated_by_status == "ERR":
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{check_treated_by_info}")
-        
-        # Ensure there is a result and it's not empty
-        if not check_treated_by_info:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No matching records found.")
-        
-        # Access the first item in the result list
-        treated_by_record = check_treated_by_info[0]
-        
-        # Check if 'id' exists in the record
-        if 'id' not in treated_by_record or not treated_by_record['id']:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ID was empty or not found: {treated_by_record}")
-        
-        # create the access token
+        # and finally put everything together and send it
+        await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).out {set_string};")
+
         access_token = create_access_token(data={"sub": current_user_id})
-
-        # # and return it as the final answer to the user
+        # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
 
-
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")
-         
-
-async def UpdatePatientService(patientin, patient_id, db):
-
-    try:
-        existing_patient = await db.get_patient_by_id(patient_id)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")
     
-    # populate empty patient data dictonary for later comparison:
-    update_data = {}
-
-    if patientin.name != existing_patient['name']:
-        update_data['name'] = patientin.patient_name
-    if patientin.name != existing_patient['date_of_birth']:
-        update_data['date_of_birth'] = patientin.date_of_birth
-    if patientin.name != existing_patient['gender']:
-        update_data['gender'] = patientin.gender
-    if patientin.name != existing_patient['contact_number']:
-        update_data['contact_number'] = patientin.contact_number
-    if patientin.name != existing_patient['address']:
-        update_data['address'] = patientin.address
-
-    print(update_data)
-      
-    
-             

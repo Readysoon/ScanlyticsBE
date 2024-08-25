@@ -1,9 +1,9 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class CreatePatient(BaseModel):
-    patient_name: str
-    # date_of_birth has to be str in order to be processable by SurrealDB
-    date_of_birth: str
-    gender: str
-    contact_number: str
-    address: str
+    patient_name: Optional[str] = None
+    date_of_birth: Optional[str] = None 
+    gender: Optional[str] = None
+    contact_number: Optional[str] = None
+    address: Optional[str] = None

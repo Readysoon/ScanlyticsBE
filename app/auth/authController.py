@@ -43,7 +43,7 @@ async def orga_signup(
         db
         )
 
-# , response_model=authSchema.Token
+# ordentliche Fehlermeldung zurückgeben und nicht nur out of index
 @router.post("/login")
 async def login(
     user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
@@ -56,6 +56,7 @@ async def login(
 
 # get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
 # current_user saves everything from get_current_user
+'''write proper errors when old jwt token was given'''
 @router.post("/validate")
 def validate(current_user = Depends(get_current_user)):
     return current_user

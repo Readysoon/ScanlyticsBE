@@ -21,7 +21,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def login_service(db, user_data):
     try:
-        query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
+        try:
+            query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         if not query_result[0]['result'][0]:
             # user not found
             print("user not found")
@@ -30,20 +33,27 @@ async def login_service(db, user_data):
         if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
             print("wrong password")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
-
-        access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
+        
+        try:
+            access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Is the error here? {e}")
         return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didnt work: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
     
 
 def create_access_token(data: dict):
+    # print(data)
+    # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
+    # == Write this if you want to return the token to the user == 
+    # access_token = create_access_token(data={"sub": user_id})
+    # and return it as the final answer to the user
+    # return {"access_token": access_token, "token_type": "bearer"}
     to_encode = data.copy()
     SECRET_KEY = os.getenv("SECRET_KEY")
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
-
-    print(data)
 
     # surreal creates an ID wrapped in ankle brackets which the following line extracts
     to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
@@ -57,45 +67,40 @@ def create_access_token(data: dict):
 
 def verify_access_token(token):
     SECRET_KEY = os.getenv("SECRET_KEY")
-
-    try: 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        id: str = payload.get("sub")
-        print(token)
-        print(f"token: {token}")
-        print(f"payload: {payload}")
-        print(f"id: {id}")
-        # commented out because id looks like this: 66qw4jxwh113byfq4lka and is no UUID
-        # token_data = TokenData(id=id)
-        token_data = id
-
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                            detail=f"JWTError excpetion: Something in verify_access_token didnt work: {e}")
-    
-    return token_data
+    print(token)
+    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    id: str = payload.get("sub")
+    print(f"id: {id}")
+    return id
 
 
+# retrieves the token from the HTTP request, extracts the user_id from it, 
+# checks if it is in the database and returns the whole user
 async def get_current_user(
-        token = Depends(oauth2_scheme), 
+        token:str = Depends(oauth2_scheme), 
         db: Surreal = Depends(get_db)
         ):
+    
     # verify_access_token returns the id when given the token
-    token_id = verify_access_token(token)
+    user_id = verify_access_token(token)
     # from the id given by verify_access_token the user is selected in the database
     try: 
-        user = await db.query(f"SELECT * FROM User WHERE id = 'User:{token_id}';")
+        user = await db.query(f"SELECT * FROM User WHERE id = 'User:{user_id}';")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail=f"Querying the user in get_current_user didnt work: {e}")
-
+    
     return user
 
+
+'''neue Version'''
 async def get_current_user_id(
-        token = Depends(oauth2_scheme),
-        ):
+    token:str = Depends(oauth2_scheme)
+    ):
+    print(f"token: {token}")
     
     token_id = verify_access_token(token)
+    print(f"token_id: {token_id}")
 
     return token_id
 
@@ -118,7 +123,7 @@ async def check_mail_service(user_email, db):
       
 
 # an user can only exist within an organization -> the first creates it the others join
-# logic for joining has to be yet implemented
+'''logic for joining an organization has to be yet implemented'''
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
 
     orga_id = None  
