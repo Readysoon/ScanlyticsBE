@@ -8,7 +8,8 @@ from fastapi.security import OAuth2PasswordBearer
 import os
 import datetime
 
-from db.database import get_db
+'''added 2 "app." for db.database for deployed mode'''
+from app.db.database import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 

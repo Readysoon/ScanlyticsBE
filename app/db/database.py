@@ -2,9 +2,12 @@ import os
 import logging
 from surrealdb import Surreal
 
-DATABASE_URL = os.getenv("SURREALDB_URL", "ws://surrealdb:8000/rpc")
-DATABASE_USER = os.getenv("SURREALDB_USER", "root")
-DATABASE_PASS = os.getenv("SURREALDB_PASS", "root")
+# old: DATABASE_URL = os.getenv("SURREALDB_URL", "ws://surrealdb:8000/rpc")
+DATABASE_URL = os.getenv("SURREALDB_URL", "wss://surrealdb-deployment-dark-feather-439.fly.dev/rpc")
+# old: DATABASE_USER = os.getenv("SURREALDB_USER", "root")
+DATABASE_USER = os.getenv("SURREALDB_USER", "Philipp")
+# old: DATABASE_PASS = os.getenv("SURREALDB_PASS", "root")
+DATABASE_PASS = os.getenv("SURREALDB_PASS", "ebKkvWv4fTMEYYK8")
 DATABASE_NAMESPACE = os.getenv("SURREALDB_NAMESPACE", "test")
 DATABASE_NAME = os.getenv("SURREALDB_DATABASE", "test")
 

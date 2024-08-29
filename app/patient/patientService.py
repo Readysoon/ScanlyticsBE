@@ -1,5 +1,7 @@
-from auth.authService import create_access_token, get_current_user_id
 from fastapi import HTTPException, status
+
+'''added "" for db.database for deployed mode'''
+from app.auth.authService import create_access_token, get_current_user_id
 
 
 async def CreatePatientService(patientin, current_user_id, db):

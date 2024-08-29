@@ -1,20 +1,13 @@
 # Use an official Python runtime as a parent image
 FROM python:3.12-slim
 
-# Set the working directory in the container
+# remove the "/app" to not have to remove the "app." in the imports -> maybe only remove it in docker-compose for local
 WORKDIR /usr/src/app
 
-# Copy the requirements file into the container
 COPY requirements.txt ./
 
-# Install dependencies into the container directly acting as a virtual environment
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Check if surrealdb is installed correctly
-RUN python -c "import surrealdb" && echo "SurrealDB package installed successfully."
-
-# Copy the rest of the application code into the container
 COPY . .
 
-# Run the app with uvicorn
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001" ]
+CMD [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080" ]

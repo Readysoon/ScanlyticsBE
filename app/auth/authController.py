@@ -2,14 +2,15 @@ from fastapi import APIRouter, Form, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic.networks import EmailStr
 from typing_extensions import Annotated
-
-from db.database import get_db
 from surrealdb import Surreal
+
+'''added 2 "app." for db.database for deployed mode'''
+from app.db.database import get_db
+from app.user.UserSchema import UserSignup, UserSimple
 
 from .authService import check_mail_service, signup_service, login_service, get_current_user
 
 from . import authSchema
-from user.UserSchema import UserSignup, UserSimple
 
 router = APIRouter(
     prefix="/auth",

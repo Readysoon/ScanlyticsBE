@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
-
-from db.database import get_db
 from surrealdb import Surreal
+
+'''added 2 "" for db.database for deployed mode'''
+from app.db.database import get_db
+from app.auth.authService import get_current_user_id
 
 from .patientService import CreatePatientService, get_patient_by_id, UpdatePatientService
 from .patientSchema import CreatePatient
 
-from auth.authService import get_current_user_id
 
 router = APIRouter(
     prefix="/patient",
