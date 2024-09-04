@@ -1,2 +1,5 @@
 __pycache__
 .env
+Docker-compose.yml
+app.yml
+Dockerfile

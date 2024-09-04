@@ -1,13 +1,17 @@
-# Use an official Python runtime as a parent image
+FROM python:3.12 AS builder
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+WORKDIR /app
+
+RUN pip install poetry
+RUN poetry config virtualenvs.in-project true
+COPY pyproject.toml poetry.lock ./
+RUN poetry install
 FROM python:3.12-slim
-
-# remove the "/app" to not have to remove the "app." in the imports -> maybe only remove it in docker-compose for local
-WORKDIR /usr/src/app
-
-COPY requirements.txt ./
-
-RUN pip install --no-cache-dir -r requirements.txt
-
+WORKDIR /app
+COPY --from=builder /app/.venv .venv/
 COPY . .
-
-CMD [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080" ]
+# this by fly.io generated line had to be changed to account for the different start command:
+# CMD ["/app/.venv/bin/fastapi", "run"]
+CMD ["/app/.venv/bin/uvicorn", "scanlyticsbe.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
