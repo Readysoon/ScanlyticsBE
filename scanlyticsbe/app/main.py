@@ -47,7 +47,7 @@ async def landing_page(
             <title>Welcome</title>
         </head>
         <body>
-            <h1>Welcomee to the Scanlytics App</h1>
+            <h1>Welcomeeee to the Scanlytics App</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
             <p>To create the Praxis (Diagnostikum), visit:</p>
