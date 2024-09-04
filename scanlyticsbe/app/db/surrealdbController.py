@@ -1,5 +1,12 @@
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from the .env file
+load_dotenv()
+
+DATABASE_URL = os.getenv("SURREALDB_URL")
 
 
 router = APIRouter(
@@ -10,4 +17,4 @@ router = APIRouter(
 @router.get("/")
 async def surrealdb_handler():
     print("test")
-    return RedirectResponse(url="https://surrealdb-deployment-floral-meadow-3035.fly.dev")
+    return RedirectResponse(url=f"https{DATABASE_URL[5:]}")
