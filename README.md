@@ -10,32 +10,29 @@ To install and run the project on your local machine, please follow these steps:
       ```
 
 
-2. Set up the virtual environment
-   
-     ```
-     python3 -m venv venv
+2. Set up the virtual environment with poetry:
      
+     To install the dependencies:
+
+     '''
+     poetry install
+     '''
+
+     To activate the virtual environment:
+     '''
+     poetry shell
+     '''
+
+     To exit the virtual environment (if necessary):
+     '''
+     exit
+     '''
+
+3. Make sure to have the Docker application up and ready (free of any containers/images with the same name)
+
+4. Run Docker
+
      ```
-
-3. Activate the virtual environment 
-
-     ```
-     source venv/bin/activate
-     
-     ```
-
-4. Install the requirements
-
-     ```
-     pip install -r requirements.txt
-     
-     ```
-
-5. Make sure to have the Docker application up and ready (free of any containers/images with the same name)
-
-6. Run Docker
-
-     ```
-     docker-compose up && docker-docker-compose down
+     docker-compose up --build
      
      ```
