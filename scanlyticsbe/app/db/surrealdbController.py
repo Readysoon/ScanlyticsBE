@@ -7,11 +7,8 @@ import os
 load_dotenv()
 
 DATABASE_URL = os.getenv("SURREALDB_URL")
-print(DATABASE_URL)
 if DATABASE_URL == "ws://surrealdb:8000/rpc":
-    DATABASE_URL = "http://0.0.0.0:8000"
-# else: DATABASE_URL = f"wss{DATABASE_URL[5:]}/rpc"
-print(DATABASE_URL)
+    REDIRECT_URL = "http://0.0.0.0:8000"
 
 
 router = APIRouter(
@@ -22,4 +19,4 @@ router = APIRouter(
 @router.get("/")
 async def surrealdb_handler():
     print(DATABASE_URL)
-    return RedirectResponse(url=DATABASE_URL)
+    return RedirectResponse(url="https://scanlyticsdb.fly.dev/")

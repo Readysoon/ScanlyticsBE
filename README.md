@@ -1,3 +1,7 @@
+## Website
+
+Visit the website here: https://scanlyticsbe-frosty-water-4954.fly.dev/
+
 ## Installation
 
 To install and run the project on your local machine, please follow these steps:
@@ -14,19 +18,21 @@ To install and run the project on your local machine, please follow these steps:
      
      To install the dependencies:
 
-     '''
+     ```
      poetry install
-     '''
+     ```
 
      To activate the virtual environment:
-     '''
+
+     ```
      poetry shell
-     '''
+     ```
 
      To exit the virtual environment (if necessary):
-     '''
+
+     ```
      exit
-     '''
+     ```
 
 3. Make sure to have the Docker application up and ready (free of any containers/images with the same name)
 
