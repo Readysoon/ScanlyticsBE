@@ -123,7 +123,7 @@ async def check_mail_service(user_email, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Something querying the email didnt work")
       
 
-# an user can only exist within an organization -> the first creates it the others join
+# an user can only exist within an organization -> the first creates it, the others join
 '''logic for joining an organization has to be yet implemented'''
 async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
 

@@ -34,7 +34,6 @@ app.include_router(auth_router)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    # await seed()
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(
@@ -47,7 +46,7 @@ async def landing_page(
             <title>Welcome</title>
         </head>
         <body>
-            <h1>Welcomeeee to the Scanlytics App</h1>
+            <h1>Welcomee to Scanlytics</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
             <p>To create the Praxis (Diagnostikum), visit:</p>

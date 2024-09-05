@@ -7,12 +7,12 @@ import os
 load_dotenv()
 
 DATABASE_URL = os.getenv("SURREALDB_URL")
-DATABASE_URL = DATABASE_URL[5:]
-
+print(DATABASE_URL)
+if DATABASE_URL == "ws://surrealdb:8000/rpc":
+    DATABASE_URL = "http://0.0.0.0:8000"
+# else: DATABASE_URL = f"wss{DATABASE_URL[5:]}/rpc"
 print(DATABASE_URL)
 
-
-# alt: https://surrealdb-deployment-floral-meadow-3035.fly.dev
 
 router = APIRouter(
     prefix="/surrealdb",
@@ -21,5 +21,5 @@ router = APIRouter(
 
 @router.get("/")
 async def surrealdb_handler():
-    print("test")
-    return RedirectResponse(url=f"https://surrealdb-deployment-floral-meadow-3035.fly.dev")
+    print(DATABASE_URL)
+    return RedirectResponse(url=DATABASE_URL)

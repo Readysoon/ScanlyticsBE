@@ -4,7 +4,6 @@ from pydantic.networks import EmailStr
 from typing_extensions import Annotated
 from surrealdb import Surreal
 
-'''added 2 "app." for db.database for deployed mode'''
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.UserSchema import UserSignup, UserSimple
 

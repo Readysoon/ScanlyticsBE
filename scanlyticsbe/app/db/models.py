@@ -1,7 +1,6 @@
 from .database import get_db
 from fastapi import HTTPException, status
 
-
 import logging
 
 async def initializedb():
@@ -119,4 +118,5 @@ async def initializedb():
             try:
                 await db.query(command)
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error in database initialization during command: {command}, Error: {e}")       
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error in database initialization during command: {command}, Error: {e}")
+
