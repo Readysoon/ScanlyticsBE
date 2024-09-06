@@ -1,6 +1,6 @@
 ## Website
 
-Visit the website here: https://scanlyticsbe-frosty-water-4954.fly.dev/
+Visit the website here: https://scanlyticsbe.fly.dev/
 
 ## Installation
 

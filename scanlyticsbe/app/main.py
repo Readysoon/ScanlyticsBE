@@ -25,6 +25,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+
 app.include_router(surrealdb_router)
 app.include_router(user_router)
 app.include_router(patient_router)
@@ -49,9 +50,9 @@ async def landing_page(
             <h1>Welcomee to Scanlytics</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
-            <p>To create the Praxis (Diagnostikum), visit:</p>
-            <a href="/auth/orga_signup">Create Praxis:Diagnostikum</a>
-            {query_result}
+            <p>To create the seed user, visit:</p>
+            <a href="/seed/orga_user">Seed the user</a>
+            <p>{query_result}</p>
         </body>
     </html>
     """

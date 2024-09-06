@@ -1,12 +1,16 @@
-# fly.toml app configuration file generated for surrealdb-deployment-withered-grass-9436 on 2024-09-05T17:47:53+02:00
+# fly.toml app configuration file generated for scanlyticsdb on 2024-09-05T13:45:51+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'surrealdb-deployment-withered-grass-9436'
+app = 'scanlyticsdb'
 primary_region = 'ams'
 
 [build]
+
+[[mounts]]
+  source = 'data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080
@@ -20,7 +24,3 @@ primary_region = 'ams'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-
-[mounts]
-source="data"
-destination="/data"

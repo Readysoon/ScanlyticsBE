@@ -33,7 +33,6 @@ async def get_patient_id(
         current_user_id = Depends(get_current_user_id),
         db: Surreal = Depends(get_db)
     ):
-    print("hello from the GET route")
     return await get_patient_by_id(patient_id, current_user_id, db)
 
 @router.patch("/update/{patient_id}")

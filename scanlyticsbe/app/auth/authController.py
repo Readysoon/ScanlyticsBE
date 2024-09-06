@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.user.UserSchema import UserSignup, UserSimple
+from scanlyticsbe.app.user.userSchema import UserSignup, UserSimple
 
 from .authService import check_mail_service, signup_service, login_service, get_current_user
 
@@ -51,7 +51,7 @@ async def login(
     db: Surreal = Depends(get_db)
     ):
     return await login_service(
-        db, 
+        db,
         user_data
         )
 

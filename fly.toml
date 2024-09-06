@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for scanlyticsbe-frosty-water-4954 on 2024-09-03T14:54:41+02:00
+# fly.toml app configuration file generated for scanlyticsbe on 2024-09-05T17:19:48+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'scanlyticsbe-frosty-water-4954'
+app = 'scanlyticsbe'
 primary_region = 'ams'
 
 [build]
@@ -15,6 +15,10 @@ primary_region = 'ams'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
+
+# Poetry stores the venv dependencies in "/app/.venv/bin/"
+[processes]
+  app = "/app/.venv/bin/uvicorn scanlyticsbe.app.main:app --host 0.0.0.0 --port 8000 --workers 1 --reload"
 
 [[vm]]
   memory = '1gb'

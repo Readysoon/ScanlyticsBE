@@ -17,16 +17,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # this takes email and password and "logs in" meaning it checks in the database 
 # if the two match and then returns the access token valid for 15 min
-
-'''Correct: out of range ERROR for user not in database!!!'''
-
 async def login_service(db, user_data):
     try:
         try:
             query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-        if not query_result[0]['result'][0]:
+        if not query_result[0]['result']:
             # user not found
             print("user not found")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
@@ -38,7 +35,7 @@ async def login_service(db, user_data):
         try:
             access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Is the error here? {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
         return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as e:
@@ -48,19 +45,24 @@ async def login_service(db, user_data):
 def create_access_token(data: dict):
     # print(data)
     # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
+    #
     # == Write this if you want to return the token to the user == 
     # access_token = create_access_token(data={"sub": user_id})
     # and return it as the final answer to the user
     # return {"access_token": access_token, "token_type": "bearer"}
     to_encode = data.copy()
-    SECRET_KEY = os.getenv("SECRET_KEY")
+    try:
+        SECRET_KEY = os.getenv("secret_key")
+        if SECRET_KEY == None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Secret Key is None.")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Secret key couldnt be obtained: {e}")
+    
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
 
     # surreal creates an ID wrapped in ankle brackets which the following line extracts
     to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
-
     to_encode.update({"exp": expire})
-
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
 
     return encoded_jwt
@@ -166,8 +168,14 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
+
+        print(user_id)
+        print(type(user_id))
+
         # create the access token
         access_token = create_access_token(data={"sub": user_id})
+
+        print(access_token)
 
         # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
