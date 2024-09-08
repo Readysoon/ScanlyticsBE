@@ -20,8 +20,6 @@ async def create_patient(
     current_user_id = Depends(get_current_user_id),
     db: Surreal = Depends(get_db)
     ):
-    print(patientin)
-    print(current_user_id)
     return await CreatePatientService(patientin, current_user_id, db)
 
 # missing: get all patients of a specific user

@@ -69,26 +69,42 @@ def create_access_token(data: dict):
 
 
 def verify_access_token(token):
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    print(token)
-    payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    try:
+        SECRET_KEY = os.getenv("secret_key")
+        if SECRET_KEY == None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Secret Key is None.")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Secret key couldnt be obtained: {e}")
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Decoding the payload didnt work: {e}")
     id: str = payload.get("sub")
-    print(f"id: {id}")
     return id
 
 
 # retrieves the token from the HTTP request, extracts the user_id from it, 
 # checks if it is in the database and returns the whole user
 async def get_current_user(
-        token:str = Depends(oauth2_scheme), 
-        db: Surreal = Depends(get_db)
-        ):
+    token:str = Depends(oauth2_scheme), 
+    db: Surreal = Depends(get_db)
+    ):
     
     # verify_access_token returns the id when given the token
-    user_id = verify_access_token(token)
+    try:
+        user_id = verify_access_token(token)
+        print(f"get_current_user->user_id: {user_id}")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Verifying the access token didnt work: {e}")
+
     # from the id given by verify_access_token the user is selected in the database
     try: 
         user = await db.query(f"SELECT * FROM User WHERE id = 'User:{user_id}';")
+        if not user[0]['result']:
+            print("user not found")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Token Error")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail=f"Querying the user in get_current_user didnt work: {e}")
@@ -169,14 +185,9 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying the user didn't work: {e}")
         
 
-        print(user_id)
-        print(type(user_id))
-
         # create the access token
         access_token = create_access_token(data={"sub": user_id})
-
-        print(access_token)
-
+        
         # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
 
