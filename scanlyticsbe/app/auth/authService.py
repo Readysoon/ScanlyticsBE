@@ -116,11 +116,7 @@ async def get_current_user(
 async def get_current_user_id(
     token:str = Depends(oauth2_scheme)
     ):
-    print(f"token: {token}")
-    
     token_id = verify_access_token(token)
-    print(f"token_id: {token_id}")
-
     return token_id
 
 
@@ -187,7 +183,7 @@ async def signup_service(user_email, user_name, user_password, user_role, orga_a
 
         # create the access token
         access_token = create_access_token(data={"sub": user_id})
-        
+
         # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}
 

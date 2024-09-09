@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import get_current_user_id
 
-from .patientService import CreatePatientService, get_patient_by_id, UpdatePatientService
+from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserID
 from .patientSchema import CreatePatient
 
 
@@ -22,18 +22,23 @@ async def create_patient(
     ):
     return await CreatePatientService(patientin, current_user_id, db)
 
-# missing: get all patients of a specific user
-
 # rename this to something more checking if a patient is actually a user's
-@router.get("/get/{patient_id}")
-async def get_patient_id(
+@router.get("/{patient_id}")
+async def get_patient(
         patient_id: str,
         current_user_id = Depends(get_current_user_id),
         db: Surreal = Depends(get_db)
     ):
-    return await get_patient_by_id(patient_id, current_user_id, db)
+    return await GetPatientByID(patient_id, current_user_id, db)
 
-@router.patch("/update/{patient_id}")
+@router.get("/")
+async def get_all_patients(
+        current_user_id = Depends(get_current_user_id),
+        db: Surreal = Depends(get_db)
+    ):
+    return await GetAllPatientsByUserID(current_user_id, db)
+
+@router.patch("/{patient_id}")
 async def update_patient(
         patientin: CreatePatient,
         patient_id: str,

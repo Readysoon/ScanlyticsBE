@@ -3,15 +3,16 @@ from fastapi import HTTPException, status
 '''added "" for db.database for deployed mode'''
 from scanlyticsbe.app.auth.authService import create_access_token, get_current_user_id
 
-
 async def CreatePatientService(patientin, current_user_id, db):
         try:
             create_patient_result = await db.query(
+                f"RELATE ("
                 f"CREATE Patient SET name = '{patientin.patient_name}', "
                 f"date_of_birth = '{patientin.date_of_birth}', "
                 f"gender = '{patientin.gender}', "
                 f"contact_number = '{patientin.contact_number}', "
-                f"address = '{patientin.address}';"
+                f"address = '{patientin.address}'"
+                f")->Treated_By->User:{current_user_id};"
             )
             create_patient_status = create_patient_result[0]['status']
             create_patient_info = create_patient_result[0]['result']
@@ -21,31 +22,23 @@ async def CreatePatientService(patientin, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
         
-        stripped_patient_id = create_patient_result[0]['result'][0]['id']
-
         try:
-            connect_patient_result = await db.query(
-                  f"RELATE {stripped_patient_id}->Treated_By->User:{current_user_id}"
-            )
-            connect_patient_status = connect_patient_result[0]['status']
-            connect_patient_info = connect_patient_result[0]['result']
-            if connect_patient_status == "ERR":
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{connect_patient_info}")
+            # transforming current user id to User:id for create_access_token
+            current_user_id = f"User:{current_user_id}"
+            
+            # create the access token
+            access_token = create_access_token(data={"sub": current_user_id})
         except Exception as e:
-             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something connecting the Patient to the user didnt work: {e}")
-        
-        # transforming current user id to User:id for create_access_token
-        current_user_id = f"User:{current_user_id}"
-        
-        # create the access token
-        access_token = create_access_token(data={"sub": current_user_id})
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Token creation failed: {e}")
 
         # # and return it as the final answer to the user
         return {"access_token": access_token, "token_type": "bearer"}, create_patient_result
 
+
+
 # Looks with the patient_id and current_user_id which patients are to user 
 # with the id and returns information about the patient
-async def get_patient_by_id(patient_id, current_user_id, db):
+async def GetPatientByID(patient_id, current_user_id, db):
     # Checking if patient is user's patient
     try:
         try: 
@@ -68,31 +61,75 @@ async def get_patient_by_id(patient_id, current_user_id, db):
 
 
 async def UpdatePatientService(patientin, patient_id, current_user_id, db):
-        # initialize and load variables with input from patientin
-        name = patientin.patient_name
-        date_of_birth = patientin.date_of_birth
-        gender = patientin.gender
-        contact_number = patientin.contact_number
-        address = patientin.address
-        set_string = "SET "
+        try:
+            # initialize and load variables with input from patientin
+            try:
+                name = patientin.patient_name
+                date_of_birth = patientin.date_of_birth
+                gender = patientin.gender
+                contact_number = patientin.contact_number
+                address = patientin.address
+                set_string = "SET "
 
-        # elongate the update_string
-        if name:
-            set_string += f"name = '{name}', "
-        if date_of_birth:
-            set_string += f"date_of_birth = '{date_of_birth}', "
-        if gender:
-            set_string += f"gender = '{gender}', "
-        if contact_number:
-            set_string += f"contact_number = '{contact_number}', "
-        if address:
-            set_string += f"address = '{address}'"
-        
-        # and finally put everything together and send it
-        await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).out {set_string};")
+                # elongate the update_string
+                if name:
+                    set_string += f"name = '{name}', "
+                if date_of_birth:
+                    set_string += f"date_of_birth = '{date_of_birth}', "
+                if gender:
+                    set_string += f"gender = '{gender}', "
+                if contact_number:
+                    set_string += f"contact_number = '{contact_number}', "
+                if address:
+                    set_string += f"address = '{address}'"
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
 
-        access_token = create_access_token(data={"sub": current_user_id})
-        # and return it as the final answer to the user
-        return {"access_token": access_token, "token_type": "bearer"}
+            try: 
+                # and finally put everything together and send it
+                update_patient_result = await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).in {set_string};")
+                update_patient_status = update_patient_result[0]['status']
+                update_patient_info = update_patient_result[0]['result']
+                if update_patient_status == "ERR":
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{update_patient_info}")
+                
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the Patient in the database didnt work: {e}")
 
+            try: 
+                access_token = create_access_token(data={"sub": current_user_id})
+                # and return it as the final answer to the user
+                return {"access_token": access_token, "token_type": "bearer"}, update_patient_result
+            except Exception as e: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token didnt work: {e}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
+
+
+
+async def GetAllPatientsByUserID(current_user_id, db):
+    try:
+        search_result = await db.query(f"SELECT id, <-Treated_By<-Patient FROM User:{current_user_id};")
+        print("search_result: ")
+        patient_search = f"{search_result[0]['result'][0]['<-Treated_By']['<-Patient']}"
+        for n in patient_search:
+            print(n)
+        print(patient_search)
+        patient_id = patient_search[8:]
+        print(patient_id)
+
+        # ['<-Treated_By']['<-Patient']
+
+        # connect_patient_status = connect_patient_result[0]['status']
+        # connect_patient_info = connect_patient_result[0]['result']
+        # if connect_patient_status == "ERR":
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{connect_patient_info}")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"An error occured while fetching all patients from a user: {e}")
     
+    print(f"search_result: {search_result[0]['result'][0]['<-Treated_By']['<-Patient'][0]}")
+    
+    return search_result
+
+
+        
