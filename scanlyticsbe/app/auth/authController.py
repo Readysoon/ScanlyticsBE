@@ -7,14 +7,14 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
 
-from .authService import check_mail_service, signup_service, login_service, get_current_user
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService
 
 from . import authSchema
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"],
-)
+    )
 
 # first check if the mail is already in the database before entering all the other information
 @router.post("/check_mail")
@@ -22,7 +22,7 @@ async def check_mail(
     user_email: EmailStr = Form(...),
     db: Surreal = Depends(get_db)
     ):
-    return await check_mail_service(
+    return await CheckMailService(
         user_email, 
         db
         )
@@ -33,7 +33,7 @@ async def orga_signup(
     userin: OrgaSignup, 
     db: Surreal = Depends(get_db)
     ):
-    return await signup_service(
+    return await OrgaSignupService(
         userin.user_email, 
         userin.user_name, 
         userin.user_password, 
@@ -55,7 +55,7 @@ async def user_signup(
         userin.user_password, 
         userin.user_role,
         db
-    )
+        )
 
 # ordentliche Fehlermeldung zurückgeben und nicht nur out of index
 @router.post("/login")
@@ -63,7 +63,7 @@ async def login(
     user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
     db: Surreal = Depends(get_db)
     ):
-    return await login_service(
+    return await LoginService(
         db,
         user_data
         )
@@ -72,7 +72,9 @@ async def login(
 # current_user saves everything from get_current_user
 '''write proper errors when old jwt token was given'''
 @router.post("/validate")
-def validate(current_user = Depends(get_current_user)):
+def validate(
+    current_user = Depends(GetCurrentUserService)
+    ):
     return current_user
 
 

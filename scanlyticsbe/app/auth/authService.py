@@ -17,7 +17,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # this takes email and password and "logs in" meaning it checks in the database 
 # if the two match and then returns the access token valid for 15 min
-async def login_service(db, user_data):
+async def LoginService(db, user_data):
     try:
         try:
             query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
@@ -86,7 +86,7 @@ def verify_access_token(token):
 
 # retrieves the token from the HTTP request, extracts the user_id from it, 
 # checks if it is in the database and returns the whole user
-async def get_current_user(
+async def GetCurrentUserService(
     token:str = Depends(oauth2_scheme), 
     db: Surreal = Depends(get_db)
     ):
@@ -122,7 +122,7 @@ async def get_current_user_id(
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
-async def check_mail_service(user_email, db):
+async def CheckMailService(user_email, db):
     try:
         result = await db.query(f"SELECT VALUE email FROM User WHERE email = '{user_email}';")
         email = result[0]['result']
@@ -139,7 +139,7 @@ async def check_mail_service(user_email, db):
 
 # an user can only exist within an organization -> the first creates it, the others join
 '''logic for joining an organization has to be yet implemented'''
-async def signup_service(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
+async def OrgaSignupService(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
 
     orga_id = None  
     user_id = None  
