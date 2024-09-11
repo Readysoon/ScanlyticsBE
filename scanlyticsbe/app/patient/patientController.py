@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["patient"],
 )
 
-@router.post("/create")
+@router.post("/")
 async def create_patient(
     patientin: CreatePatient, 
     current_user_id = Depends(get_current_user_id),

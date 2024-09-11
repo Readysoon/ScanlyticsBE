@@ -35,26 +35,23 @@ async def CreatePatientService(patientin, current_user_id, db):
         return {"access_token": access_token, "token_type": "bearer"}, create_patient_result
 
 
-
+'''Join the the two queries into one'''
 # Looks with the patient_id and current_user_id which patients are to user 
 # with the id and returns information about the patient
 async def GetPatientByID(patient_id, current_user_id, db):
     # Checking if patient is user's patient
     try:
         try: 
+            # SELECT in FROM (SELECT * FROM Treated_By WHERE out = User:{current_user_id})
             check_treated_by_result = await db.query(
-                f"SELECT VALUE id FROM Treated_By WHERE in = 'Patient:{patient_id}' AND out = 'User:{current_user_id}';"
+                f"SELECT * FROM (SELECT * FROM Treated_By WHERE in = '{patient_id}' AND out = '{current_user_id}').in;"
             )
+            print(check_treated_by_result)
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Some error occured in querying the patient: {e}")
 
         if not check_treated_by_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient and user")
-        
-        patient_data = await db.query(
-            f"SELECT * FROM Patient WHERE id = 'Patient:{patient_id}';"
-        )
-        return patient_data
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")       
@@ -101,7 +98,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 # and return it as the final answer to the user
                 return {"access_token": access_token, "token_type": "bearer"}, update_patient_result
             except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token didnt work: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access creation and returning didnt work: {e}")
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
 
@@ -109,27 +106,15 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
 
 async def GetAllPatientsByUserID(current_user_id, db):
     try:
-        search_result = await db.query(f"SELECT id, <-Treated_By<-Patient FROM User:{current_user_id};")
-        print("search_result: ")
-        patient_search = f"{search_result[0]['result'][0]['<-Treated_By']['<-Patient']}"
+        search_result = await db.query(f"SELECT in FROM (SELECT * FROM Treated_By WHERE out = User:{current_user_id});")
+        patient_search = search_result[0]['result']
         for n in patient_search:
-            print(n)
-        print(patient_search)
-        patient_id = patient_search[8:]
-        print(patient_id)
+            print(n['in'])
 
-        # ['<-Treated_By']['<-Patient']
-
-        # connect_patient_status = connect_patient_result[0]['status']
-        # connect_patient_info = connect_patient_result[0]['result']
-        # if connect_patient_status == "ERR":
-        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{connect_patient_info}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"An error occured while fetching all patients from a user: {e}")
-    
-    print(f"search_result: {search_result[0]['result'][0]['<-Treated_By']['<-Patient'][0]}")
-    
-    return search_result
+        
+    return patient_search
 
 
         

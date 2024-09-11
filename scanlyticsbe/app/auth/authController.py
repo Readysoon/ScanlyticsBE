@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.user.userSchema import UserSignup, UserSimple
+from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
 
 from .authService import check_mail_service, signup_service, login_service, get_current_user
 
@@ -30,7 +30,7 @@ async def check_mail(
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(
-    userin: UserSignup, 
+    userin: OrgaSignup, 
     db: Surreal = Depends(get_db)
     ):
     return await signup_service(
@@ -43,6 +43,19 @@ async def orga_signup(
         userin.orga_name,
         db
         )
+
+@router.post("/user_signuo", response_model=authSchema.Token)
+async def user_signup(
+    userin: UserSignup,
+    db: Surreal = Depends(get_db)
+    ):
+    return await UserSignupService(
+        userin.user_email, 
+        userin.user_name, 
+        userin.user_password, 
+        userin.user_role,
+        db
+    )
 
 # ordentliche Fehlermeldung zurückgeben und nicht nur out of index
 @router.post("/login")

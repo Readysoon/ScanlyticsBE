@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-class UserSignup(BaseModel):
+class OrgaSignup(BaseModel):
     user_email: EmailStr
     user_name: str
     user_password: str
@@ -12,4 +12,10 @@ class UserSignup(BaseModel):
 class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str
+
+class UserSignup(BaseModel):
+    user_email: EmailStr
+    user_name: str
+    user_password: str
+    user_role: str
 
