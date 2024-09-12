@@ -19,7 +19,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 async def LoginService(db, user_data):
     try:
         try:
-            query_result = await db.query(f"SELECT id, email, password FROM User WHERE email = '{user_data.username}';")
+            query_result = await db.query(
+                f"SELECT id, email, password "
+                f"FROM User WHERE "
+                f"email = '{user_data.username}';"
+                )
+            
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         if not query_result[0]['result']:
@@ -187,7 +192,7 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
                 f"role = '{user_role}', "
                 f"organization = Organization:1"
                 )
-            print(create_user_result)
+            
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database creation didnt work. {e}")
         
