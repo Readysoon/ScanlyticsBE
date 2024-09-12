@@ -7,7 +7,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService# , UserSignupService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService
 
 from . import authSchema
 
@@ -44,7 +44,7 @@ async def orga_signup(
         db
         )
 
-@router.post("/user_signuo", response_model=authSchema.Token)
+@router.post("/user_signup", response_model=authSchema.Token)
 async def user_signup(
     userin: UserSignup,
     db: Surreal = Depends(get_db)

@@ -93,7 +93,6 @@ async def GetCurrentUserService(
     # verify_access_token returns the id when given the token
     try:
         user_id = verify_access_token(token)
-        print(f"get_current_user->user_id: {user_id}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Verifying the access token didnt work: {e}")
@@ -102,7 +101,6 @@ async def GetCurrentUserService(
     try: 
         user = await db.query(f"SELECT * FROM User WHERE id = 'User:{user_id}';")
         if not user[0]['result']:
-            print("user not found")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Token Error")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
@@ -123,9 +121,12 @@ async def get_current_user_id(
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
 async def CheckMailService(user_email, db):
     try:
-        result = await db.query(f"SELECT VALUE email FROM User WHERE email = '{user_email}';")
+        result = await db.query(
+            f"SELECT VALUE email FROM User WHERE "
+            f"email = '{user_email}';"
+            )
+
         email = result[0]['result']
-        print(email)
 
         if email:
             return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Email in use")
@@ -170,15 +171,35 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
 
     # If anything goes wrong: Main Exception and rollback deletion for Organization and User 
     except Exception as e:   
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user didnt work: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user with orga didnt work: {e}")
 
 
-# '''A user can only join an organization if the owner acccepts'''    
-# async def UserSignupService(user_email, user_name, user_password, user_role, orga_id, db):
-#     try:
-#         return
-#     except Exception as e:
-#         raise
+'''A user can only join an organization if the owner acccepts'''    
+async def UserSignupService(user_email, user_name, user_password, user_role, db):
+    hashed_password = pwd_context.hash(user_password)
+    try:
+        try:
+            create_user_result = await db.query(
+                f"CREATE User Set "
+                f"email = '{user_email}', "
+                f"name = '{user_name}', "
+                f"password = '{hashed_password}', "
+                f"role = '{user_role}', "
+                f"organization = Organization:1"
+                )
+            print(create_user_result)
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database creation didnt work. {e}")
+        
+        user_id = create_user_result[0]['result'][0]['id'] 
+
+        # create the access token
+        access_token = create_access_token(data={"sub": user_id})
+
+        # and return it as the final answer to the user
+        return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
 
 
 

@@ -8,6 +8,8 @@ async def initializedb():
     async for db in get_db():
         logging.info("Connected to SurrealDB with namespace 'test' and database 'test'")
 
+        # Add default Organisation:1 for independent doctors?
+
         surreal_command_list = [
             "DEFINE TABLE Organization SCHEMAFULL;",
             "DEFINE FIELD name ON Organization TYPE string;",
