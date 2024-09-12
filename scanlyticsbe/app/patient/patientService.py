@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 
-'''added "" for db.database for deployed mode'''
 from scanlyticsbe.app.auth.authService import create_access_token, get_current_user_id
 
 async def CreatePatientService(patientin, current_user_id, db):
@@ -84,7 +83,17 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
 
             try: 
                 # and finally put everything together and send it
-                update_patient_result = await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).in {set_string} RETURN DIFF;")
+                update_patient_result = await db.query(
+                    f"UPDATE ("
+                    f"SELECT * FROM Treated_By WHERE "
+                    f"out = 'User:{current_user_id}' AND "
+                    f"in = 'Patient:{patient_id}' "
+                    f"LIMIT 1).in "
+                    f"{set_string};"
+                    #f"RETURN DIFF;"
+                    )
+                print(update_patient_result)
+                print(current_user_id)
                 update_patient_status = update_patient_result[0]['status']
                 update_patient_info = update_patient_result[0]['result']
                 if update_patient_status == "ERR":
@@ -94,6 +103,8 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the Patient in the database didnt work: {e}")
 
             try: 
+                current_user_id = f"User:{current_user_id}"
+                print(current_user_id)
                 access_token = create_access_token(data={"sub": current_user_id})
                 # and return it as the final answer to the user
                 return {"access_token": access_token, "token_type": "bearer"}, update_patient_result
