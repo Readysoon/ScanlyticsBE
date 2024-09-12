@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from scanlyticsbe.app.auth.authService import create_access_token, get_current_user_id
+from scanlyticsbe.app.auth.authService import create_access_token, GetCurrentUserService
 
 async def CreatePatientService(patientin, current_user_id, db):
         try:

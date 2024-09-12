@@ -12,39 +12,7 @@ from scanlyticsbe.app.db.database import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# this takes email and password and "logs in" meaning it checks in the database 
-# if the two match and then returns the access token valid for 15 min
-async def LoginService(db, user_data):
-    try:
-        try:
-            query_result = await db.query(
-                f"SELECT id, email, password "
-                f"FROM User WHERE "
-                f"email = '{user_data.username}';"
-                )
-            
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-        if not query_result[0]['result']:
-            # user not found
-            print("user not found")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
-        
-        if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
-            print("wrong password")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
-        
-        try:
-            access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
-        return {"access_token": access_token, "token_type": "bearer"}
-
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
-    
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
 def create_access_token(data: dict):
     # print(data)
@@ -110,6 +78,7 @@ async def GetCurrentUserService(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail=f"Querying the user in get_current_user didnt work: {e}")
+    print(user)
     
     return user
 
@@ -196,6 +165,38 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
+    
+
+# this takes email and password and "logs in" meaning it checks in the database 
+# if the two match and then returns the access token valid for 15 min
+async def LoginService(db, user_data):
+    try:
+        try:
+            query_result = await db.query(
+                f"SELECT id, email, password "
+                f"FROM User WHERE "
+                f"email = '{user_data.username}';"
+                )
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+        if not query_result[0]['result']:
+            # user not found
+            print("user not found")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
+        
+        if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
+            print("wrong password")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
+        
+        try:
+            access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
 
 
 
