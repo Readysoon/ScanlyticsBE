@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from scanlyticsbe.app.auth.authService import create_access_token, GetCurrentUserService
+from scanlyticsbe.app.auth.authService import create_access_token
 
 async def CreatePatientService(patientin, current_user_id, db):
         try:
@@ -11,7 +11,7 @@ async def CreatePatientService(patientin, current_user_id, db):
                 f"gender = '{patientin.gender}', "
                 f"contact_number = '{patientin.contact_number}', "
                 f"address = '{patientin.address}'"
-                f")->Treated_By->User:{current_user_id};"
+                f")->Treated_By->{current_user_id};"
             )
             create_patient_status = create_patient_result[0]['status']
             create_patient_info = create_patient_result[0]['result']
@@ -22,9 +22,6 @@ async def CreatePatientService(patientin, current_user_id, db):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
         
         try:
-            # transforming current user id to User:id for create_access_token
-            current_user_id = f"User:{current_user_id}"
-            
             # create the access token
             access_token = create_access_token(data={"sub": current_user_id})
         except Exception as e:
@@ -41,7 +38,6 @@ async def GetPatientByID(patient_id, current_user_id, db):
     # Checking if patient is user's patient
     try:
         try: 
-            # SELECT in FROM (SELECT * FROM Treated_By WHERE out = User:{current_user_id})
             check_treated_by_result = await db.query(
                 f"SELECT * FROM (SELECT * FROM Treated_By WHERE in = '{patient_id}' AND out = '{current_user_id}').in;"
             )
@@ -86,14 +82,11 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 update_patient_result = await db.query(
                     f"UPDATE ("
                     f"SELECT * FROM Treated_By WHERE "
-                    f"out = 'User:{current_user_id}' AND "
+                    f"out = '{current_user_id}' AND "
                     f"in = 'Patient:{patient_id}' "
                     f"LIMIT 1).in "
                     f"{set_string};"
-                    #f"RETURN DIFF;"
                     )
-                print(update_patient_result)
-                print(current_user_id)
                 update_patient_status = update_patient_result[0]['status']
                 update_patient_info = update_patient_result[0]['result']
                 if update_patient_status == "ERR":
@@ -103,8 +96,6 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the Patient in the database didnt work: {e}")
 
             try: 
-                current_user_id = f"User:{current_user_id}"
-                print(current_user_id)
                 access_token = create_access_token(data={"sub": current_user_id})
                 # and return it as the final answer to the user
                 return {"access_token": access_token, "token_type": "bearer"}, update_patient_result
@@ -117,7 +108,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
 
 async def GetAllPatientsByUserID(current_user_id, db):
     try:
-        search_result = await db.query(f"SELECT in FROM (SELECT * FROM Treated_By WHERE out = User:{current_user_id});")
+        search_result = await db.query(f"SELECT in FROM (SELECT * FROM Treated_By WHERE out = {current_user_id});")
         patient_search = search_result[0]['result']
         for n in patient_search:
             print(n['in'])

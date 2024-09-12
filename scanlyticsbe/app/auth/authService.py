@@ -33,11 +33,22 @@ def create_access_token(data: dict):
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
 
     # surreal creates an ID wrapped in ankle brackets which the following line extracts
-    to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
+    try:
+        to_encode['sub'] = to_encode['sub'].split(":")[1].strip("⟨⟩")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ID extraction didnt work: {e}")
+    
+    try:
+        to_encode.update({"exp": expire})
+    except:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating to_encode didnt work: {e}")
+    
+    try:
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
 
-    return encoded_jwt
+        return encoded_jwt
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Encoding and returning the jwt-token didnt work: {e}")
 
 
 def verify_access_token(token):
@@ -72,15 +83,15 @@ async def GetCurrentUserService(
 
     # from the id given by verify_access_token the user is selected in the database
     try: 
-        user = await db.query(f"SELECT * FROM User WHERE id = 'User:{user_id}';")
-        if not user[0]['result']:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Token Error")
+        query_result = await db.query(f"((SELECT * FROM User WHERE id = 'User:{user_id}').id)[0];")
+        select_user_result = query_result[0]['result']
+        if select_user_result == None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select User == None")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                             detail=f"Querying the user in get_current_user didnt work: {e}")
-    print(user)
     
-    return user
+    return select_user_result
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
@@ -155,14 +166,22 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database creation didnt work. {e}")
-        
-        user_id = create_user_result[0]['result'][0]['id'] 
+        try:
+            try:
+                user_id = create_user_result[0]['result'][0]['id'] 
+            except Exception as e:
+                HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting the user_id didnt work: {e}")
 
-        # create the access token
-        access_token = create_access_token(data={"sub": user_id})
+            try:
+                access_token = create_access_token(data={"sub": user_id})
+            except Exception as e:
+                HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation didnt work: {e}")
 
-        # and return it as the final answer to the user
-        return {"access_token": access_token, "token_type": "bearer"}
+            # and return it as the final answer to the user
+            return {"access_token": access_token, "token_type": "bearer"}
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
     
@@ -182,11 +201,9 @@ async def LoginService(db, user_data):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         if not query_result[0]['result']:
             # user not found
-            print("user not found")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
         
         if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
-            print("wrong password")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
         
         try:
