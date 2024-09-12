@@ -56,7 +56,7 @@ async def GetPatientByID(patient_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")       
 
-
+'''RETURN DIFF -> untested yet!!'''
 async def UpdatePatientService(patientin, patient_id, current_user_id, db):
         try:
             # initialize and load variables with input from patientin
@@ -84,7 +84,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
 
             try: 
                 # and finally put everything together and send it
-                update_patient_result = await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).in {set_string};")
+                update_patient_result = await db.query(f"UPDATE (SELECT * FROM Treated_By WHERE out = User:{current_user_id} AND in = Patient:{patient_id} LIMIT 1).in {set_string} RETURN DIFF;")
                 update_patient_status = update_patient_result[0]['status']
                 update_patient_info = update_patient_result[0]['result']
                 if update_patient_status == "ERR":

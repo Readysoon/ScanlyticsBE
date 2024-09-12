@@ -7,7 +7,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService# , UserSignupService
 
 from . import authSchema
 
