@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from scanlyticsbe.app.auth.authService import create_access_token
+from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 
 async def CreatePatientService(patientin, current_user_id, db):
         try:
@@ -21,14 +21,10 @@ async def CreatePatientService(patientin, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
         
-        try:
-            # create the access token
-            access_token = create_access_token(data={"sub": current_user_id})
+        try: 
+            return ReturnAccessTokenService(create_patient_result)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Token creation failed: {e}")
-
-        # # and return it as the final answer to the user
-        return {"access_token": access_token, "token_type": "bearer"}, create_patient_result
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
 
 
 '''Join the the two queries into one'''
@@ -39,22 +35,29 @@ async def GetPatientByID(patient_id, current_user_id, db):
     try:
         try: 
             check_treated_by_result = await db.query(
-                f"SELECT * FROM (SELECT * FROM Treated_By WHERE in = '{patient_id}' AND out = '{current_user_id}').in;"
+                f"SELECT * FROM "
+                f"(SELECT * FROM "
+                f"Treated_By WHERE "
+                f"in = '{patient_id}' "
+                f"AND out = '{current_user_id}').in;"
             )
-            print(check_treated_by_result)
+
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Some error occured in querying the patient: {e}")
 
         if not check_treated_by_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient and user")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
+        
+        try: 
+            return ReturnAccessTokenService(check_treated_by_result)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Patient was not found: {e}")       
 
-'''RETURN DIFF -> untested yet!!'''
 async def UpdatePatientService(patientin, patient_id, current_user_id, db):
         try:
-            # initialize and load variables with input from patientin
             try:
                 name = patientin.patient_name
                 date_of_birth = patientin.date_of_birth
@@ -74,18 +77,19 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                     set_string += f"contact_number = '{contact_number}', "
                 if address:
                     set_string += f"address = '{address}'"
+
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
 
             try: 
                 # and finally put everything together and send it
                 update_patient_result = await db.query(
-                    f"UPDATE ("
-                    f"SELECT * FROM Treated_By WHERE "
-                    f"out = '{current_user_id}' AND "
-                    f"in = 'Patient:{patient_id}' "
-                    f"LIMIT 1).in "
-                    f"{set_string};"
+                        f"UPDATE ("
+                        f"SELECT * FROM Treated_By WHERE "
+                        f"out = '{current_user_id}' AND "
+                        f"in = 'Patient:{patient_id}' "
+                        f"LIMIT 1).in "
+                        f"{set_string};"
                     )
                 update_patient_status = update_patient_result[0]['status']
                 update_patient_info = update_patient_result[0]['result']
@@ -93,30 +97,33 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{update_patient_info}")
                 
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the Patient in the database didnt work: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
             try: 
-                access_token = create_access_token(data={"sub": current_user_id})
-                # and return it as the final answer to the user
-                return {"access_token": access_token, "token_type": "bearer"}, update_patient_result
-            except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access creation and returning didnt work: {e}")
+                return ReturnAccessTokenService(update_patient_result)
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
+
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
 
 
-
 async def GetAllPatientsByUserID(current_user_id, db):
     try:
-        search_result = await db.query(f"SELECT in FROM (SELECT * FROM Treated_By WHERE out = {current_user_id});")
-        patient_search = search_result[0]['result']
-        for n in patient_search:
-            print(n['in'])
-
+        search_result = await db.query(
+                f"SELECT in FROM "
+                f"(SELECT * FROM "
+                f"Treated_By WHERE "
+                f"out = {current_user_id});"
+            )
+        try: 
+            return ReturnAccessTokenService(search_result)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"An error occured while fetching all patients from a user: {e}")
-        
-    return patient_search
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
+
+
 
 
         

@@ -14,14 +14,15 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
+
+# print(data)
+# = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
+#
+# == Write this if you want to return the token to the user == 
+# access_token = create_access_token(data={"sub": user_id})
+# and return it as the final answer to the user
+# return {"access_token": access_token, "token_type": "bearer"}
 def create_access_token(data: dict):
-    # print(data)
-    # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
-    #
-    # == Write this if you want to return the token to the user == 
-    # access_token = create_access_token(data={"sub": user_id})
-    # and return it as the final answer to the user
-    # return {"access_token": access_token, "token_type": "bearer"}
     to_encode = data.copy()
     try:
         SECRET_KEY = os.getenv("secret_key")
@@ -94,6 +95,22 @@ async def GetCurrentUserService(
     return select_user_result
 
 
+# only takes User IDs in the format "User:jhfdcoirrwueck"
+def ReturnAccessTokenService(query_result):
+    try:
+        current_user_id = query_result[0]['result'][0]['id']
+
+        access_token = create_access_token(data={"sub": current_user_id})
+
+        print(access_token)
+
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except Exception as e:
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation didnt work: {e}")
+
+
+
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
 async def CheckMailService(user_email, db):
     try:
@@ -118,7 +135,6 @@ async def CheckMailService(user_email, db):
 async def OrgaSignupService(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
     hashed_password = pwd_context.hash(user_password)
     try: 
-        # Creates the Organizaion part
         try:
             create_orga_result = await db.query(
                 f"CREATE User Set "
@@ -135,52 +151,39 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
                 )
             
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Organization didnt work: {e}")   
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")   
 
-        user_id = create_orga_result[0]['result'][0]['id'] 
+        try: 
+            return ReturnAccessTokenService(create_orga_result)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")   
 
-        # create the access token
-        access_token = create_access_token(data={"sub": user_id})
-
-        # and return it as the final answer to the user
-        return {"access_token": access_token, "token_type": "bearer"}
-
-    # If anything goes wrong: Main Exception and rollback deletion for Organization and User 
     except Exception as e:   
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user with orga didnt work: {e}")
 
 
-'''A user can only join an organization if the owner acccepts'''    
+'''A user can only join an organization if the owner acccepts'''  
+# Organization:1 is for all doctors without an practice
 async def UserSignupService(user_email, user_name, user_password, user_role, db):
     hashed_password = pwd_context.hash(user_password)
     try:
         try:
             create_user_result = await db.query(
-                f"CREATE User Set "
-                f"email = '{user_email}', "
-                f"name = '{user_name}', "
-                f"password = '{hashed_password}', "
-                f"role = '{user_role}', "
-                f"organization = Organization:1"
+                    f"CREATE User Set "
+                    f"email = '{user_email}', "
+                    f"name = '{user_name}', "
+                    f"password = '{hashed_password}', "
+                    f"role = '{user_role}', "
+                    f"organization = Organization:1"
                 )
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database creation didnt work. {e}")
-        try:
-            try:
-                user_id = create_user_result[0]['result'][0]['id'] 
-            except Exception as e:
-                HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting the user_id didnt work: {e}")
-
-            try:
-                access_token = create_access_token(data={"sub": user_id})
-            except Exception as e:
-                HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation didnt work: {e}")
-
-            # and return it as the final answer to the user
-            return {"access_token": access_token, "token_type": "bearer"}
+        
+        try: 
+            return ReturnAccessTokenService(create_user_result)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
@@ -191,26 +194,26 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
 async def LoginService(db, user_data):
     try:
         try:
-            query_result = await db.query(
-                f"SELECT id, email, password "
-                f"FROM User WHERE "
-                f"email = '{user_data.username}';"
+            login_query_result = await db.query(
+                    f"SELECT id, email, password "
+                    f"FROM User WHERE "
+                    f"email = '{user_data.username}';"
                 )
             
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-        if not query_result[0]['result']:
+        if not login_query_result[0]['result']:
             # user not found
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
         
-        if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
+        if not pwd_context.verify(user_data.password, login_query_result[0]['result'][0]['password']):
+            # wrong password
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
         
-        try:
-            access_token = create_access_token(data={"sub": query_result[0]['result'][0]['id']})
+        try: 
+            return ReturnAccessTokenService(login_query_result)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Creating the access token didnt work: {e}")
-        return {"access_token": access_token, "token_type": "bearer"}
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")

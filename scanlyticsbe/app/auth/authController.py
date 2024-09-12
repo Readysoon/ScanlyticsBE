@@ -57,7 +57,6 @@ async def user_signup(
         db
         )
 
-# ordentliche Fehlermeldung zurückgeben und nicht nur out of index
 @router.post("/login")
 async def login(
     user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
