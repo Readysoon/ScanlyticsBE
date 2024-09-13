@@ -27,6 +27,8 @@ async def check_mail(
             db
         )
 
+
+
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(
@@ -46,8 +48,8 @@ async def orga_signup(
 
 @router.post("/user_signup", response_model=authSchema.Token)
 async def user_signup(
-    userin: UserSignup,
-    db: Surreal = Depends(get_db)
+        userin: UserSignup,
+        db: Surreal = Depends(get_db)
     ):
     return await UserSignupService(
             userin.user_email, 

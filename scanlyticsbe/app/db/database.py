@@ -2,6 +2,7 @@ import os
 import logging
 from surrealdb import Surreal
 from dotenv import load_dotenv
+from fastapi import HTTPException, status
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -35,3 +36,8 @@ async def get_db():
     finally:
         await db.close()
         logging.info("Closed SurrealDB connection")
+
+def DatabaseResultHandlerService(query_result):
+    if query_result[0]['status'] == 'ERR':
+        result = query_result[0]['result']
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database : Status == 'ERR': {result}")
