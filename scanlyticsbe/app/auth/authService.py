@@ -154,6 +154,8 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")   
 
         try: 
+            print(f"BBBBBBBBBBBB: {create_orga_result}")
+            print(f"AAAAAAAAAAAA: {ReturnAccessTokenService(create_orga_result)}")
             return ReturnAccessTokenService(create_orga_result)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token returning failed: {e}")   

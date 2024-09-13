@@ -12,36 +12,36 @@ from .authService import CheckMailService, OrgaSignupService, LoginService, GetC
 from . import authSchema
 
 router = APIRouter(
-    prefix="/auth",
-    tags=["auth"],
-    )
+            prefix="/auth",
+            tags=["auth"],
+        )
 
 # first check if the mail is already in the database before entering all the other information
 @router.post("/check_mail")
 async def check_mail(
-    user_email: EmailStr = Form(...),
-    db: Surreal = Depends(get_db)
+        user_email: EmailStr = Form(...),
+        db: Surreal = Depends(get_db)
     ):
     return await CheckMailService(
-        user_email, 
-        db
+            user_email, 
+            db
         )
 
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(
-    userin: OrgaSignup, 
-    db: Surreal = Depends(get_db)
+        userin: OrgaSignup, 
+        db: Surreal = Depends(get_db)
     ):
     return await OrgaSignupService(
-        userin.user_email, 
-        userin.user_name, 
-        userin.user_password, 
-        userin.user_role,
-        userin.orga_address,
-        userin.orga_email,
-        userin.orga_name,
-        db
+            userin.user_email, 
+            userin.user_name, 
+            userin.user_password, 
+            userin.user_role,
+            userin.orga_address,
+            userin.orga_email,
+            userin.orga_name,
+            db
         )
 
 @router.post("/user_signup", response_model=authSchema.Token)
@@ -50,21 +50,21 @@ async def user_signup(
     db: Surreal = Depends(get_db)
     ):
     return await UserSignupService(
-        userin.user_email, 
-        userin.user_name, 
-        userin.user_password, 
-        userin.user_role,
-        db
+            userin.user_email, 
+            userin.user_name, 
+            userin.user_password, 
+            userin.user_role,
+            db
         )
 
 @router.post("/login")
 async def login(
-    user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
-    db: Surreal = Depends(get_db)
+        user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
+        db: Surreal = Depends(get_db)
     ):
     return await LoginService(
-        db,
-        user_data
+            db,
+            user_data
         )
 
 # get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
@@ -72,7 +72,7 @@ async def login(
 '''write proper errors when old jwt token was given'''
 @router.post("/validate")
 def validate(
-    current_user = Depends(GetCurrentUserService)
+        current_user = Depends(GetCurrentUserService)
     ):
     return current_user
 

@@ -3,7 +3,8 @@ from fastapi import HTTPException, status
 
 import logging
 
-# implement access rights 
+'''implement access rights '''
+
 async def initializedb():
     async for db in get_db():
         logging.info("Connected to SurrealDB with namespace 'test' and database 'test'")
