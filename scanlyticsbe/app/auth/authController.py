@@ -27,8 +27,6 @@ async def check_mail(
             db
         )
 
-
-
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=authSchema.Token)
 async def orga_signup(

@@ -178,7 +178,7 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
             DatabaseResultHandlerService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database creation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
         return ReturnAccessTokenService(query_result)
 
