@@ -3,9 +3,9 @@ from surrealdb import Surreal
 
 '''added 2 "" for db.database for deployed mode'''
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
+from scanlyticsbe.app.auth.authService import GetCurrentUserService
 
-from .reportService import CreateReportService, GetReportByID, UpdateReportService, GetAllReportsByPatientAndUserID
+from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientAndUserIDService
 from .reportSchema import CreateReport
 
 
@@ -17,7 +17,7 @@ router = APIRouter(
 @router.post("/")
 async def create_report(
         patientin: CreateReport, 
-        current_user_id = Depends(ReturnAccessTokenService),
+        current_user_id = Depends(GetCurrentUserService),
         db: Surreal = Depends(get_db)
     ):
     return await CreateReportService(
@@ -26,14 +26,13 @@ async def create_report(
             db
         )
 
-# rename this to something more checking if a patient is actually a user's
-@router.get("/{patient_id}")
+@router.get("/{report_id}")
 async def get_report(
         patient_id: str,
-        current_user_id = Depends(ReturnAccessTokenService),
+        current_user_id = Depends(GetCurrentUserService),
         db: Surreal = Depends(get_db)
     ):
-    return await GetReportByID(
+    return await GetReportByIDService(
             patient_id, 
             current_user_id, 
             db
@@ -41,10 +40,10 @@ async def get_report(
 
 @router.get("/")
 async def get_all_reports_by_patient_and_user(
-        current_user_id = Depends(ReturnAccessTokenService),
+        current_user_id = Depends(GetCurrentUserService),
         db: Surreal = Depends(get_db)
     ):
-    return await GetAllReportsByPatientAndUserID(
+    return await GetAllReportsByPatientAndUserIDService(
             current_user_id, 
             db
         )
@@ -54,7 +53,7 @@ async def update_reports(
         patientin: CreateReport,
         report_id: str,
         db: Surreal = Depends(get_db),
-        current_user_id = Depends(ReturnAccessTokenService)
+        current_user_id = Depends(GetCurrentUserService)
     ):
     return await UpdateReportService(
             patientin, 

@@ -6,3 +6,7 @@ router = APIRouter(
 )
 
 '''implement that users can give patients access to their data'''
+
+'''delete userr'''
+
+

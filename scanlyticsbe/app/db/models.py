@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 import logging
 
 '''implement access rights '''
+'''body_type'''
 
 async def initializedb():
     async for db in get_db():

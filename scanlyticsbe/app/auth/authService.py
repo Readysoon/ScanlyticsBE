@@ -84,8 +84,11 @@ async def GetCurrentUserService(
 
     # from the id given by verify_access_token the user is selected in the database
     try: 
+        print(user_id)
         query_result = await db.query(f"((SELECT * FROM User WHERE id = 'User:{user_id}').id)[0];")
+        print(query_result)
         select_user_result = query_result[0]['result']
+        print(select_user_result)
         if select_user_result == None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select User == None")
     except Exception as e:
@@ -101,8 +104,6 @@ def ReturnAccessTokenService(query_result):
         current_user_id = query_result[0]['result'][0]['id']
 
         access_token = create_access_token(data={"sub": current_user_id})
-
-        print(access_token)
 
         return {"access_token": access_token, "token_type": "bearer"}
 

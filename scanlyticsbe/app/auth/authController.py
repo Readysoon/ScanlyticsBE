@@ -7,7 +7,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, PatchUserService
 
 from . import authSchema
 
@@ -65,6 +65,18 @@ async def login(
     return await LoginService(
             db,
             user_data
+        )
+
+@router.patch("/")
+async def patch_user(
+        userin: UserSignup,
+        db: Surreal = Depends(get_db),
+        current_user_id = Depends(GetCurrentUserService)
+    ):
+    return await PatchUserService(
+            userin, 
+            current_user_id, 
+            db
         )
 
 # get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
