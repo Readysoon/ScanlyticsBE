@@ -60,8 +60,10 @@ async def GetPatientByID(patient_id, current_user_id, db):
         return ReturnAccessTokenService(query_result), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")       
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
 
+
+# 
 async def UpdatePatientService(patientin, patient_id, current_user_id, db):
         try:
             try:
@@ -82,7 +84,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 if contact_number:
                     set_string += f"contact_number = '{contact_number}', "
                 if address:
-                    set_string += f"address = '{address}'"
+                    set_string += f"address = '{address}', "
                 
                 set_string = set_string[:-2]
 
@@ -104,11 +106,18 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
    
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            
+            query_result = await db.query(
+                f"SELECT * FROM Treated_By WHERE "
+                f"out = '{current_user_id}' AND "
+                f"in = 'Patient:{patient_id}';"
+            )
 
             return ReturnAccessTokenService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
+
 
 # access token is here created from current_user_id !!!
 async def GetAllPatientsByUserID(current_user_id, db):
@@ -119,16 +128,14 @@ async def GetAllPatientsByUserID(current_user_id, db):
                     f"Treated_By WHERE "
                     f"out = {current_user_id};"
                 )
-            print(query_result)
             DatabaseResultHandlerService(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
         result_without_status = query_result[0]['result']
-        print(query_result)
 
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenService(query_result), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
@@ -145,8 +152,6 @@ async def DeletePatientService(patient_id, db, current_user_id):
                     f"in = {patient_id} and "
                     f"out = {current_user_id}).in;"
                 )
-
-            # DELETE (SELECT * FROM Treated_By WHERE in = Patient:Hans9 and out = User:bsb2xdhxgn0arxgjp8mq).in;
             
             DatabaseResultHandlerService(query_result)
    

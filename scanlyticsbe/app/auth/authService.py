@@ -78,6 +78,7 @@ async def GetCurrentUserService(
     # verify_access_token returns the id when given the token
     try:
         user_id = verify_access_token(token)
+        print(f"GetCurrentUserService: {user_id}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Verifying the access token didnt work: {e}")
@@ -85,16 +86,13 @@ async def GetCurrentUserService(
     # from the id given by verify_access_token the user is selected in the database
     # can also be: (SELECT id FROM User WHERE id = 'User:bsb2xdhxgn0arxgjp8mq')[0].id
     try: 
-        print(user_id)
         query_result = await db.query(f"((SELECT * FROM User WHERE id = 'User:{user_id}').id)[0];")
-        print(query_result)
         select_user_result = query_result[0]['result']
-        print(select_user_result)
         if select_user_result == None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select User == None")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                            detail=f"Querying the user in get_current_user didnt work: {e}")
+                            detail=f"Querying the user in GetCurrentUserService didnt work: {e}")
     
     return select_user_result
 
@@ -102,38 +100,29 @@ async def GetCurrentUserService(
 # takes User:hsdjkcanbhvhb and list (dictionaries) returned from the Service functions
 def ReturnAccessTokenService(query_result):
     try:
-        print("before if ")
-        if type(query_result) == list:
+        if type(query_result) == str:
+            print("ReturnAccessTokenService: str")
+            access_token = create_access_token(data={"sub": query_result})
+            return {"access_token": access_token, "token_type": "bearer"}
 
+        elif type(query_result) == list:
             if 'out' in query_result[0]['result'][0]:
-
+                print("ReturnAccessTokenService: out")
                 current_user_id = query_result[0]['result'][0]['out']
-
                 access_token = create_access_token(data={"sub": current_user_id})
-
                 return {"access_token": access_token, "token_type": "bearer"}
             
             elif 'id' in query_result[0]['result'][0]:
-
+                print("ReturnAccessTokenService: id")
                 current_user_id = query_result[0]['result'][0]['id']
-
                 access_token = create_access_token(data={"sub": current_user_id})
-
-                return {"access_token": access_token, "token_type": "bearer"}
-            
+                return {"access_token": access_token, "token_type": "bearer"}    
             else: 
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Neither 'out' nor 'id' in query_result!!! => fix 'ReturnAccessTokenService' ")
-
+        else:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Query result is neither str nor list")
     except Exception as e:
-        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from list (dictionary) didnt work: {e}")
-    try: 
-        if type(query_result) == str:
-
-            access_token = create_access_token(data={"sub": query_result})
-
-            return {"access_token": access_token, "token_type": "bearer"}
-    except Exception as e: 
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from User:bvhdcjnaskchbd didnt work: {e}")
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ReturnAccessTokenService: {e}")
 
 
 
