@@ -13,7 +13,7 @@ class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str
 
-class UserSignup(BaseModel):
+class User(BaseModel):
     user_email: EmailStr
     user_name: str
     user_password: str

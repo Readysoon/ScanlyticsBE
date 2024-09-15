@@ -83,6 +83,7 @@ async def GetCurrentUserService(
             detail=f"Verifying the access token didnt work: {e}")
 
     # from the id given by verify_access_token the user is selected in the database
+    # can also be: (SELECT id FROM User WHERE id = 'User:bsb2xdhxgn0arxgjp8mq')[0].id
     try: 
         print(user_id)
         query_result = await db.query(f"((SELECT * FROM User WHERE id = 'User:{user_id}').id)[0];")
@@ -98,8 +99,16 @@ async def GetCurrentUserService(
     return select_user_result
 
 
-# only takes User IDs in the format "User:jhfdcoirrwueck"
+# takes User:hsdjkcanbhvhb and list (dictionaries) returned from the Service functions
 def ReturnAccessTokenService(query_result):
+    try: 
+        if not type(query_result) == list:
+
+            access_token = create_access_token(data={"sub": query_result})
+
+            return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e: 
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from User:bvhdcjnaskchbd didnt work: {e}")
     try:
         current_user_id = query_result[0]['result'][0]['id']
 
@@ -108,7 +117,7 @@ def ReturnAccessTokenService(query_result):
         return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as e:
-        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation didnt work: {e}")
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from list (dictionary) didnt work: {e}")
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
@@ -217,7 +226,72 @@ async def LoginService(db, user_data):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
 
 
+async def PatchUserService(userin, current_user_id, db):
+    try:
+        try:
+            email = userin.user_email
+            name = userin.user_name
+            password = userin.user_password
+            role = userin.user_role
+            set_string = "SET "
 
+            # elongate the update_string
+            if email:
+                set_string += f"email = '{email}', "
+            if name:
+                set_string += f"name = '{name}', "
+            if password:
+                set_string += f"date_of_birth = '{password}', "
+            if role:
+                set_string += f"gender = '{role}', "
 
+            set_string = set_string[:-2]
 
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")   
+        
+        try: 
+            # and finally put everything together and send it
+            query_result = await db.query(
+                    f"UPDATE "
+                    f"{current_user_id} "
+                    f"{set_string};"
+                )
+            
+            DatabaseResultHandlerService(query_result)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+        
+        return ReturnAccessTokenService(query_result)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")
     
+async def DeleteUserService(password, current_user_id, db):
+    try:
+        try:
+            query_result = await db.query(
+                    f"SELECT password "
+                    f"FROM User WHERE "
+                    f"id = '{current_user_id}';"
+                )
+            DatabaseResultHandlerService(query_result)
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+
+        try: 
+            if pwd_context.verify(password.password, query_result[0]['result'][0]['password']):
+                try:
+                    query_result = await db.query(
+                        f"DELETE {current_user_id};"
+                    )
+                    DatabaseResultHandlerService(query_result)
+                except Exception as e:
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion error: {e}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong password: {e}")
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Delete User error: {e}")

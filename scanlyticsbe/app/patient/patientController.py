@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserService
 
-from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserID
+from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserID, DeletePatientService
 from .patientSchema import CreatePatient
 
 
@@ -61,5 +61,18 @@ async def update_patient(
             patient_id, 
             current_user_id, 
             db
+        )
+
+
+@router.delete("/{patient_id}")
+async def delete_patient(
+        patient_id: str,
+        db: Surreal = Depends(get_db),
+        current_user_id = Depends(GetCurrentUserService)
+    ):
+    return await DeletePatientService(
+                patient_id,
+                db,
+                current_user_id
         )
 

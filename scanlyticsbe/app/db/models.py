@@ -5,6 +5,7 @@ import logging
 
 '''implement access rights '''
 '''body_type'''
+'''Options for user roles'''
 
 async def initializedb():
     async for db in get_db():

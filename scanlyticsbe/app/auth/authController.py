@@ -5,9 +5,10 @@ from typing_extensions import Annotated
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.user.userSchema import OrgaSignup, UserSignup, UserSimple
+from scanlyticsbe.app.user.userSchema import OrgaSignup, User, UserSimple
+from scanlyticsbe.app.auth.authSchema import Password
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, PatchUserService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, PatchUserService, DeleteUserService
 
 from . import authSchema
 
@@ -46,7 +47,7 @@ async def orga_signup(
 
 @router.post("/user_signup", response_model=authSchema.Token)
 async def user_signup(
-        userin: UserSignup,
+        userin: User,
         db: Surreal = Depends(get_db)
     ):
     return await UserSignupService(
@@ -69,7 +70,7 @@ async def login(
 
 @router.patch("/")
 async def patch_user(
-        userin: UserSignup,
+        userin: User,
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserService)
     ):
@@ -79,10 +80,22 @@ async def patch_user(
             db
         )
 
+@router.delete("/")
+async def delete_user(
+        password: Password, 
+        current_user = Depends(GetCurrentUserService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await DeleteUserService(   
+            password,  
+            current_user,
+            db
+        )
+
 # get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
 # current_user saves everything from get_current_user
 '''write proper errors when old jwt token was given'''
-@router.post("/validate")
+@router.get("/validate")
 def validate(
         current_user = Depends(GetCurrentUserService)
     ):

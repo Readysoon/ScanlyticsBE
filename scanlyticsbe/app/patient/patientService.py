@@ -25,7 +25,9 @@ async def CreatePatientService(patientin, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(query_result), query_result
+        result_without_status = query_result[0]['result'][0]
+        
+        return ReturnAccessTokenService(query_result), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
@@ -53,7 +55,9 @@ async def GetPatientByID(patient_id, current_user_id, db):
         if not query_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
         
-        return ReturnAccessTokenService(query_result), 
+        result_without_status = query_result[0]['result'][0]
+  
+        return ReturnAccessTokenService(query_result), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")       
@@ -79,6 +83,8 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                     set_string += f"contact_number = '{contact_number}', "
                 if address:
                     set_string += f"address = '{address}'"
+                
+                set_string = set_string[:-2]
 
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
@@ -90,7 +96,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                         f"SELECT * FROM Treated_By WHERE "
                         f"out = '{current_user_id}' AND "
                         f"in = 'Patient:{patient_id}' "
-                        f"LIMIT 1).in "
+                        f").in "
                         f"{set_string};"
                     )
                 
@@ -104,27 +110,57 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
 
-
+# access token is here created from current_user_id !!!
 async def GetAllPatientsByUserID(current_user_id, db):
     try:
         try: 
             query_result = await db.query(
-                    f"SELECT in FROM "
+                    f"SELECT * FROM "
                     f"(SELECT * FROM "
                     f"Treated_By WHERE "
-                    f"out = {current_user_id});"
+                    f"out = {current_user_id}"
+                    f");"
                 )
+            print(query_result)
+            DatabaseResultHandlerService(query_result)
+   
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+        
+        result_without_status = query_result[0]['result']
+        print(query_result)
+
+        return ReturnAccessTokenService(current_user_id), result_without_status
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
+    
+
+# Tested: Deleting the Patient automatically deletes the Treated_By relation too
+async def DeletePatientService(patient_id, db, current_user_id):
+    try:
+        try: 
+            query_result = await db.query(
+                    f"DELETE "
+                    f"(SELECT * FROM "
+                    f"Treated_By WHERE "
+                    f"in = {patient_id} and "
+                    f"out = {current_user_id}).in;"
+                )
+
+            # DELETE (SELECT * FROM Treated_By WHERE in = Patient:Hans9 and out = User:bsb2xdhxgn0arxgjp8mq).in;
             
             DatabaseResultHandlerService(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-
-        return ReturnAccessTokenService(query_result)
+        
+        if query_result[0] == '':
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
-
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Patient deletion didnt work: {e}")
+    
 
 
 
