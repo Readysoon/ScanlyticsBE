@@ -116,10 +116,8 @@ async def GetAllPatientsByUserID(current_user_id, db):
         try: 
             query_result = await db.query(
                     f"SELECT * FROM "
-                    f"(SELECT * FROM "
                     f"Treated_By WHERE "
-                    f"out = {current_user_id}"
-                    f");"
+                    f"out = {current_user_id};"
                 )
             print(query_result)
             DatabaseResultHandlerService(query_result)

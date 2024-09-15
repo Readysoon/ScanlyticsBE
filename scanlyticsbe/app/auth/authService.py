@@ -101,23 +101,40 @@ async def GetCurrentUserService(
 
 # takes User:hsdjkcanbhvhb and list (dictionaries) returned from the Service functions
 def ReturnAccessTokenService(query_result):
+    try:
+        print("before if ")
+        if type(query_result) == list:
+
+            if 'out' in query_result[0]['result'][0]:
+
+                current_user_id = query_result[0]['result'][0]['out']
+
+                access_token = create_access_token(data={"sub": current_user_id})
+
+                return {"access_token": access_token, "token_type": "bearer"}
+            
+            elif 'id' in query_result[0]['result'][0]:
+
+                current_user_id = query_result[0]['result'][0]['id']
+
+                access_token = create_access_token(data={"sub": current_user_id})
+
+                return {"access_token": access_token, "token_type": "bearer"}
+            
+            else: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Neither 'out' nor 'id' in query_result!!! => fix 'ReturnAccessTokenService' ")
+
+    except Exception as e:
+        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from list (dictionary) didnt work: {e}")
     try: 
-        if not type(query_result) == list:
+        if type(query_result) == str:
 
             access_token = create_access_token(data={"sub": query_result})
 
             return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e: 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from User:bvhdcjnaskchbd didnt work: {e}")
-    try:
-        current_user_id = query_result[0]['result'][0]['id']
 
-        access_token = create_access_token(data={"sub": current_user_id})
-
-        return {"access_token": access_token, "token_type": "bearer"}
-
-    except Exception as e:
-        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Access token creation from list (dictionary) didnt work: {e}")
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
@@ -220,6 +237,7 @@ async def LoginService(db, user_data):
             # wrong password
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
         
+        print("Before ReturnAccessTokenService")
         return ReturnAccessTokenService(query_result)
 
     except Exception as e:
@@ -267,7 +285,8 @@ async def PatchUserService(userin, current_user_id, db):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")
-    
+
+
 async def DeleteUserService(password, current_user_id, db):
     try:
         try:
@@ -281,17 +300,16 @@ async def DeleteUserService(password, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
 
-        try: 
-            if pwd_context.verify(password.password, query_result[0]['result'][0]['password']):
-                try:
-                    query_result = await db.query(
-                        f"DELETE {current_user_id};"
-                    )
-                    DatabaseResultHandlerService(query_result)
-                except Exception as e:
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion error: {e}")
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong password: {e}")
+        if pwd_context.verify(password.password, query_result[0]['result'][0]['password']):
+            try:
+                query_result = await db.query(
+                    f"DELETE {current_user_id};"
+                )
+                DatabaseResultHandlerService(query_result)
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion error: {e}")
+        else: 
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Wrong password.")
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Delete User error: {e}")
