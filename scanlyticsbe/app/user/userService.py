@@ -5,6 +5,15 @@ from fastapi import HTTPException, status
 from scanlyticsbe.app.auth.authService import DatabaseResultHandlerService, ReturnAccessTokenService
 
 
+'''	1.	Get user profile
+	2.	Update user profile
+	3.	Delete user account
+	4.	Change password (when already logged in)
+	5.	Get user preferences
+	6.	Update user preferences
+	7.	User search/listing (for admin purposes)
+    '''
+
 
 async def PatchUserService(userin, current_user_id, db):
     try:

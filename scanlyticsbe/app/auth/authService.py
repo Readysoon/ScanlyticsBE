@@ -15,6 +15,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
 
+
+'''	1.	Login
+	2.	Logout
+	3.	Register/Signup
+	4.	Password reset
+	5.	Email verification
+	6.	Two-factor authentication
+	7.	OAuth/Social login
+	8.	Refresh token
+'''
+
+
+
 # print(data)
 # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
 #
@@ -70,7 +83,7 @@ def verify_access_token(token):
 
 # retrieves the token from the HTTP request, extracts the user_id from it, 
 # checks if it is in the database and returns the whole user
-async def GetCurrentUserService(
+async def GetCurrentUserIDService(
     token:str = Depends(oauth2_scheme), 
     db: Surreal = Depends(get_db)
     ):
@@ -78,7 +91,7 @@ async def GetCurrentUserService(
     # verify_access_token returns the id when given the token
     try:
         user_id = verify_access_token(token)
-        print(f"GetCurrentUserService: {user_id}")
+        print(f"GetCurrentUserIDService: {user_id}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Verifying the access token didnt work: {e}")

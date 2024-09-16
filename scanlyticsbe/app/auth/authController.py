@@ -8,9 +8,20 @@ from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, User, UserSimple
 from scanlyticsbe.app.auth.authSchema import Password
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, DeleteUserService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserIDService, UserSignupService, DeleteUserService
 
 from . import authSchema
+
+
+'''	1.	Login
+	2.	Logout
+	3.	Register/Signup
+	4.	Password reset
+	5.	Email verification
+	6.	Two-factor authentication
+	7.	OAuth/Social login
+	8.	Refresh token
+'''
 
 router = APIRouter(
             prefix="/auth",
@@ -72,7 +83,7 @@ async def login(
 @router.delete("/")
 async def delete_user(
         password: Password, 
-        current_user = Depends(GetCurrentUserService),
+        current_user = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await DeleteUserService(   
@@ -81,14 +92,8 @@ async def delete_user(
             db
         )
 
-# get_current_user takes the token, extracts the id, looks with the id in the database and returns the user
-# current_user saves everything from get_current_user
-'''write proper errors when old jwt token was given'''
-@router.get("/validate")
-def validate(
-        current_user = Depends(GetCurrentUserService)
-    ):
-    return current_user
+
+
 
 
 

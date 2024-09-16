@@ -3,7 +3,7 @@ from surrealdb import Surreal
 
 '''added 2 "" for db.database for deployed mode'''
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.auth.authService import GetCurrentUserService
+from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
 from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserID, DeletePatientService
 from .patientSchema import CreatePatient
@@ -17,7 +17,7 @@ router = APIRouter(
 @router.post("/")
 async def create_patient(
         patientin: CreatePatient, 
-        current_user_id = Depends(GetCurrentUserService),
+        current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await CreatePatientService(
@@ -30,7 +30,7 @@ async def create_patient(
 @router.get("/{patient_id}")
 async def get_patient(
         patient_id: str,
-        current_user_id = Depends(GetCurrentUserService),
+        current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await GetPatientByID(
@@ -41,7 +41,7 @@ async def get_patient(
 
 @router.get("/")
 async def get_all_patients(
-        current_user_id = Depends(GetCurrentUserService),
+        current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await GetAllPatientsByUserID(
@@ -54,7 +54,7 @@ async def update_patient(
         patientin: CreatePatient,
         patient_id: str,
         db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserService)
+        current_user_id = Depends(GetCurrentUserIDService)
     ):
     return await UpdatePatientService(
             patientin, 
@@ -68,7 +68,7 @@ async def update_patient(
 async def delete_patient(
         patient_id: str,
         db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserService)
+        current_user_id = Depends(GetCurrentUserIDService)
     ):
     return await DeletePatientService(
                 patient_id,
