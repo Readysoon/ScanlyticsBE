@@ -15,6 +15,26 @@ from scanlyticsbe.app.auth.authService import DatabaseResultHandlerService, Retu
     '''
 
 
+async def GetCurrentUserService(current_user_id, db):
+    try:
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM "
+                f"User WHERE "
+                f"id = '{current_user_id}'"
+            )
+            
+            DatabaseResultHandlerService(query_result)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+        
+        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
+
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetCurrentUserService: {e}")   
+    
+
 async def PatchUserService(userin, current_user_id, db):
     try:
         try:

@@ -3,7 +3,9 @@ from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import User
+from scanlyticsbe.app.user.userService import GetCurrentUserService
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
+
 
 from .userService import PatchUserService
 
@@ -26,12 +28,16 @@ router = APIRouter(
     tags=["user"],
 )
 
-'''write proper errors when old jwt token was given'''
+
 @router.get("/")
-def validate(
-        current_user = Depends(GetCurrentUserIDService)
+async def get_user(
+        current_user = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
-    return current_user
+    return await GetCurrentUserService(
+        current_user,
+        db
+        )
 
 
 @router.patch("/")
