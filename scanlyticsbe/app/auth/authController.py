@@ -8,7 +8,7 @@ from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, User, UserSimple
 from scanlyticsbe.app.auth.authSchema import Password
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, PatchUserService, DeleteUserService
+from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserService, UserSignupService, DeleteUserService
 
 from . import authSchema
 
@@ -68,17 +68,6 @@ async def login(
             user_data
         )
 
-@router.patch("/")
-async def patch_user(
-        userin: User,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserService)
-    ):
-    return await PatchUserService(
-            userin, 
-            current_user_id, 
-            db
-        )
 
 @router.delete("/")
 async def delete_user(

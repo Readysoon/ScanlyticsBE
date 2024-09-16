@@ -142,6 +142,8 @@ async def GetAllPatientsByUserID(current_user_id, db):
     
 
 # Tested: Deleting the Patient automatically deletes the Treated_By relation too
+'''insert db check afterwards if the patient was actually deleted'''
+'''delete all the reports and notes for the patient'''
 async def DeletePatientService(patient_id, db, current_user_id):
     try:
         try: 
