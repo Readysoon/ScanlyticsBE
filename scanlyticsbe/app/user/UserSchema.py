@@ -9,6 +9,7 @@ class OrgaSignup(BaseModel):
     orga_email: EmailStr
     orga_name: str
 
+'''unused so far'''
 class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str

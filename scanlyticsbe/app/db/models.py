@@ -23,6 +23,8 @@ async def initializedb():
             "DEFINE FIELD user ON Organization TYPE option<array>;",
             "DEFINE FIELD user.* ON Organization TYPE option<record(User)>;",
 
+            "DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == 'DELETE' THEN (DELETE Patient WHERE doctor == $before.id);",
+
             "DEFINE TABLE User SCHEMAFULL;",
             "DEFINE FIELD name ON User TYPE string;",
             "DEFINE FIELD email ON User TYPE string ASSERT string::is::email($value);",
@@ -41,6 +43,8 @@ async def initializedb():
             "DEFINE FIELD out ON TABLE Write_Reports TYPE record<Report>;",
             "DEFINE FIELD in ON TABLE Access_Statements TYPE record<User>;",
             "DEFINE FIELD out ON TABLE Access_Statements TYPE record<Statement>;",
+
+            "DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == 'DELETE' THEN (DELETE Patient WHERE doctor == $before.id);",
 
             "DEFINE TABLE Patient SCHEMAFULL;",
             "DEFINE FIELD name ON Patient TYPE string;",

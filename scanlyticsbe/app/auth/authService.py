@@ -244,31 +244,3 @@ async def LoginService(db, user_data):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
-
-
-async def DeleteUserService(password, current_user_id, db):
-    try:
-        try:
-            query_result = await db.query(
-                    f"SELECT password "
-                    f"FROM User WHERE "
-                    f"id = '{current_user_id}';"
-                )
-            DatabaseResultHandlerService(query_result)
-            
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-
-        if pwd_context.verify(password.password, query_result[0]['result'][0]['password']):
-            try:
-                query_result = await db.query(
-                    f"DELETE {current_user_id};"
-                )
-                DatabaseResultHandlerService(query_result)
-            except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion error: {e}")
-        else: 
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Wrong password.")
-
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Delete User error: {e}")

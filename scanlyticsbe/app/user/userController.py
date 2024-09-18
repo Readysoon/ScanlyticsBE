@@ -3,7 +3,8 @@ from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import User
-from scanlyticsbe.app.user.userService import GetCurrentUserService
+from scanlyticsbe.app.user.userService import GetCurrentUserService, DeleteUserService
+from scanlyticsbe.app.auth.authSchema import Password
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
 
@@ -49,6 +50,19 @@ async def patch_user(
     return await PatchUserService(
             userin, 
             current_user_id, 
+            db
+        )
+
+
+@router.delete("/")
+async def delete_user(
+        password: Password, 
+        current_user = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await DeleteUserService(   
+            password,  
+            current_user,
             db
         )
 

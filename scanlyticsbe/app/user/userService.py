@@ -1,8 +1,12 @@
 from surrealdb import Surreal
 from pydantic import BaseModel
 from fastapi import HTTPException, status
+from passlib.context import CryptContext
 
 from scanlyticsbe.app.auth.authService import DatabaseResultHandlerService, ReturnAccessTokenService
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
+
 
 
 '''	1.	Get user profile
@@ -76,3 +80,38 @@ async def PatchUserService(userin, current_user_id, db):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")
+    
+
+'''Delete all Patients too'''
+async def DeleteUserService(password, current_user_id, db):
+    try:
+        try:
+            query_result = await db.query(
+                    f"SELECT password "
+                    f"FROM User WHERE "
+                    f"id = '{current_user_id}';"
+                )
+            DatabaseResultHandlerService(query_result)
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+
+        if pwd_context.verify(password.password, query_result[0]['result'][0]['password']):
+            try:
+                '''Patient deletion here'''
+            except:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
+
+            try:
+                query_result = await db.query(
+                    f"DELETE {current_user_id};"
+                )
+                DatabaseResultHandlerService(query_result)
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
+        else: 
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Wrong password.")
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Delete User error: {e}")
+

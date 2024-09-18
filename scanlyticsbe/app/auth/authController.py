@@ -5,10 +5,9 @@ from typing_extensions import Annotated
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.user.userSchema import OrgaSignup, User, UserSimple
-from scanlyticsbe.app.auth.authSchema import Password
+from scanlyticsbe.app.user.userSchema import OrgaSignup, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, GetCurrentUserIDService, UserSignupService, DeleteUserService
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService
 
 from . import authSchema
 
@@ -77,19 +76,6 @@ async def login(
     return await LoginService(
             db,
             user_data
-        )
-
-
-@router.delete("/")
-async def delete_user(
-        password: Password, 
-        current_user = Depends(GetCurrentUserIDService),
-        db: Surreal = Depends(get_db)
-    ):
-    return await DeleteUserService(   
-            password,  
-            current_user,
-            db
         )
 
 
