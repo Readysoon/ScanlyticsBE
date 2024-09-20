@@ -47,7 +47,7 @@ async def landing_page(
             <title>Welcome</title>
         </head>
         <body>
-            <h1>Welcomee to Scanlytics</h1>
+            <h1>Welcome test to Scanlytics</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
             <p>To create the seed user, visit:</p>
