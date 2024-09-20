@@ -4,7 +4,7 @@ name: Fly Deploy
 on:
   push:
     branches:
-      - main
+      - main # changed to main from master
 jobs:
   deploy:
     name: Deploy app

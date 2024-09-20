@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for surrealdb-deployment-withered-grass-9436 on 2024-09-05T17:47:53+02:00
+# fly.toml app configuration file generated for surrealdb-deployment-misty-grass-581 on 2024-09-19T10:38:38+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'surrealdb-deployment-withered-grass-9436'
+app = 'surrealdb-deployment-misty-grass-581'
 primary_region = 'ams'
 
 [build]

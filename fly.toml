@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for scanlyticsbe on 2024-09-05T17:19:48+02:00
+# fly.toml app configuration file generated for scanlyticsbe on 2024-09-20T09:49:26+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -9,7 +9,7 @@ primary_region = 'ams'
 [build]
 
 [http_service]
-  internal_port = 8000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
@@ -18,7 +18,7 @@ primary_region = 'ams'
 
 # Poetry stores the venv dependencies in "/app/.venv/bin/"
 [processes]
-  app = "/app/.venv/bin/uvicorn scanlyticsbe.app.main:app --host 0.0.0.0 --port 8000 --workers 1 --reload"
+  app = "/app/.venv/bin/uvicorn scanlyticsbe.app.main:app --host 0.0.0.0 --port 8080 --workers 1 --reload"
 
 [[vm]]
   memory = '1gb'
