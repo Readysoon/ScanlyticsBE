@@ -19,6 +19,7 @@ from scanlyticsbe.app.db.surrealdbController import router as surrealdb_router
 from scanlyticsbe.app.user.userController import router as user_router
 from scanlyticsbe.app.patient.patientController import router as patient_router
 from scanlyticsbe.app.auth.authController import router as auth_router
+from scanlyticsbe.app.report.reportController import router as report_router
 
 
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +31,7 @@ app.include_router(surrealdb_router)
 app.include_router(user_router)
 app.include_router(patient_router)
 app.include_router(auth_router)
+app.include_router(report_router)
 
 '''to implement: seed()'''
 @app.on_event("startup")

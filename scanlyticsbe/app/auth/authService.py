@@ -81,8 +81,7 @@ def verify_access_token(token):
     return id
 
 
-# retrieves the token from the HTTP request, extracts the user_id from it, 
-# checks if it is in the database and returns the whole user
+# returns format User:hus842hjs98ou2i
 async def GetCurrentUserIDService(
     token:str = Depends(oauth2_scheme), 
     db: Surreal = Depends(get_db)

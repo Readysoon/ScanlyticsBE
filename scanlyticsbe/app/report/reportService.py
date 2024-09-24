@@ -4,20 +4,19 @@ from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 from scanlyticsbe.app.db.database import DatabaseResultHandlerService
 
 
-async def CreateReportService(patientin, current_user_id, db):
+async def CreateReportService(patientin, reportin, current_user_id, db):
     try:
         try:
-            # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
             query_result = await db.query(
-                f"SELECT * FROM (("
-                f"RELATE ("
-                f"CREATE Patient SET name = '{patientin.patient_name}', "
-                f"date_of_birth = '{patientin.date_of_birth}', "
-                f"gender = '{patientin.gender}', "
-                f"contact_number = '{patientin.contact_number}', "
-                f"address = '{patientin.address}'"
-                f")->Treated_By->{current_user_id}"
-                f").in)[0];"
+                f"SELECT * FROM ("
+                f"RELATE {current_user_id}"
+                f"->Write_Reports->"
+                f"CREATE Report "
+                f"SET body_type = '{reportin.body_type}', "
+                f"condition = '{reportin.condition}', "
+                f"report_text = '{reportin.report_text}', "
+                f"patient = 'Patient:{patientin}'"
+                f")[0].out;"
             )
 
             DatabaseResultHandlerService(query_result)
@@ -25,40 +24,72 @@ async def CreateReportService(patientin, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(query_result), query_result
+        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Report didnt work: {e}")
     
-# 
-# 
-# # Looks with the patient_id and current_user_id which patients are to user 
-# # with the id and returns information about the patient
-# async def GetPatientByID(patient_id, current_user_id, db):
-#     # Checking if patient is user's patient
-#     try:
-#         try: 
-#             query_result = await db.query(
-#                 f"SELECT * FROM ("
-#                 f"SELECT * FROM "
-#                 f"Treated_By WHERE "
-#                 f"in = '{patient_id}' "
-#                 f"AND out = '{current_user_id}'"
-#                 f").in;"
-#             )
-# 
-#             DatabaseResultHandlerService(query_result)
-#             
-#         except Exception as e: 
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
-#         
-#         if not query_result[0]['result']:
-#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
-#         
-#         return ReturnAccessTokenService(query_result)
-#     
-#     except Exception as e:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")       
+
+# braucht gar keine patient_id, da anhand der current_user_id geschaut werden kann, welche patienten 
+# der Arzt hat und ob ein Report mit der angegebenen ID auch einen dieser Patienten listet
+# => 
+# 0. from the specified report get the patient id
+# 1. which patients has the doctor
+# 2. Look for matches
+
+async def GetReportByIDService(report_id, current_user_id, db):
+    try:
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM Report WHERE id = Report:{report_id};"
+            )
+
+            DatabaseResultHandlerService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Report [...]' operation didnt work. {e}")
+        
+        if not query_result[0]['result']:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this Report.")
+        
+        patient_id = query_result[0]['result'][0]['patient']
+        
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM Treated_By WHERE out = {current_user_id};"
+            )
+
+            DatabaseResultHandlerService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Treated_By [...]' operation didnt work. {e}")
+        
+        if not query_result[0]['result']:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this Report.")
+        
+        try: 
+            for relation in query_result[0]['result']:
+                try:
+                    if patient_id == relation['in']:
+                        try:
+                            final_query_result = await db.query(
+                                f"SELECT * FROM Report WHERE id = Report:{report_id};"
+                            )
+
+                            DatabaseResultHandlerService(final_query_result)
+
+                            return ReturnAccessTokenService(current_user_id), final_query_result[0]['result'][0]
+                            
+                        except Exception as e:
+                            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Error in 'SELECT * FROM Report WHERE id = Report:report_id': {e}")
+                except Exception as e:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Error in 'patient_id == relation['in']': {e}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Error in 'for relation in query_result[0]['result']': {e}")
+                
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetReportByIDService: {e}")       
 # 
 # async def UpdatePatientService(patientin, patient_id, current_user_id, db):
 #         try:

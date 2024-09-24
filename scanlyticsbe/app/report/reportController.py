@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
-from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientAndUserIDService
+from .reportService import CreateReportService, GetReportByIDService#, UpdateReportService, GetAllReportsByPatient
 from .reportSchema import CreateReport
 
 
@@ -14,26 +14,35 @@ router = APIRouter(
     tags=["report"],
 )
 
-@router.post("/")
+@router.post("/{patient_id}")
 async def create_report(
-        patientin: CreateReport, 
+        patient_id: str,
+        reportin: CreateReport, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await CreateReportService(
-            patientin, 
+            patient_id,
+            reportin, 
             current_user_id, 
             db
         )
 
+# braucht gar keine patient_id, da anhand der current_user_id geschaut werden kann, welche patienten 
+# der Arzt hat und ob ein Report mit der angegebenen ID auch einen dieser Patienten listet
+# => 
+# 0. from the specified report get the patient id
+# 1. which patients has the doctor
+# 2. Look for matches
+
 @router.get("/{report_id}")
 async def get_report(
-        patient_id: str,
+        report_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await GetReportByIDService(
-            patient_id, 
+            report_id,
             current_user_id, 
             db
         )
@@ -43,7 +52,7 @@ async def get_all_reports_by_patient_and_user(
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
-    return await GetAllReportsByPatientAndUserIDService(
+    return await GetAllReportsByPatient(
             current_user_id, 
             db
         )

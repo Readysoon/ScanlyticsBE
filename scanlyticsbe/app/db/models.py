@@ -23,8 +23,6 @@ async def initializedb():
             "DEFINE FIELD user ON Organization TYPE option<array>;",
             "DEFINE FIELD user.* ON Organization TYPE option<record(User)>;",
 
-            "DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == 'DELETE' THEN (DELETE Patient WHERE doctor == $before.id);",
-
             "DEFINE TABLE User SCHEMAFULL;",
             "DEFINE FIELD name ON User TYPE string;",
             "DEFINE FIELD email ON User TYPE string ASSERT string::is::email($value);",
@@ -43,8 +41,6 @@ async def initializedb():
             "DEFINE FIELD out ON TABLE Write_Reports TYPE record<Report>;",
             "DEFINE FIELD in ON TABLE Access_Statements TYPE record<User>;",
             "DEFINE FIELD out ON TABLE Access_Statements TYPE record<Statement>;",
-
-            "DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == 'DELETE' THEN (DELETE Patient WHERE doctor == $before.id);",
 
             "DEFINE TABLE Patient SCHEMAFULL;",
             "DEFINE FIELD name ON Patient TYPE string;",
@@ -107,8 +103,10 @@ async def initializedb():
             "DEFINE FIELD in ON TABLE Images_Reports_Join TYPE record<Image>;",
             "DEFINE FIELD out ON TABLE Images_Reports_Join TYPE record<Report>;",
 
+            "DEFINE INDEX Patients_Reports_Join ON TABLE Treated_By COLUMNS in, out UNIQUE;",
             "DEFINE INDEX Treated_By ON TABLE Treated_By COLUMNS in, out UNIQUE;",
             "DEFINE INDEX Access_Statements ON TABLE Access_Statements COLUMNS in, out UNIQUE;",
+            "DEFINE INDEX Patients_Reports_Join ON TABLE Patients_Reports_Join COLUMNS in, out UNIQUE;",
             "DEFINE INDEX PatientNotes_Reports_Join ON TABLE PatientNotes_Reports_Join COLUMNS in, out UNIQUE;",
             "DEFINE INDEX Statements_Reports_Join ON TABLE Statements_Reports_Join COLUMNS in, out UNIQUE;",
             "DEFINE INDEX Images_Reports_Join ON TABLE Images_Reports_Join COLUMNS in, out UNIQUE;",
@@ -117,6 +115,7 @@ async def initializedb():
             "DEFINE INDEX Email ON TABLE User COLUMNS email UNIQUE;",
 
             "DEFINE TABLE Treated_By SCHEMAFULL;",
+            "DEFINE TABLE Patients_Reports_Join SCHEMAFULL;",
             "DEFINE TABLE Access_Statements SCHEMAFULL;",
             "DEFINE TABLE PatientNotes_Reports_Join SCHEMAFULL;",
             "DEFINE TABLE Statements_Reports_Join SCHEMAFULL;",
