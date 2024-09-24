@@ -20,9 +20,7 @@ from .userService import PatchUserService
 	7.	User search/listing (for admin purposes)
     '''
 
-
 '''implement that users can give patients access to their data'''
-'''delete user'''
 
 router = APIRouter(
     prefix="/user",

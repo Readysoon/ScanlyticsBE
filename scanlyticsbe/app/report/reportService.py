@@ -36,6 +36,7 @@ async def CreateReportService(patientin, reportin, current_user_id, db):
 # 0. from the specified report get the patient id
 # 1. which patients has the doctor
 # 2. Look for matches
+# siehe auch update report
 
 async def GetReportByIDService(report_id, current_user_id, db):
     try:
@@ -87,56 +88,54 @@ async def GetReportByIDService(report_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Error in 'for relation in query_result[0]['result']': {e}")
                 
-    
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetReportByIDService: {e}")       
-# 
-# async def UpdatePatientService(patientin, patient_id, current_user_id, db):
-#         try:
-#             try:
-#                 name = patientin.patient_name
-#                 date_of_birth = patientin.date_of_birth
-#                 gender = patientin.gender
-#                 contact_number = patientin.contact_number
-#                 address = patientin.address
-#                 set_string = "SET "
-# 
-#                 # elongate the update_string
-#                 if name:
-#                     set_string += f"name = '{name}', "
-#                 if date_of_birth:
-#                     set_string += f"date_of_birth = '{date_of_birth}', "
-#                 if gender:
-#                     set_string += f"gender = '{gender}', "
-#                 if contact_number:
-#                     set_string += f"contact_number = '{contact_number}', "
-#                 if address:
-#                     set_string += f"address = '{address}'"
-# 
-#             except Exception as e:
-#                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
-# 
-#             try: 
-#                 # and finally put everything together and send it
-#                 query_result = await db.query(
-#                         f"UPDATE ("
-#                         f"SELECT * FROM Treated_By WHERE "
-#                         f"out = '{current_user_id}' AND "
-#                         f"in = 'Patient:{patient_id}' "
-#                         f"LIMIT 1).in "
-#                         f"{set_string};"
-#                     )
-#                 
-#                 DatabaseResultHandlerService(query_result)
-#    
-#             except Exception as e:
-#                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-# 
-#             return ReturnAccessTokenService(query_result)
-# 
-#         except Exception as e:
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
-# 
+
+async def UpdateReportService(reportin, report_id, current_user_id, db):
+    try:
+        checked_report_query_result = await GetReportByIDService(report_id, current_user_id, db)
+        checked_report_id = checked_report_query_result[1]["id"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Checking if the report is the users didnt work: {e}")   
+    
+    try:
+        try:
+            body_type = reportin.body_type
+            condition = reportin.condition
+            report_text = reportin.report_text
+            set_string = "SET "
+
+            # elongate the update_string
+            if body_type:
+                set_string += f"body_type = '{body_type}', "
+            if condition:
+                set_string += f"condition = '{condition}', "
+            if report_text:
+                set_string += f"report_text = '{report_text}', "
+
+            set_string = set_string[:-2]
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
+
+        try: 
+            # and finally put everything together and send it
+            query_result = await db.query(
+                    f"UPDATE "
+                    f"{checked_report_id} "
+                    f"{set_string};"
+                )
+            
+            DatabaseResultHandlerService(query_result)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+
+        return ReturnAccessTokenService(query_result)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
+
 # 
 # async def GetAllPatientsByUserID(current_user_id, db):
 #     try:

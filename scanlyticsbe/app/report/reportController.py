@@ -5,8 +5,8 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
-from .reportService import CreateReportService, GetReportByIDService#, UpdateReportService, GetAllReportsByPatient
-from .reportSchema import CreateReport
+from .reportService import CreateReportService, GetReportByIDService, UpdateReportService#, GetAllReportsByPatient
+from .reportSchema import Report
 
 
 router = APIRouter(
@@ -17,7 +17,7 @@ router = APIRouter(
 @router.post("/{patient_id}")
 async def create_report(
         patient_id: str,
-        reportin: CreateReport, 
+        reportin: Report, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
@@ -47,19 +47,9 @@ async def get_report(
             db
         )
 
-@router.get("/")
-async def get_all_reports_by_patient_and_user(
-        current_user_id = Depends(GetCurrentUserIDService),
-        db: Surreal = Depends(get_db)
-    ):
-    return await GetAllReportsByPatient(
-            current_user_id, 
-            db
-        )
-
 @router.patch("/{report_id}")
-async def update_reports(
-        patientin: CreateReport,
+async def update_report(
+        patientin: Report,
         report_id: str,
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDService)
@@ -70,3 +60,14 @@ async def update_reports(
             current_user_id, 
             db
         )
+
+@router.get("/")
+async def get_all_reports_by_patient_and_user(
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await GetAllReportsByPatient(
+            current_user_id, 
+            db
+        )
+
