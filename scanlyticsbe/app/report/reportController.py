@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
-from .reportService import CreateReportService, GetReportByIDService, UpdateReportService#, GetAllReportsByPatient
+from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientID
 from .reportSchema import Report
 
 
@@ -61,12 +61,14 @@ async def update_report(
             db
         )
 
-@router.get("/")
+@router.get("/all/{patient_id}")
 async def get_all_reports_by_patient_and_user(
+        patient_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
-    return await GetAllReportsByPatient(
+    return await GetAllReportsByPatientID(
+            patient_id,
             current_user_id, 
             db
         )

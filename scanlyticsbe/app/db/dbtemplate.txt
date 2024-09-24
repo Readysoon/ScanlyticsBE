@@ -1,3 +1,5 @@
+
+
 # for access rights: see 
 
 raycast://extensions/raycast/raycast-ai/ai-chat?context=%7B%22id%22:%22BC187015-9EFC-4B3F-81C6-BD8486F3016B%22%7D
@@ -19,6 +21,8 @@ DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == "DELETE" THEN (
     DELETE Patient WHERE doctor == $before.id
 );
 --
+=> impletent deletion controll (admin approves deletion of patients, reports)
+=> access controll across an organization
 
 DEFINE TABLE Organization SCHEMAFULL;
 DEFINE FIELD name ON Organization TYPE string;

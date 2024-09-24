@@ -91,6 +91,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetReportByIDService: {e}")       
 
+
 async def UpdateReportService(reportin, report_id, current_user_id, db):
     try:
         checked_report_query_result = await GetReportByIDService(report_id, current_user_id, db)
@@ -131,33 +132,40 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        return ReturnAccessTokenService(query_result)
+        return ReturnAccessTokenService(query_result), query_result[0]['result']
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
 
-# 
-# async def GetAllPatientsByUserID(current_user_id, db):
-#     try:
-#         try: 
-#             query_result = await db.query(
-#                     f"SELECT in FROM "
-#                     f"(SELECT * FROM "
-#                     f"Treated_By WHERE "
-#                     f"out = {current_user_id});"
-#                 )
-#             
-#             DatabaseResultHandlerService(query_result)
-#    
-#         except Exception as e:
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-# 
-#         return ReturnAccessTokenService(query_result)
-#     
-#     except Exception as e:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
-# 
-# 
+
+# in order to get all reports of a patient, i have to:
+# 1. query all reports 
+# 2. return all reports where the patient matches 
+async def GetAllReportsByPatientID(patient_id, current_user_id, db):
+    try: 
+        try:
+            query_result = await db.query(
+                f"SELECT * FROM "
+                f"Report WHERE "
+                f"patient = "
+                f"(SELECT * FROM "
+                f"Treated_By WHERE "
+                f"in = Patient:{patient_id} AND "
+                f"out = {current_user_id}"
+                f")[0].in;"
+            )
+
+            DatabaseResultHandlerService(query_result)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+
+        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        
+    except Exception as e: 
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Treated_By [...]' operation didnt work. {e}")
+
+
 
 
         
