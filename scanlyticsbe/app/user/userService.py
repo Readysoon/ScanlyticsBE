@@ -83,6 +83,7 @@ async def PatchUserService(userin, current_user_id, db):
     
 
 '''Delete all Patients too'''
+'''make this modular so it uses the delete patient service -> better code handling'''
 async def DeleteUserService(password, current_user_id, db):
     try:
         try:

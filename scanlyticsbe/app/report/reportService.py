@@ -141,7 +141,7 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
 # in order to get all reports of a patient, i have to:
 # 1. query all reports 
 # 2. return all reports where the patient matches 
-async def GetAllReportsByPatientID(patient_id, current_user_id, db):
+async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
     try: 
         try:
             query_result = await db.query(
@@ -164,8 +164,31 @@ async def GetAllReportsByPatientID(patient_id, current_user_id, db):
         
     except Exception as e: 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Treated_By [...]' operation didnt work. {e}")
+    
 
-
-
-
+'''delete Report Service'''
+'''add Report deletion to user deletion'''
+async def DeleteReportService(report_id, current_user_id, db):
+    try:
+        try: 
+            print(report_id)
+            print(current_user_id)
+            query_result = await db.query(
+                    f"DELETE ("
+                    f"SELECT * FROM "
+                    f"Write_Reports WHERE "
+                    f"in = '{current_user_id}' AND "
+                    f"out = 'Report:{report_id}'"
+                    f")[0]['out'];"
+                )
+            
+            DatabaseResultHandlerService(query_result)
+   
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
+        if query_result[0] == '':
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="Report was deleted successfully.")
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DeleteReportService: {e}")
