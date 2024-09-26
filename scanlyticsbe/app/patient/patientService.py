@@ -1,7 +1,10 @@
 from fastapi import HTTPException, status
 
 from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
+from scanlyticsbe.app.report.reportService import GetAllReportsByPatientIDService, DeleteReportService
 from scanlyticsbe.app.db.database import DatabaseResultHandlerService
+
+
 
 
 async def CreatePatientService(patientin, current_user_id, db):
@@ -143,9 +146,22 @@ async def GetAllPatientsByUserID(current_user_id, db):
 
 # Tested: Deleting the Patient automatically deletes the Treated_By relation too
 '''insert db check afterwards if the patient was actually deleted'''
-'''delete all the reports and notes for the patient'''
+'''insert check with output that shows the user if they can delete this patient'''
 async def DeletePatientService(patient_id, db, current_user_id):
     try:
+        try:
+            json_response = await GetAllReportsByPatientIDService(patient_id, current_user_id, db)
+            reports = json_response[1]
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"[...] await GetAllReportsByPatientIDService(patient_id, current_user_id, db) [...]: {e}")
+
+        try:
+            for report in reports:
+                report_id = report['id']
+                DeleteReportService(report_id, current_user_id, db)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"for report in reports [...]: {e}")
+ 
         try: 
             query_result = await db.query(
                     f"DELETE "
@@ -161,11 +177,10 @@ async def DeletePatientService(patient_id, db, current_user_id):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
         if query_result[0] == '':
-            raise HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
+            return HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Patient deletion didnt work: {e}")
-    
 
 
 

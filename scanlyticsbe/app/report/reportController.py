@@ -49,13 +49,13 @@ async def get_report(
 
 @router.patch("/{report_id}")
 async def update_report(
-        patientin: Report,
+        reportin: Report,
         report_id: str,
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDService)
     ):
     return await UpdateReportService(
-            patientin, 
+            reportin,
             report_id, 
             current_user_id, 
             db
@@ -80,8 +80,8 @@ async def delete_patient(
         db: Surreal = Depends(get_db),
     ):
     return await DeleteReportService(
-                report_id,
-                current_user_id,
-                db
+            report_id,
+            current_user_id,
+            db
                 
         )

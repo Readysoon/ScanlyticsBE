@@ -161,6 +161,7 @@ async def CheckMailService(user_email, db):
 '''logic for joining an organization has to be yet implemented'''
 async def OrgaSignupService(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
     hashed_password = pwd_context.hash(user_password)
+    print(user_email)
     try: 
         try:
             query_result = await db.query(

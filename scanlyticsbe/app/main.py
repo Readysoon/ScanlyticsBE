@@ -40,24 +40,56 @@ async def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(
-    db: Surreal = Depends(get_db)
     ):
-    query_result = await db.query(f"INFO FOR DB;")
     html_content = f"""
     <html>
         <head>
             <title>Welcome</title>
+            <script>
+                async function signup(event) {{
+                    event.preventDefault(); // Prevent form submission
+
+                    const formData = new FormData(event.target);
+                    const data = {{
+                        user_email: formData.get('user_email'),
+                        user_name: formData.get('user_name'),
+                        user_password: formData.get('user_password'),
+                        user_role: formData.get('user_role')
+                    }};
+
+                    const response = await fetch('auth/user_signup', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json',
+                        }},
+                        body: JSON.stringify(data),
+                    }});
+
+                    const result = await response.json();
+                    alert(result.message || 'Signup succesful or unsuccessful :)');
+                }}
+            </script>
         </head>
         <body>
             <h1>Welcome test to Scanlytics</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
-            <p>To create the seed user, visit:</p>
-            <a href="/seed/orga_user">Seed the user</a>
-            <p>{query_result}</p>
+            <h2>Signup</h2>
+            <form onsubmit="signup(event)">
+                <label for="user_email">Email:</label><br>
+                <input type="email" id="user_email" name="user_email" required><br>
+                <label for="user_name">Name:</label><br>
+                <input type="text" id="user_name" name="user_name" required><br>
+                <label for="user_password">Password:</label><br>
+                <input type="password" id="user_password" name="user_password" required><br>
+                <label for="user_role">Role:</label><br>
+                <input type="text" id="user_role" name="user_role" required><br><br>
+                <input type="submit" value="Signup">
+            </form>
         </body>
     </html>
     """
+
     # print(query_result)
     return HTMLResponse(content=html_content)
 

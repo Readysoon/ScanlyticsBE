@@ -167,7 +167,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
     
 
 '''delete Report Service'''
-'''add Report deletion to user deletion'''
+'''add Report deletion to patient deletion'''
 async def DeleteReportService(report_id, current_user_id, db):
     try:
         try: 

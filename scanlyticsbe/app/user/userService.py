@@ -101,6 +101,10 @@ async def DeleteUserService(password, current_user_id, db):
                     
         if pwd_context.verify(password.password, query_password):
             try:
+                '''insert patient deletion here'''
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
+            try:
                 query_result = await db.query(
                     f"BEGIN TRANSACTION;"
                     f"LET $patients = (SELECT * FROM Patient WHERE (SELECT * FROM Treated_By WHERE out = '{current_user_id}').in);"
