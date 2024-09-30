@@ -66,7 +66,7 @@ async def GetImagesByPatient(patient_id, current_user_id, db):
         try:
             query_result = await db.query(
                 f"SELECT * FROM Image WHERE "
-                f"user = '{curren_user_id}' "
+                f"user = '{current_user_id}' "
                 f"AND patient = 'Patient:{patient_id}';"
             )
 
@@ -111,7 +111,7 @@ async def DeleteImageByID(image_id, current_user_id, db):
                 )
             
             DatabaseResultService(query_result)
-   
+        
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
