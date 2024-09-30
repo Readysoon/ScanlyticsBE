@@ -37,6 +37,11 @@ async def get_db():
         await db.close()
         logging.info("Closed SurrealDB connection")
 
+'''handle those empty results for when nothing was found'''
+# [
+#     null,
+#     []
+# ]
 def DatabaseResultService(query_result):
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']

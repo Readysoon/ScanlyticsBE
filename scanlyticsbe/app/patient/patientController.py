@@ -70,8 +70,8 @@ async def delete_patient(
         current_user_id = Depends(GetCurrentUserIDService)
     ):
     return await DeletePatientService(
-                patient_id,
-                db,
-                current_user_id
+            patient_id,
+            db,
+            current_user_id
         )
 

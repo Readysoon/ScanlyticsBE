@@ -79,8 +79,8 @@ async def GetImagesByPatient(patient_id, curren_user_id, db):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImagesByPatient: {e}")
-    
-'''does not work for some mysterious reason'''
+
+
 async def GetImageByID(image_id, current_user_id, db):
     try:
         try:
@@ -95,8 +95,30 @@ async def GetImageByID(image_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
         
-        print(query_result)
-        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImageByID: {e}")
+    
+'''implement proper checking and stuff (also for the other deletions)'''
+async def DeleteImageByID(image_id, current_user_id, db):
+    try:
+        try: 
+            query_result = await db.query(
+                    f"DELETE Image WHERE "
+                    f"user = '{current_user_id}' "
+                    f"AND id = 'Image:{image_id}';"
+                )
+            
+            DatabaseResultService(query_result)
+   
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+        
+        if query_result[0] == '':
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="Image was deleted successfully.")
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DeleteImageByID: {e}")
+    
+'''update image'''
