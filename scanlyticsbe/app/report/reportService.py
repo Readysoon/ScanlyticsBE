@@ -24,7 +24,7 @@ async def CreateReportService(patientin, reportin, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Report didnt work: {e}")
@@ -132,7 +132,7 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
@@ -160,7 +160,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
         
     except Exception as e: 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllReportsByPatientIDService: {e}")

@@ -34,7 +34,7 @@ async def GetCurrentUserService(current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
-        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
 
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetCurrentUserService: {e}")   
@@ -77,7 +77,7 @@ async def PatchUserService(userin, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
-        return ReturnAccessTokenService(query_result)
+        return ReturnAccessTokenService(current_user_id)
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")

@@ -14,7 +14,7 @@ load_dotenv()
 S3_BUCKET = os.getenv("AWS_BUCKET_NAME") 
 S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")  
 S3_SECRET_KEY = os.getenv("AWS_SECRET_KEY")  
-S3_REGION = os.getenv("eu-north-1")  
+S3_REGION = os.getenv("AWS_REGION")  
 
 s3_client = boto3.client(
     "s3",
@@ -53,7 +53,7 @@ async def UploadImageService(file, patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
 
-        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
 
     except NoCredentialsError:
         raise HTTPException(status_code=403, detail="Credentials not available")
@@ -61,7 +61,7 @@ async def UploadImageService(file, patient_id, current_user_id, db):
         raise HTTPException(status_code=500, detail=str(e))
     
 
-async def GetImagesByPatient(patient_id, curren_user_id, db):
+async def GetImagesByPatient(patient_id, current_user_id, db):
     try:
         try:
             query_result = await db.query(
@@ -75,7 +75,7 @@ async def GetImagesByPatient(patient_id, curren_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
         
-        return ReturnAccessTokenService(query_result), query_result[0]['result']
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImagesByPatient: {e}")
@@ -95,7 +95,7 @@ async def GetImageByID(image_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
         
-        return ReturnAccessTokenService(query_result), query_result[0]['result'][0]
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImageByID: {e}")
