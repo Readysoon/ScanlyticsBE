@@ -15,7 +15,7 @@ from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 	5.	Get user preferences
 	6.	Update user preferences
 	7.	User search/listing (for admin purposes)
-    '''
+'''
 
 '''implement that users can give patients access to their data'''
 

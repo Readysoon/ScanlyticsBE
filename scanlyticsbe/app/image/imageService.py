@@ -41,8 +41,8 @@ async def UploadImageService(file, patient_id, current_user_id, db):
                 f"CREATE Image "
                 f"SET name = '{file.filename}', "
                 f"path = '{s3_url}', "
-                f"body_type = 'arm', "
-                f"modal_type = 'mri', "
+                f"body_part = 'arm', "
+                f"modality = 'mri', "
                 f"file_type = '{file_type}', "
                 f"patient = 'Patient:{patient_id}', "
                 f"user = '{current_user_id}'"
@@ -100,6 +100,7 @@ async def GetImageByID(image_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImageByID: {e}")
     
+
 '''implement proper checking and stuff (also for the other deletions)'''
 async def DeleteImageByID(image_id, current_user_id, db):
     try:
@@ -122,51 +123,43 @@ async def DeleteImageByID(image_id, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DeleteImageByID: {e}")
     
 
-# async def UpdatePatientService(Image, current_user_id, db):
-#         try:
-#             try:
-#                 name = patientin.patient_name
-#                 date_of_birth = patientin.date_of_birth
-#                 gender = patientin.gender
-#                 contact_number = patientin.contact_number
-#                 address = patientin.address
-#                 set_string = "SET "
-# 
-#                 # elongate the update_string
-#                 if name:
-#                     set_string += f"name = '{name}', "
-#                 if date_of_birth:
-#                     set_string += f"date_of_birth = '{date_of_birth}', "
-#                 if gender:
-#                     set_string += f"gender = '{gender}', "
-#                 if contact_number:
-#                     set_string += f"contact_number = '{contact_number}', "
-#                 if address:
-#                     set_string += f"address = '{address}', "
-#                 
-#                 set_string = set_string[:-2]
-# 
-#             except Exception as e:
-#                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
-# 
-#             try: 
-#                 # and finally put everything together and send it
-#                 query_result = await db.query(
-#                         f"UPDATE ("
-#                         f"SELECT * FROM Treated_By WHERE "
-#                         f"out = '{current_user_id}' AND "
-#                         f"in = 'Patient:{patient_id}' "
-#                         f").in "
-#                         f"{set_string};"
-#                     )
-#                 
-#                 DatabaseResultService(query_result)
-#    
-#             except Exception as e:
-#                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-#             
-#             return ReturnAccessTokenService(current_user_id)
-# 
-#         except Exception as e:
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
-# 
+async def UpdateImageService(Image, image_id, current_user_id, db):
+        try:
+            try:
+                image_name = Image.image_name
+                body_part = Image.body_part
+                modality = Image.modality
+                set_string = "SET "
+
+                # elongate the update_string
+                if image_name:
+                    set_string += f"name = '{image_name}', "
+                if body_part:
+                    set_string += f"body_part = '{body_part}', "
+                if modality:
+                    set_string += f"modality = '{modality}', "
+                
+                set_string = set_string[:-2]
+
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
+
+            try: 
+                # and finally put everything together and send it
+                query_result = await db.query(
+                    f"Update Image "
+                    f"{set_string} WHERE "
+                    f"user = '{current_user_id}' "
+                    f"AND id = 'Image:{image_id}' "
+                    f";"
+                )
+                
+                DatabaseResultService(query_result)
+   
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            
+            return ReturnAccessTokenService(current_user_id)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the Image didnt work: {e}")
