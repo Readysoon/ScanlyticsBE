@@ -65,7 +65,6 @@ async def GetPatientByID(patient_id, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
 
 
-# 
 async def UpdatePatientService(patientin, patient_id, current_user_id, db):
         try:
             try:
@@ -109,12 +108,6 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
             
-            query_result = await db.query(
-                f"SELECT * FROM Treated_By WHERE "
-                f"out = '{current_user_id}' AND "
-                f"in = 'Patient:{patient_id}';"
-            )
-
             return ReturnAccessTokenService(current_user_id)
 
         except Exception as e:

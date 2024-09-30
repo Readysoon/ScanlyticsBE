@@ -4,8 +4,8 @@ from fastapi import APIRouter
 
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
-
 from scanlyticsbe.app.image.imageService import UploadImageService, GetImagesByPatient, GetImageByID, DeleteImageByID
+from scanlyticsbe.app.image.imageSchema import Image
 
 
 router = APIRouter(
@@ -65,4 +65,17 @@ async def delete_image(
         db
     )
 
+@router.patch("/{image_id}")
+async def update_patient(
+        imagein: Image,
+        image_id: str,
+        db: Surreal = Depends(get_db),
+        current_user_id = Depends(GetCurrentUserIDService)
+    ):
+    return await UpdateImageService(
+            imagein, 
+            image_id, 
+            current_user_id, 
+            db
+        )
 
