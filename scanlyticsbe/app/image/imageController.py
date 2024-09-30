@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
-from scanlyticsbe.app.image.imageService import UploadImageService, GetImagesByPatient
+from scanlyticsbe.app.image.imageService import UploadImageService, GetImagesByPatient, GetImageByID
 
 
 router = APIRouter(
@@ -29,26 +29,28 @@ async def upload_image(
     )
 
 '''to do: get all images service'''
-@router.get("/{patient_id}")
+@router.get("/patient/{patient_id}")
 async def get_images_by_patient(
     patient_id: str,
-    curren_user_id = Depends(GetCurrentUserIDService),
+    current_user_id = Depends(GetCurrentUserIDService),
     db: Surreal = Depends(get_db)
     ):
     return await GetImagesByPatient(
         patient_id,
-        curren_user_id,
+        current_user_id,
         db
     )
 
-'''to do'''
-@router.get("/{filename}")
+@router.get("/{image_id}")
 async def get_image(
-    filename: str
+    image_id: str,
+    current_user_id = Depends(GetCurrentUserIDService),
+    db: Surreal = Depends(get_db)
     ):
-    try:
-        # Generate a URL for the uploaded file
-        url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
-        return {"url": url}
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"File {filename} not found")
+    return await GetImageByID(
+        image_id,
+        current_user_id,
+        db
+    )
+
+
