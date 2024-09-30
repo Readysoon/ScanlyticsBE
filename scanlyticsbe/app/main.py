@@ -74,7 +74,7 @@ async def landing_page(
             </script>
         </head>
         <body>
-            <h1>Welcome to Scanlytics</h1>
+            <h1>Welcome test to Scanlytics</h1>
             <p>To checkout the database itself, visit:</p>
             <a href="/surrealdb">SurrealDB</a>
             <h2>Signup</h2>
