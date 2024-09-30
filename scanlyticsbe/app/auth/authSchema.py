@@ -6,3 +6,7 @@ class Token(BaseModel):
 
 class Password(BaseModel):
     password: str
+
+class Login(BaseModel):
+    user_email: str
+    user_password: str

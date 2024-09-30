@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-'''added 2 "" for db.database for deployed mode'''
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 

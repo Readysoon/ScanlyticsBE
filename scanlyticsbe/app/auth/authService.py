@@ -223,7 +223,7 @@ async def LoginService(db, user_data):
             query_result = await db.query(
                     f"SELECT id, email, password "
                     f"FROM User WHERE "
-                    f"email = '{user_data.username}';"
+                    f"email = '{user_data.user_email}';"
                 )
             
             DatabaseResultHandlerService(query_result)
@@ -235,11 +235,10 @@ async def LoginService(db, user_data):
             # user not found
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
         
-        if not pwd_context.verify(user_data.password, query_result[0]['result'][0]['password']):
+        if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
             # wrong password
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
         
-        print("Before ReturnAccessTokenService")
         return ReturnAccessTokenService(query_result)
 
     except Exception as e:

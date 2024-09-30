@@ -163,7 +163,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
         return ReturnAccessTokenService(query_result), query_result[0]['result']
         
     except Exception as e: 
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Treated_By [...]' operation didnt work. {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllReportsByPatientIDService: {e}")
     
 
 '''delete Report Service'''
@@ -171,8 +171,6 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
 async def DeleteReportService(report_id, current_user_id, db):
     try:
         try: 
-            print(report_id)
-            print(current_user_id)
             query_result = await db.query(
                     f"DELETE ("
                     f"SELECT * FROM "

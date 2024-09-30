@@ -9,7 +9,7 @@ from scanlyticsbe.app.user.userSchema import OrgaSignup, User
 
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService
 
-from . import authSchema
+from .authSchema import Login, Token
 
 
 '''	1.	Login
@@ -39,7 +39,7 @@ async def check_mail(
         )
 
 # first user of a organization has to sign up for the organization too
-@router.post("/orga_signup", response_model=authSchema.Token)
+@router.post("/orga_signup", response_model=Token)
 async def orga_signup(
         userin: OrgaSignup, 
         db: Surreal = Depends(get_db)
@@ -55,7 +55,7 @@ async def orga_signup(
             db
         )
 
-@router.post("/user_signup", response_model=authSchema.Token)
+@router.post("/user_signup", response_model=Token)
 async def user_signup(
         userin: User,
         db: Surreal = Depends(get_db)
@@ -70,7 +70,7 @@ async def user_signup(
 
 @router.post("/login")
 async def login(
-        user_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
+        user_data: Login, 
         db: Surreal = Depends(get_db)
     ):
     return await LoginService(

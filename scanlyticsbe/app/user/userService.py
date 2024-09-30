@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
 from scanlyticsbe.app.auth.authService import DatabaseResultHandlerService, ReturnAccessTokenService
+from scanlyticsbe.app.patient.patientService import DeletePatientService, GetAllPatientsByUserID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
@@ -82,8 +83,6 @@ async def PatchUserService(userin, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")
     
 
-'''Delete all Patients too'''
-'''make this modular so it uses the delete patient service -> better code handling'''
 async def DeleteUserService(password, current_user_id, db):
     try:
         try:
@@ -97,22 +96,25 @@ async def DeleteUserService(password, current_user_id, db):
             query_password = query_result[0]['result'][0]['password']
             
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Password querying didnt work: {e}")
                     
         if pwd_context.verify(password.password, query_password):
             try:
-                '''insert patient deletion here'''
+                json_response = await GetAllPatientsByUserID(current_user_id, db)
+                patients = json_response[1]
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllPatientsByUserID: {e}")
+            
+            try:
+                for patient in patients:
+                    patient_id = patient['in']
+                    DeletePatientService(patient_id, db, current_user_id)
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
+            
             try:
                 query_result = await db.query(
-                    f"BEGIN TRANSACTION;"
-                    f"LET $patients = (SELECT * FROM Patient WHERE (SELECT * FROM Treated_By WHERE out = '{current_user_id}').in);"
-                    f"FOR $patient in $patients{{"
-                        f"DELETE $patient;"
-                    f"}};"
                     f"DELETE {current_user_id};"
-                    f"COMMIT TRANSACTION;"
                 )
                 DatabaseResultHandlerService(query_result)
             except Exception as e:

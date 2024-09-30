@@ -5,8 +5,6 @@ from scanlyticsbe.app.report.reportService import GetAllReportsByPatientIDServic
 from scanlyticsbe.app.db.database import DatabaseResultHandlerService
 
 
-
-
 async def CreatePatientService(patientin, current_user_id, db):
     try:
         try:
