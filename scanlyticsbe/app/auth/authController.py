@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Form, Depends
-from fastapi.security import OAuth2PasswordRequestForm
 from pydantic.networks import EmailStr
-from typing_extensions import Annotated
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService
-
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService
 from .authSchema import Login, Token
 
 
@@ -78,6 +75,15 @@ async def login(
             user_data
         )
 
+@router.post("/validate")
+async def validate(
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await ValidateService(
+             current_user_id,
+             db
+        )
 
 
 

@@ -250,3 +250,22 @@ async def LoginService(db, user_data):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
+    
+async def ValidateService(current_user_id, db):
+    try:
+        try:
+            query_result = await db.query(
+                    f"SELECT id "
+                    f"FROM User WHERE "
+                    f"id = '{current_user_id}';"
+                )
+            
+            DatabaseResultService(query_result)
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+        
+        return AuthReturnAccessTokenService(query_result)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
