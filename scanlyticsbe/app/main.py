@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
 from scanlyticsbe.app.db.database import get_db
 
-from surrealdb import Surreal
 from fastapi import Depends
 from scanlyticsbe.app.db.database import get_db
 
 import logging
 from dotenv import load_dotenv
-import os
 
 '''For Gcloud deploying add "." to the imports and remove for development.'''
 

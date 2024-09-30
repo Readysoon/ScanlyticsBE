@@ -108,41 +108,13 @@ async def GetCurrentUserIDService(
     
     return select_user_result
 
+
 def ReturnAccessTokenService(current_user_id):
     try:
         access_token = create_access_token(data={"sub": current_user_id})
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ReturnAccessTokenService: {e}")
-
-
-# takes User:hsdjkcanbhvhb and list (dictionaries) returned from the Service functions
-def AuthReturnAccessTokenService(query_result):
-    try:
-        if type(query_result) == str:
-            print("AuthReturnAccessTokenService: str")
-            access_token = create_access_token(data={"sub": query_result})
-            return {"access_token": access_token, "token_type": "bearer"}
-
-        elif type(query_result) == list:
-            if 'out' in query_result[0]['result'][0]:
-                print("AuthReturnAccessTokenService: out")
-                current_user_id = query_result[0]['result'][0]['out']
-                access_token = create_access_token(data={"sub": current_user_id})
-                return {"access_token": access_token, "token_type": "bearer"}
-            
-            elif 'id' in query_result[0]['result'][0]:
-                print("AuthReturnAccessTokenService: id")
-                current_user_id = query_result[0]['result'][0]['id']
-                access_token = create_access_token(data={"sub": current_user_id})
-                return {"access_token": access_token, "token_type": "bearer"}    
-            else: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Neither 'out' nor 'id' in query_result!!! => fix 'ReturnAccessTokenService' ")
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Query result is neither str nor list")
-    except Exception as e:
-        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"AuthReturnAccessTokenService: {e}")
-
 
 
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
@@ -188,9 +160,9 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
             DatabaseResultService(query_result)
    
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")   
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")  
 
-        return AuthReturnAccessTokenService(query_result)
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:   
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user with orga didnt work: {e}")
@@ -216,7 +188,7 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        return AuthReturnAccessTokenService(query_result)
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
@@ -246,7 +218,7 @@ async def LoginService(db, user_data):
             # wrong password
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
         
-        return AuthReturnAccessTokenService(query_result)
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
@@ -265,7 +237,8 @@ async def ValidateService(current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         
-        return AuthReturnAccessTokenService(query_result)
+        print(query_result)
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
