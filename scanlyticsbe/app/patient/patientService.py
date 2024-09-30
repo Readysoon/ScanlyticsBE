@@ -143,7 +143,7 @@ async def DeletePatientService(patient_id, db, current_user_id):
     try:
         # Delete Images
         try:
-            json_response = await GetImagesByPatient(patient_id, current_user_id, db):
+            json_response = await GetImagesByPatient(patient_id, current_user_id, db)
             images = json_response[1]
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"[...] await GetAllReportsByPatientIDService(patient_id, current_user_id, db) [...]: {e}")
