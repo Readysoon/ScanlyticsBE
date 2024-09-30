@@ -5,19 +5,17 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, status
 
 from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
-from scanlyticsbe.app.db.database import DatabaseResultHandlerService
+from scanlyticsbe.app.db.database import DatabaseResultService
 
 
 # Load .env file from a specific path
 load_dotenv()
 
-# AWS S3 Configuration
-S3_BUCKET = "hanswurstbucket"  # Replace with your bucket name
-S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")  # Set your AWS access key in environment variables
-S3_SECRET_KEY = os.getenv("AWS_SECRET_KEY")  # Set your AWS secret key in environment variables
-S3_REGION = "eu-north-1"  # Replace with your region, e.g., 'us-west-2'
+S3_BUCKET = os.getenv("AWS_BUCKET_NAME") 
+S3_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")  
+S3_SECRET_KEY = os.getenv("AWS_SECRET_KEY")  
+S3_REGION = os.getenv("eu-north-1")  
 
-# Initialize S3 client
 s3_client = boto3.client(
     "s3",
     aws_access_key_id=S3_ACCESS_KEY,
@@ -50,7 +48,7 @@ async def UploadImageService(file, patient_id, current_user_id, db):
                 f"user = '{current_user_id}'"
             )
 
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
@@ -62,5 +60,22 @@ async def UploadImageService(file, patient_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-async def GetImagesByPatient():
-    print('empty')
+
+async def GetImagesByPatient(patient_id, curren_user_id, db):
+    try:
+        try:
+            query_result = await db.query(
+                f"SELECT * FROM Image WHERE "
+                f"user = '{curren_user_id}' "
+                f"AND patient = 'Patient:{patient_id}';"
+            )
+
+            DatabaseResultService(query_result)
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
+        
+        return ReturnAccessTokenService(query_result), query_result[0]['result']
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImagesByPatient: {e}")

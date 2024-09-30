@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 import os
 import datetime
 
-from scanlyticsbe.app.db.database import get_db, DatabaseResultHandlerService
+from scanlyticsbe.app.db.database import get_db, DatabaseResultService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -178,7 +178,7 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
                     f").id)[0]"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")   
@@ -204,7 +204,7 @@ async def UserSignupService(user_email, user_name, user_password, user_role, db)
                     f"organization = Organization:1"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -226,7 +226,7 @@ async def LoginService(db, user_data):
                     f"email = '{user_data.user_email}';"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
             
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
-from scanlyticsbe.app.db.database import DatabaseResultHandlerService
+from scanlyticsbe.app.db.database import DatabaseResultService
 
 
 async def CreateReportService(patientin, reportin, current_user_id, db):
@@ -19,7 +19,7 @@ async def CreateReportService(patientin, reportin, current_user_id, db):
                 f")[0].out;"
             )
 
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -45,7 +45,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                 f"SELECT * FROM Report WHERE id = Report:{report_id};"
             )
 
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Report [...]' operation didnt work. {e}")
@@ -60,7 +60,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                 f"SELECT * FROM Treated_By WHERE out = {current_user_id};"
             )
 
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Treated_By [...]' operation didnt work. {e}")
@@ -77,7 +77,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                                 f"SELECT * FROM Report WHERE id = Report:{report_id};"
                             )
 
-                            DatabaseResultHandlerService(final_query_result)
+                            DatabaseResultService(final_query_result)
 
                             return ReturnAccessTokenService(current_user_id), final_query_result[0]['result'][0]
                             
@@ -127,7 +127,7 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
                     f"{set_string};"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -155,7 +155,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
                 f")[0].in;"
             )
 
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -180,7 +180,7 @@ async def DeleteReportService(report_id, current_user_id, db):
                     f")[0]['out'];"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")

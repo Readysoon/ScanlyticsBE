@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
-from scanlyticsbe.app.auth.authService import DatabaseResultHandlerService, ReturnAccessTokenService
+from scanlyticsbe.app.auth.authService import DatabaseResultService, ReturnAccessTokenService
 from scanlyticsbe.app.patient.patientService import DeletePatientService, GetAllPatientsByUserID
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
@@ -29,7 +29,7 @@ async def GetCurrentUserService(current_user_id, db):
                 f"id = '{current_user_id}'"
             )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -72,7 +72,7 @@ async def PatchUserService(userin, current_user_id, db):
                     f"{set_string};"
                 )
             
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -91,7 +91,7 @@ async def DeleteUserService(password, current_user_id, db):
                     f"FROM User WHERE "
                     f"id = '{current_user_id}';"
                 )
-            DatabaseResultHandlerService(query_result)
+            DatabaseResultService(query_result)
 
             query_password = query_result[0]['result'][0]['password']
             
@@ -116,7 +116,7 @@ async def DeleteUserService(password, current_user_id, db):
                 query_result = await db.query(
                     f"DELETE {current_user_id};"
                 )
-                DatabaseResultHandlerService(query_result)
+                DatabaseResultService(query_result)
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
         else: 

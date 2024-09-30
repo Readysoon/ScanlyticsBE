@@ -37,7 +37,7 @@ async def get_db():
         await db.close()
         logging.info("Closed SurrealDB connection")
 
-def DatabaseResultHandlerService(query_result):
+def DatabaseResultService(query_result):
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database: Status == 'ERR': {result}")
