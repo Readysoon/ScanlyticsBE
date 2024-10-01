@@ -1,0 +1,26 @@
+﻿Sehr geehrter Herr Kollege,
+vielen Dank für die freundliche Überweisung Ihrer Patientin Susanne Meier, geb. 02.02.1977
+
+Röntgen Ellenbogen
+
+__Indikation__
+Dies ist die Indikation. Die steht im Überweisungsschein
+
+__Technik__
+LWS in 2 Ebenen
+
+__Klinik__
+Hier kommen die Notizen des Arztes rein.
+ 
+__Vergleich__
+Hier kommt der Vergleich mit etwaigen vorherigen Befunden/Bildern rein und die zeitliche Entwicklung der Krankheit.
+
+__Befund__
+Am Ellenbogen ____ sind keine Frakturen oder andere knöcherne Anomalien zu erkennen.
+Der Gelenkspalt zeigt ein normales Erscheinungsbild ohne Verschiebung der vorderen oder hinteren Fettpolster, die auf einen Erguss hindeuten.
+Die anterioren humeralen und radiokapitellaren Linien sind normal.
+Schlussfolgerung:
+Normaler Gleitfilm ____ Ellenbogen.
+
+__Beurteilung__
+Unauffällige Darstellung der LWS.

@@ -1,0 +1,23 @@
+﻿Sehr geehrter Herr Kollege,
+vielen Dank für die freundliche Überweisung Ihres Patienten Stephan Mustermann, geb. 23.06.1951
+
+Röntgen Handgelenk
+
+__Indikation__
+Dies ist die Indikation, deshalb wurde der Pat hergeschickt, siehe Überweisungsschein.
+
+__Technik__
+LWS in 2 Ebenen
+
+__Klinik__
+Hier kommen die Notizen der körperlichen Untersuchung/der Anamnese rein.
+
+__Vergleich__
+Hier kommt der Vergleich mit etwaigen vorherigen Befunden/Bildern rein und die zeitliche Entwicklung der Krankheit.
+ 
+__Befund__
+Am Handgelenk _____ sind keine Frakturen oder andere knöcherne Anomalien zu erkennen. Die radiokarpalen und interkarpalen Gelenke sehen normal aus und es gibt keine Verschiebung des Pronator-Fettpolsters.
+Es sind keine Weichteilschwellungen zu sehen.
+
+__Beurteilung__
+Dies ist ein Platzhalter für die Beurteilung. Die muss der Arzt selber schreiben. 

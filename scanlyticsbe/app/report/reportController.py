@@ -28,13 +28,6 @@ async def create_report(
             db
         )
 
-# braucht gar keine patient_id, da anhand der current_user_id geschaut werden kann, welche patienten 
-# der Arzt hat und ob ein Report mit der angegebenen ID auch einen dieser Patienten listet
-# => 
-# 0. from the specified report get the patient id
-# 1. which patients has the doctor
-# 2. Look for matches
-
 @router.get("/{report_id}")
 async def get_report(
         report_id: str,

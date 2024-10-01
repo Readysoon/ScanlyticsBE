@@ -1,23 +1,22 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from scanlyticsbe.app.db.database import get_db
-
-from fastapi import Depends
-from scanlyticsbe.app.db.database import get_db
 
 import logging
-from dotenv import load_dotenv
 
 '''For Gcloud deploying add "." to the imports and remove for development.'''
 
 # from db.seeds import seeddoc2patients
 from scanlyticsbe.app.db.models import initializedb
+from scanlyticsbe.app.statement.statementService import initialize_statements
+
 from scanlyticsbe.app.db.surrealdbController import router as surrealdb_router
 from scanlyticsbe.app.user.userController import router as user_router
 from scanlyticsbe.app.patient.patientController import router as patient_router
 from scanlyticsbe.app.auth.authController import router as auth_router
 from scanlyticsbe.app.report.reportController import router as report_router
 from scanlyticsbe.app.image.imageController import router as image_router
+from scanlyticsbe.app.statement.statementController import router as statement_router
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -31,12 +30,14 @@ app.include_router(patient_router)
 app.include_router(auth_router)
 app.include_router(report_router)
 app.include_router(image_router)
+app.include_router(statement_router)
 
 
 '''to implement: seed()'''
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
+    await initialize_statements()
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(
