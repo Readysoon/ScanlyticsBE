@@ -37,7 +37,7 @@ app.include_router(statement_router)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    await initialize_statements()
+    # await initialize_statements()
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(

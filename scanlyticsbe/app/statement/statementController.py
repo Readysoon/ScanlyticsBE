@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 from scanlyticsbe.app.db.database import get_db
 
-# from scanlyticsbe.app.statement.statementService import write_statement
+from scanlyticsbe.app.statement.statementService import write_statement
 from scanlyticsbe.app.statement.statementSchema import Statement
 
 

@@ -25,37 +25,46 @@ from fastapi import APIRouter, Depends
 #             "DEFINE FIELD user_owner ON Statement TYPE record(User);",
 
 
-# async def write_statement(statementin, current_user_id, db):
-#     try:
-#         try:
-#             query_result = await db.query(
-#                 f"CREATE Statement "
-#                 f"SET text = '{statementin.text}', "
-#                 f"body_part = '{statementin.body_part}', "
-#                 f"medical_condition = '{statementin.medical_condition}', "
-#                 f"modality = '{statementin.modality}', "
-#                 f"section = '{statementin.section}', "
-#                 f"user_owner = '{current_user_id}';"
-#             )
-# 
-#             DatabaseResultService(query_result)
-#             
-#         except Exception as e: 
-#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
-#         
-#         return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
-#             
-#     except Exception as e:
-#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement: {e}")
+async def write_statement(statementin, current_user_id, db):
+    try:
+        # this and the if statement afterwards is for the seed function below to not create duplicates
+        try:
+            query_result = await db.query(
+                f"SELECT * FROM Statement "
+                f"WHERE text = '{statementin.text}'"
+            )
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select Statements didnt work: {e}")
+        
+        if not query_result[0]['result']:
+            try:
+                query_result = await db.query(
+                    f"CREATE Statement "
+                    f"SET text = '{statementin.text}', "
+                    f"body_part = '{statementin.body_part}', "
+                    f"medical_condition = '{statementin.medical_condition}', "
+                    f"modality = '{statementin.modality}', "
+                    f"section = '{statementin.section}', "
+                    f"user_owner = '{current_user_id}';"
+                )
+
+                DatabaseResultService(query_result)
+                
+            except Exception as e: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Create Statements didnt work: {e}")
+            
+            return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+                
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement: {e}")
     
 
 # Path to the reportTemplates directory
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
-def initialize_statements(
-       #  db: Surreal = Depends(get_db)
+async def initialize_statements(
+        db: Surreal = Depends(get_db)
     ):
-
     print("initialize_statements:")
     for file_name in os.listdir(TEMPLATES_DIR):
         print(f"filename: {file_name}")
@@ -92,11 +101,15 @@ def initialize_statements(
                     else:
                         text.append(word)  # Append word to text
 
-                print(Statement.text)
-                print(Statement.body_part)
-                print(Statement.medical_condition)
-                print(Statement.modality)
-                print(Statement.section)
+                await write_statement(Statement, "User:1", db)
+
+                # print(Statement.text)
+                # print(Statement.body_part)
+                # print(Statement.medical_condition)
+                # print(Statement.modality)
+                # print(Statement.section)
+
+
 
 
                 

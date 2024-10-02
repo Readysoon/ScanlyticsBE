@@ -43,6 +43,11 @@ async def get_db():
 #     []
 # ]
 def DatabaseResultService(query_result):
+    print(query_result)
+    if not query_result[0]['result']:
+        # or return NONE => explore the two options
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Empty result list: {query_result}")
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database: Status == 'ERR': {result}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DatabaseResultService: Status == 'ERR': {result}")
+    
