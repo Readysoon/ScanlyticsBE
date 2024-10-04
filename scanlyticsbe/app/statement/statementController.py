@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 from scanlyticsbe.app.db.database import get_db
 
-from scanlyticsbe.app.statement.statementService import write_statement_service, initialize_statements_service, get_statements_by_categories_service, get_statement_service, update_statement_service, delete_or_reset_statement_service
+from scanlyticsbe.app.statement.statementService import write_statement_service, initialize_statements_service, search_statements_service, get_statement_service, update_statement_service, delete_or_reset_statement_service
 from scanlyticsbe.app.statement.statementSchema import Statement, StatementSearch
 
 
@@ -32,7 +32,7 @@ async def create_statement(
         )
 
 @router.post("/initialize")
-async def create_statement(
+async def initialize_statements(
         db: Surreal = Depends(get_db)
     ):
     return await initialize_statements_service(
@@ -40,20 +40,20 @@ async def create_statement(
         )
 
 '''gets scanlytics statements by categories and user statements by categories'''
-@router.get("/")
-async def get_statements_by_categories(
-        searchin: StatementSearch,
+@router.get("/categories")
+async def search_statements(
+        searchin: Statement,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
-    return await get_statements_by_categories_service(
+    return await search_statements_service(
             searchin,
             current_user_id,
             db
         )
 
 '''gets a single statement'''
-@router.get("/")
+@router.get("/{statement_id}")
 async def get_statement(
         statement_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
@@ -66,7 +66,7 @@ async def get_statement(
         )
 
 '''updating is creating a new and connecting to the old'''
-@router.get("/{statement_id}")
+@router.patch("/{statement_id}")
 async def update_statement(
         statement_id: str,
         statementin: Statement, 
