@@ -3,25 +3,25 @@ vielen Dank für die freundliche Überweisung Ihrer Patientin Sabine Meier, geb.
 
 Röntgen rechtes Schultergelenk
 
-__Indikation
+__Indikation__
 Z.n. Sturz auf die rechte Schulter. Schmerzbedingte Bewegungseinschränkung im Schultergelenk. Frage nach Fraktur?
 
-__Technik
+__Technik__
 Röntgen re. Schultergelenk in 2 Ebenen
 
-__Klinik
+__Klinik__
 Hier kommen die Notizen der körperlichen Untersuchung/der Anamnese rein.
 
-__Vergleich
+__Vergleich__
 Hier kommt der Vergleich mit etwaigen vorherigen Befunden/Bildern rein und die zeitliche Entwicklung der Krankheit.
 
-__Befund
+__Befund__
 Die am Glenohumeralgelenk und am AC-Gelenk beteiligten Skelettabschnitte sind normal konfiguriert. Mineralgehalt und Knochenstruktur regelrecht.
 Regelrechte Artikulation im Glenohumeralgelenk und im AC-Gelenk. Der Gelenkspalt ist allseits normal weit.
 Die mitabgebildeten knöchernen Strukturen des Schultergürtels und des Thorax sind unauffällig.
 Keine periartikulären Verkalkungen.
 
-__Beurteilung
+__Beurteilung__
 Regelrechte Darstellung des Schultergelenks. Insbesondere kein Frakturnachweis.
 
 https://befunddolmetscher.de/roentgen/schulter/beispielbefund

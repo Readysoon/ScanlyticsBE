@@ -7,53 +7,25 @@ from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 
 from scanlyticsbe.app.statement.statementSchema import Statement
 
-# imports for initialize_statements
-from surrealdb import Surreal
-from scanlyticsbe.app.db.database import get_db
-from fastapi import APIRouter, Depends
-
-
-
-#             "DEFINE TABLE Statement SCHEMAFULL;",
-#             "DEFINE FIELD text ON Statement TYPE string;",
-#             "DEFINE FIELD body_part ON Statement TYPE string;",
-#             "DEFINE FIELD medical_condition ON Statement TYPE string;",
-#             "DEFINE FIELD modality ON Statement TYPE string;",
-#             "DEFINE FIELD section ON Statement TYPE string;",
-#             "DEFINE FIELD created_at ON Statement TYPE datetime DEFAULT time::now();",
-#             "DEFINE FIELD updated_at ON Statement TYPE datetime DEFAULT time::now() VALUE time::now();",
-#             "DEFINE FIELD user_owner ON Statement TYPE record(User);",
-
-
 async def write_statement(statementin, current_user_id, db):
     try:
-        # this and the if statement afterwards is for the seed function below to not create duplicates
         try:
             query_result = await db.query(
-                f"SELECT * FROM Statement "
-                f"WHERE text = '{statementin.text}'"
+                f"CREATE Statement "
+                f"SET text = '{statementin.text}', "
+                f"body_part = '{statementin.body_part}', "
+                f"medical_condition = '{statementin.medical_condition}', "
+                f"modality = '{statementin.modality}', "
+                f"section = '{statementin.section}', "
+                f"user_owner = '{current_user_id}';"
             )
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select Statements didnt work: {e}")
-        
-        if not query_result[0]['result']:
-            try:
-                query_result = await db.query(
-                    f"CREATE Statement "
-                    f"SET text = '{statementin.text}', "
-                    f"body_part = '{statementin.body_part}', "
-                    f"medical_condition = '{statementin.medical_condition}', "
-                    f"modality = '{statementin.modality}', "
-                    f"section = '{statementin.section}', "
-                    f"user_owner = '{current_user_id}';"
-                )
 
-                DatabaseResultService(query_result)
-                
-            except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Create Statements didnt work: {e}")
+            DatabaseResultService(query_result)
             
-            return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Create Statements didnt work: {e}")
+        
+        # return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement: {e}")
@@ -62,9 +34,9 @@ async def write_statement(statementin, current_user_id, db):
 # Path to the reportTemplates directory
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
-async def initialize_statements(
-        db: Surreal = Depends(get_db)
-    ):
+
+# async def initialize_statements(
+async def initialize_statements(db):
     print("initialize_statements:")
     for file_name in os.listdir(TEMPLATES_DIR):
         print(f"filename: {file_name}")
@@ -77,46 +49,37 @@ async def initialize_statements(
                 file_name_parts = base_name.split() # split Röntgen and the body_part
 
                 content = file.read()
-                words = content.split()  # Split the content into words
 
-                Statement.text = ""
-                Statement.body_part = file_name_parts[1]
-                Statement.medical_condition = "sick"
-                Statement.modality = file_name_parts[0]
-                Statement.section = ""
+                lines = content.splitlines()  
 
-                # if file_name_parts[0] == "Befund":
-                #     einleitung_text = []
-                #     for word in words:
-                #         einleitung_text += word
-                #     break
+                statement_instance = Statement()
 
-                text = []
-                for word in words:
-                    if word in ["__Indikation__", "__Technik__", "__Klinik__", "__Vergleich__", "__Befund__", "__Beurteilung__"]:
-                        if text:  # Only assign if text is not empty
-                            Statement.text = " ".join(text)  # Join the words in text to form a string
-                            text = []  # Reset text for the next section
-                        Statement.section = word  # Set the current section to the keyword
-                    else:
-                        text.append(word)  # Append word to text
+                statement_instance.section = ""
+                statement_instance.body_part = file_name_parts[1]
+                statement_instance.medical_condition = "sick"
+                statement_instance.modality = file_name_parts[0]
+                statement_instance.text = ""
 
-                await write_statement(Statement, "User:1", db)
+                for line in lines:
+                    line = line.strip()  
 
-                # print(Statement.text)
-                # print(Statement.body_part)
-                # print(Statement.medical_condition)
-                # print(Statement.modality)
-                # print(Statement.section)
+                    if line in ["__Indikation__", "__Technik__", "__Klinik__", "__Vergleich__", "__Befund__", "__Beurteilung__"]:
+                        statement_instance.section = line
 
-
-
-
-                
-# Example usage
-if __name__ == "__main__":
-    initialize_statements()
-
-
+                    elif line:  
+                        statement_instance.text = line
+                    
+                    # find some other way to check if it already in the database
+                        try:
+                            query_result = await db.query(
+                                f"SELECT * FROM Statement "
+                                f"WHERE text = '{statement_instance.text}' "
+                                f"AND body_part = '{statement_instance.body_part}';"
+                            )
+                        except Exception as e:
+                            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select Statements didnt work: {e}")
+                        
+                        if not query_result[0]['result'] and statement_instance.section:
+                            await write_statement(statement_instance, "User:1", db)
 
 

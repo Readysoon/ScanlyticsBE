@@ -37,6 +37,7 @@ app.include_router(statement_router)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
+    '''does not work for some reason'''
     # await initialize_statements()
 
 @app.get("/", response_class=HTMLResponse)

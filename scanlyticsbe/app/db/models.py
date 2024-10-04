@@ -80,6 +80,7 @@ async def initializedb():
             "DEFINE FIELD section ON Statement TYPE string;",
             "DEFINE FIELD created_at ON Statement TYPE datetime DEFAULT time::now();",
             "DEFINE FIELD updated_at ON Statement TYPE datetime DEFAULT time::now() VALUE time::now();",
+            "DEFINE FIELD updated_statement ON Statement TYPE record(Statement);",
             "DEFINE FIELD user_owner ON Statement TYPE record(User);",
 
             "DEFINE TABLE Report SCHEMAFULL;",
