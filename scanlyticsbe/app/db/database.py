@@ -37,11 +37,13 @@ async def get_db():
         await db.close()
         logging.info("Closed SurrealDB connection")
 
+
 '''handle those empty results for when nothing was found'''
 # [
 #     null,
 #     []
 # ]
+'''handling those now with the if not line?'''
 def DatabaseResultService(query_result):
     print(query_result)
     if not query_result[0]['result']:

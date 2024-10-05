@@ -73,14 +73,13 @@ async def initializedb():
             "DEFINE FIELD in ON TABLE PatientNotes_Reports_Join TYPE record<PatientNote>;",
 
             "DEFINE TABLE Statement SCHEMAFULL;",
-            "DEFINE FIELD text ON Statement TYPE string;",
+            "DEFINE FIELD text ON Statement TYPE array<string>;",
             "DEFINE FIELD body_part ON Statement TYPE string;",
             "DEFINE FIELD medical_condition ON Statement TYPE string;",
             "DEFINE FIELD modality ON Statement TYPE string;",
             "DEFINE FIELD section ON Statement TYPE string;",
             "DEFINE FIELD created_at ON Statement TYPE datetime DEFAULT time::now();",
             "DEFINE FIELD updated_at ON Statement TYPE datetime DEFAULT time::now() VALUE time::now();",
-            "DEFINE FIELD updated_statement ON Statement TYPE record(Statement);",
             "DEFINE FIELD user_owner ON Statement TYPE record(User);",
 
             "DEFINE TABLE Report SCHEMAFULL;",
@@ -130,5 +129,6 @@ async def initializedb():
             try:
                 await db.query(command)
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error in database initialization during command: {command}, Error: {e}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=
+                                    f"Error in database initialization during command: {command}, Error: {e}")
 

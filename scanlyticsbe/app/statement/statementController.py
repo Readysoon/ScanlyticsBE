@@ -5,7 +5,7 @@ from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 from scanlyticsbe.app.db.database import get_db
 
 from scanlyticsbe.app.statement.statementService import write_statement_service, initialize_statements_service, search_statements_service, get_statement_service, update_statement_service, delete_or_reset_statement_service
-from scanlyticsbe.app.statement.statementSchema import Statement, StatementSearch
+from scanlyticsbe.app.statement.statementSchema import Statement
 
 
 '''A user can only change an existing statement and add their statements to existing categories'''
@@ -65,7 +65,7 @@ async def get_statement(
             db
         )
 
-'''updating is creating a new and connecting to the old'''
+'''updating adding a new text to the array or changing the other parameters'''
 @router.patch("/{statement_id}")
 async def update_statement(
         statement_id: str,
@@ -80,7 +80,7 @@ async def update_statement(
             db
         )
 
-'''delete "updated" statements but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
+'''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
 @router.delete("/{statement_id}")
 async def delete_statement(
         statement_id: str,

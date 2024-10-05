@@ -7,7 +7,7 @@ import logging
 
 # from db.seeds import seeddoc2patients
 from scanlyticsbe.app.db.models import initializedb
-from scanlyticsbe.app.statement.statementService import initialize_statements
+from scanlyticsbe.app.statement.statementService import initialize_statements_service
 
 from scanlyticsbe.app.db.surrealdbController import router as surrealdb_router
 from scanlyticsbe.app.user.userController import router as user_router
@@ -33,12 +33,11 @@ app.include_router(image_router)
 app.include_router(statement_router)
 
 
-'''to implement: seed()'''
+'''to make initialize_statements_service work it needs db as a parameter'''
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    '''does not work for some reason'''
-    # await initialize_statements()
+    # await initialize_statements_service()
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(

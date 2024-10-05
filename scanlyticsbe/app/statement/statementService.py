@@ -15,7 +15,7 @@ async def write_statement_service(statementin, current_user_id, db):
         try:
             query_result = await db.query(
                 f"CREATE Statement "
-                f"SET text = '{statementin.text}', "
+                f"SET text += '{statementin.text}', "
                 f"body_part = '{statementin.body_part}', "
                 f"medical_condition = '{statementin.medical_condition}', "
                 f"modality = '{statementin.modality}', "
@@ -36,7 +36,6 @@ async def write_statement_service(statementin, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement_service: {e}")
     
 
-# Path to the reportTemplates directory
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
 async def initialize_statements_service(db):
@@ -83,14 +82,14 @@ async def initialize_statements_service(db):
                         if not query_result[0]['result'] and statement_instance.section:
                             await write_statement_service(statement_instance, "User:1", db)
 
-'''TO BE TESTED'''
+'''WORKS'''
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
-            section = searchin.patient_name
-            body_part = searchin.date_of_birth
-            medical_condition = searchin.gender
-            modality = searchin.contact_number
+            section = searchin.section
+            body_part = searchin.body_part
+            medical_condition = searchin.medical_condition
+            modality = searchin.modality
             text = searchin.text
             search_string = ""
 
@@ -116,8 +115,8 @@ async def search_statements_service(searchin, current_user_id, db):
             query_result = await db.query(
                 f"SELECT * FROM Statement "
                 f"WHERE {search_string} AND "
-                f"user_owner = '{current_user_id}' OR "
-                f"user_owner = 'User:1';"
+                f"(user_owner = '{current_user_id}' OR "
+                f"user_owner = 'User:1');"
             )
 
             DatabaseResultService(query_result)
@@ -125,20 +124,21 @@ async def search_statements_service(searchin, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+        # add or remove '[0]' for multiple results
+        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
     
-'''TO BE TESTED'''
+'''works'''
 async def get_statement_service(statement_id, current_user_id, db):
     try:
         try: 
             query_result = await db.query(
                 f"SELECT * FROM Statement "
                 f"WHERE id = 'Statement:{statement_id}' "
-                f"AND user_owner = {current_user_id} "
-                f"OR user_owner = 'User:1';"
+                f"AND (user_owner = {current_user_id} "
+                f"OR user_owner = 'User:1');"
             )
             DatabaseResultService(query_result)
             
@@ -148,27 +148,27 @@ async def get_statement_service(statement_id, current_user_id, db):
         if not query_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
         
-        result_without_status = query_result[0]['result'][0]
+        result_without_status = query_result[0]['result']
   
         return ReturnAccessTokenService(current_user_id), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
     
-'''TO BE TESTED'''
+'''WORKS'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
     try:
         try:
-            section = statementin.patient_name
-            body_part = statementin.date_of_birth
-            medical_condition = statementin.gender
-            modality = statementin.contact_number
+            section = statementin.section
+            body_part = statementin.body_part
+            medical_condition = statementin.medical_condition
+            modality = statementin.modality
             text = statementin.text
             set_string = "SET "
 
             # elongate the update_string
             if text:
-                set_string += f"text = '{text}', "
+                set_string += f"text += '{text}', "
             if section:
                 set_string += f"section = '{section}', "
             if body_part:
@@ -188,8 +188,8 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
             query_result = await db.query(
                     f"UPDATE ("
                     f"SELECT * FROM Statement "
-                    f"WHERE id = '{statement_id}' "
-                    f"AND user_owner = {current_user_id} "
+                    f"WHERE id = 'Statement:{statement_id}' "
+                    f"AND user_owner = {current_user_id}"
                     f") {set_string};"
                 )
 
@@ -201,9 +201,31 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
         return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
                 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
 
-    
+'''TO BE written'''
 async def delete_or_reset_statement_service(statement_id, current_user_id, db):
+    try:
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM Statement "
+                f"WHERE id = 'Statement:{statement_id}' "
+                f"AND user_owner = {current_user_id} "
+                f"OR user_owner = 'User:1';"
+            )
+
+            DatabaseResultService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+        
+        if not query_result[0]['result']:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
+        
+        result_without_status = query_result[0]['result'][0]
+  
+        return ReturnAccessTokenService(current_user_id), result_without_status
     
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
 
