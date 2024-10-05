@@ -13,7 +13,8 @@ async def CreatePatientService(patientin, current_user_id, db):
             query_result = await db.query(
                 f"SELECT * FROM (("
                 f"RELATE ("
-                f"CREATE Patient SET name = '{patientin.patient_name}', "
+                f"CREATE Patient "
+                f"SET name = '{patientin.patient_name}', "
                 f"date_of_birth = '{patientin.date_of_birth}', "
                 f"gender = '{patientin.gender}', "
                 f"contact_number = '{patientin.contact_number}', "
@@ -27,7 +28,7 @@ async def CreatePatientService(patientin, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        result_without_status = query_result[0]['result'][0]
+        result_without_status = query_result[0]['result']
         
         return ReturnAccessTokenService(current_user_id), result_without_status
             
@@ -57,7 +58,7 @@ async def GetPatientByID(patient_id, current_user_id, db):
         if not query_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
         
-        result_without_status = query_result[0]['result'][0]
+        result_without_status = query_result[0]['result']
   
         return ReturnAccessTokenService(current_user_id), result_without_status
     

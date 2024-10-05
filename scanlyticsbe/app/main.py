@@ -16,6 +16,7 @@ from scanlyticsbe.app.auth.authController import router as auth_router
 from scanlyticsbe.app.report.reportController import router as report_router
 from scanlyticsbe.app.image.imageController import router as image_router
 from scanlyticsbe.app.statement.statementController import router as statement_router
+from scanlyticsbe.app.note.noteController import router as note_router
 
 
 
@@ -31,6 +32,7 @@ app.include_router(auth_router)
 app.include_router(report_router)
 app.include_router(image_router)
 app.include_router(statement_router)
+app.include_router(note_router)
 
 
 '''to make initialize_statements_service work it needs db as a parameter'''
