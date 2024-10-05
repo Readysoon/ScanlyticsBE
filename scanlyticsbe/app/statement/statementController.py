@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 from scanlyticsbe.app.db.database import get_db
 
-from scanlyticsbe.app.statement.statementService import write_statement_service, initialize_statements_service, search_statements_service, get_statement_service, update_statement_service, delete_or_reset_statement_service
+from scanlyticsbe.app.statement.statementService import write_statement_service, initialize_statements_service, search_statements_service, get_statement_service, get_all_statements_service, update_statement_service, delete_or_reset_statement_service
 from scanlyticsbe.app.statement.statementSchema import Statement
 
 
@@ -61,6 +61,17 @@ async def get_statement(
     ):
     return await get_statement_service(
             statement_id,
+            current_user_id,
+            db
+        )
+
+'''gets all users statements'''
+@router.get("/")
+async def get_all_statement(
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await get_all_statements_service(
             current_user_id,
             db
         )

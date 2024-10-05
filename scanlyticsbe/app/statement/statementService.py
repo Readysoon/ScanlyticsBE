@@ -7,9 +7,6 @@ from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 
 from scanlyticsbe.app.statement.statementSchema import Statement
 
-'''write_statement_service, initialize_statements_service, get_statements_by_categories_service, '''
-'''get_statement_service, update_statement_service, delete_or_reset_statement_service'''
-
 async def write_statement_service(statementin, current_user_id, db):
     try:
         try:
@@ -82,7 +79,7 @@ async def initialize_statements_service(db):
                         if not query_result[0]['result'] and statement_instance.section:
                             await write_statement_service(statement_instance, "User:1", db)
 
-'''WORKS'''
+'''test again with new "AND" in search string'''
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
@@ -96,17 +93,17 @@ async def search_statements_service(searchin, current_user_id, db):
             # elongate the update_string
             if text:
                 '''Do the sql/surreal text search magic here (instead of just this simple version)'''
-                search_string += f"text = '{text}', "
+                search_string += f"text = '{text}' AND "
             if section:
-                search_string += f"section = '{section}', "
+                search_string += f"section = '{section}' AND "
             if body_part:
-                search_string += f"body_part = '{body_part}', "
+                search_string += f"body_part = '{body_part}' AND "
             if medical_condition:
-                search_string += f"medical_condition = '{medical_condition}', "
+                search_string += f"medical_condition = '{medical_condition}' AND "
             if modality:
-                search_string += f"modality = '{modality}', "
+                search_string += f"modality = '{modality}' AND "
             
-            search_string = search_string[:-2]
+            search_string = search_string[:-5]
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Search-string creation failed: {e}")
@@ -146,14 +143,38 @@ async def get_statement_service(statement_id, current_user_id, db):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this statement.")
         
         result_without_status = query_result[0]['result']
   
         return ReturnAccessTokenService(current_user_id), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
+    
+'''WORKS'''
+async def get_all_statements_service(current_user_id, db):
+    try:
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM Statement "
+                f"WHERE user_owner = '{current_user_id}';"
+            )
+            DatabaseResultService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+        
+        if not query_result[0]['result']:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this user.")
+        
+        result_without_status = query_result[0]['result']
+  
+        return ReturnAccessTokenService(current_user_id), result_without_status
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
+
     
 '''WORKS'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
@@ -203,15 +224,17 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
 
-'''TO BE written'''
+'''implement checking if deletion worked'''
+'''implement removing all additional texts in arrays when deleting a scanlytics statement'''
 async def delete_or_reset_statement_service(statement_id, current_user_id, db):
     try:
         try: 
             query_result = await db.query(
-                f"SELECT * FROM Statement "
-                f"WHERE id = 'Statement:{statement_id}' "
-                f"AND user_owner = {current_user_id} "
-                f"OR user_owner = 'User:1';"
+                f"DELETE ("
+                f"SELECT * FROM "
+                f"Statement WHERE "
+                f"id = Statement:{statement_id} "
+                f"AND user_owner = '{current_user_id}');"
             )
 
             DatabaseResultService(query_result)
@@ -219,13 +242,10 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
-        
-        result_without_status = query_result[0]['result'][0]
+        result_without_status = query_result[0]['result']
   
         return ReturnAccessTokenService(current_user_id), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"delete_or_reset_statement_service: {e}")  
 
