@@ -39,7 +39,7 @@ async def get_note(
             db
         )
 
-@router.get("/{patient_id}")
+@router.get("/patient/{patient_id}")
 async def get_all_notes_by_patient_id(
         patient_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
@@ -69,12 +69,12 @@ async def update_note(
 @router.delete("/{note_id}")
 async def delete_note(
         note_id: str,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDService)
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
     return await DeleteNoteService(
             note_id,
-            db,
-            current_user_id
+            current_user_id,
+            db
         )
 

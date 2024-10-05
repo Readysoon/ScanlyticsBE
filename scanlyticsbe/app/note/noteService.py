@@ -30,6 +30,7 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"CreateNoteService: {e}")
 
+'''untested'''
 async def GetNoteByID(note_id, current_user_id, db):
     try:
         try:
@@ -53,7 +54,8 @@ async def GetNoteByID(note_id, current_user_id, db):
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetNoteByID: {e}")
-    
+
+'''untested'''
 async def GetAllNotesByPatientID(patient_id, current_user_id, db):
     try:
         try:
@@ -78,48 +80,67 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllNotesByPatientID: {e}")
 
-async def UpdateNoteService():
+
+'''find a solution for updating patient properly, maybe doctor just has to delete it?'''
+'''untested'''
+async def UpdateNoteService(note_in, note_id, current_user_id, db):
     try:
         try:
-            # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
+            symptoms = note_in.symptoms
+            diagnosis = note_in.diagnosis
+            treatment = note_in.treatment
+            severity = note_in.severity
+            is_urgent = note_in.is_urgent
+            patient = note_in.patient
+            set_string = "SET "
+
+            # elongate the update_string
+            if symptoms:
+                set_string += f"symptoms = '{symptoms}', "
+            if diagnosis:
+                set_string += f"diagnosis = '{diagnosis}', "
+            if treatment:
+                set_string += f"treatment = '{treatment}', "
+            if severity:
+                set_string += f"severity = '{severity}', "
+            if is_urgent:
+                set_string += f"is_urgent = '{is_urgent}', "
+            if patient:
+                set_string += f"patient = '{patient}', "
+            
+            set_string = set_string[:-2]
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")
+        
+        try:
+            # and finally put everything together and send it
             query_result = await db.query(
-                f"SELECT * FROM (("
-                f"RELATE ("
-                f"CREATE Patient SET name = '{patientin.patient_name}', "
-                f"date_of_birth = '{patientin.date_of_birth}', "
-                f"gender = '{patientin.gender}', "
-                f"contact_number = '{patientin.contact_number}', "
-                f"address = '{patientin.address}'"
-                f")->Treated_By->{current_user_id}"
-                f").in)[0];"
-            )
+                    f"UPDATE ("
+                    f"SELECT * FROM PatientNote "
+                    f"WHERE id = 'PatientNote:{note_id}' "
+                    f"AND user_owner = {current_user_id}"
+                    f") {set_string};"
+                )
 
             DatabaseResultService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
         result_without_status = query_result[0]['result']
         
         return ReturnAccessTokenService(current_user_id), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
     
-async def DeleteNoteService():
+'''untested''' 
+async def DeleteNoteService(note_id, current_user_id, db):
     try:
         try:
-            # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
             query_result = await db.query(
-                f"SELECT * FROM (("
-                f"RELATE ("
-                f"CREATE Patient SET name = '{patientin.patient_name}', "
-                f"date_of_birth = '{patientin.date_of_birth}', "
-                f"gender = '{patientin.gender}', "
-                f"contact_number = '{patientin.contact_number}', "
-                f"address = '{patientin.address}'"
-                f")->Treated_By->{current_user_id}"
-                f").in)[0];"
+                
             )
 
             DatabaseResultService(query_result)
@@ -132,6 +153,6 @@ async def DeleteNoteService():
         return ReturnAccessTokenService(current_user_id), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
 
 

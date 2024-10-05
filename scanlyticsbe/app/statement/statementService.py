@@ -242,9 +242,9 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        result_without_status = query_result[0]['result']
-  
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        '''how to return access token here?'''
+        if query_result[0] == '':
+            return HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"delete_or_reset_statement_service: {e}")  

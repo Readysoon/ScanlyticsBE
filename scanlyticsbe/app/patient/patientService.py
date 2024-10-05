@@ -140,6 +140,7 @@ async def GetAllPatientsByUserID(current_user_id, db):
 # Tested: Deleting the Patient automatically deletes the Treated_By relation too
 '''insert db check afterwards if the patient was actually deleted'''
 '''insert check with output that shows the user if they can delete this patient'''
+'''add Note deletion'''
 async def DeletePatientService(patient_id, db, current_user_id):
     try:
         # Delete Images
