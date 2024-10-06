@@ -15,19 +15,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
 
-
-'''	1.	Login
-	2.	Logout
-	3.	Register/Signup
-	4.	Password reset
-	5.	Email verification
-	6.	Two-factor authentication
-	7.	OAuth/Social login
-	8.	Refresh token
-'''
-
-
-
 # print(data)
 # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
 #
