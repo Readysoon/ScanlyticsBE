@@ -223,6 +223,29 @@ async def LoginService(db, user_data):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
     
+async def update_password_service(password, current_user_id, db):
+    hashed_password = pwd_context.hash(password.password)
+    try:
+        try:
+            query_result = await db.query(
+                    f"UPDATE ("
+                    f"SELECT id "
+                    f"FROM User WHERE "
+                    f"id = '{current_user_id}') "
+                    f"SET password = '{hashed_password}';"
+                )
+            
+            DatabaseResultService(query_result)
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+        
+        print(query_result)
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
+    
 async def ValidateService(current_user_id, db):
     try:
         try:

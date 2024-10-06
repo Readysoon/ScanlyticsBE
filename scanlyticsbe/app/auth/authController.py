@@ -5,8 +5,8 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import OrgaSignup, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService
-from .authSchema import Login, Token
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, update_password_service
+from .authSchema import Login, Token, Password
 
 
 '''	1.	Login
@@ -73,6 +73,18 @@ async def login(
     return await LoginService(
             db,
             user_data
+        )
+
+@router.patch("/password")
+async def update_password(
+        password: Password,
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
+    ):
+    return await update_password_service(
+             password,
+             current_user_id,
+             db
         )
 
 @router.post("/validate")

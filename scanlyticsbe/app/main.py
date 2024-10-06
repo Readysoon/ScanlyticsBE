@@ -7,7 +7,6 @@ import logging
 
 # from db.seeds import seeddoc2patients
 from scanlyticsbe.app.db.models import initializedb
-from scanlyticsbe.app.statement.statementService import initialize_statements_service
 
 from scanlyticsbe.app.db.surrealdbController import router as surrealdb_router
 from scanlyticsbe.app.user.userController import router as user_router
@@ -17,6 +16,7 @@ from scanlyticsbe.app.report.reportController import router as report_router
 from scanlyticsbe.app.image.imageController import router as image_router
 from scanlyticsbe.app.statement.statementController import router as statement_router
 from scanlyticsbe.app.note.noteController import router as note_router
+from scanlyticsbe.app.email.emailController import router as email_router
 
 
 
@@ -33,6 +33,7 @@ app.include_router(report_router)
 app.include_router(image_router)
 app.include_router(statement_router)
 app.include_router(note_router)
+app.include_router(email_router)
 
 
 '''to make initialize_statements_service work it needs db as a parameter'''

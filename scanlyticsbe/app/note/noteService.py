@@ -30,7 +30,7 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"CreateNoteService: {e}")
 
-'''untested'''
+'''works'''
 async def GetNoteByID(note_id, current_user_id, db):
     try:
         try:
@@ -55,7 +55,7 @@ async def GetNoteByID(note_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetNoteByID: {e}")
 
-'''untested'''
+'''works'''
 async def GetAllNotesByPatientID(patient_id, current_user_id, db):
     try:
         try:
@@ -81,8 +81,8 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllNotesByPatientID: {e}")
 
 
-'''find a solution for updating patient properly, maybe doctor just has to delete it?'''
-'''untested'''
+'''find a solution for updating parameter "patient" properly, maybe doctor just has to delete it?'''
+'''Works - except for when wrong parameter was given'''
 async def UpdateNoteService(note_in, note_id, current_user_id, db):
     try:
         try:
@@ -135,12 +135,20 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
     
-'''untested''' 
+    
+'''works but unfinished''' 
 async def DeleteNoteService(note_id, current_user_id, db):
     try:
+        # try:
+        #     # search before deletion
+        # except: 
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         try:
             query_result = await db.query(
-                
+                f"DELETE ("
+                f"SELECT * FROM PatientNote "
+                f"WHERE id = PatientNote:{note_id} "
+                f"AND user_owner = {current_user_id})"
             )
 
             DatabaseResultService(query_result)
@@ -148,9 +156,7 @@ async def DeleteNoteService(note_id, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenService(current_user_id)
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
