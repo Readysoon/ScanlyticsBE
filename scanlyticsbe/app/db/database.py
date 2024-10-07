@@ -45,7 +45,6 @@ async def get_db():
 # ]
 '''handling those now with the if not line?'''
 def DatabaseResultService(query_result):
-    print(query_result)
     if not query_result[0]['result']:
         # or return NONE => explore the two options
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Empty Result List: {query_result}")

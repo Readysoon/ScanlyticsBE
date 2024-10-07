@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 import logging
 
 '''implement access rights '''
-'''body_type'''
+'''body_type -> Report still needs to be fixed'''
 '''Options for user roles'''
 
 async def initializedb():

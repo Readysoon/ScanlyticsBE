@@ -79,7 +79,26 @@ async def initialize_statements_service(db):
                         if not query_result[0]['result'] and statement_instance.section:
                             await write_statement_service(statement_instance, "User:1", db)
 
-'''test again with new "AND" in search string'''
+
+async def get_last_statement_text_element(statement_id, db):
+    try:
+        query_result = await db.query(
+            f"RETURN array::len(("
+            f"SELECT text FROM "
+            f"Statement WHERE "
+            f"id = '{statement_id}'"
+            f")[0]['text']);"
+        )
+
+        DatabaseResultService(query_result)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"get_last_statement_text_element: {e}")
+    
+    last_list_element = query_result[0]['result'] - 1
+    
+    return last_list_element
+
+
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
@@ -107,16 +126,16 @@ async def search_statements_service(searchin, current_user_id, db):
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Search-string creation failed: {e}")
-        
+               
         try:
             query_result = await db.query(
-                f"SELECT * FROM Statement "
+                f"SELECT id FROM Statement "
                 f"WHERE {search_string} AND "
                 f"(user_owner = '{current_user_id}' OR "
                 f"user_owner = 'User:1');"
             )
 
-            DatabaseResultService(query_result)
+            last_element_number = get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -140,10 +159,23 @@ async def get_statement_service(statement_id, current_user_id, db):
             DatabaseResultService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work. {e}")
         
         if not query_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this statement.")
+        
+        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+
+        try: 
+            query_result = await db.query(
+                # f"SELECT text[{last_element_number}-1],* FROM Statement "
+                f"SELECT text[{last_element_number}],* FROM Statement "
+                f"WHERE id = '{query_result[0]['result'][0]['id']}';"
+            )
+            DatabaseResultService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
         
         result_without_status = query_result[0]['result']
   

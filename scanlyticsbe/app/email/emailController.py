@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from pydantic import EmailStr, BaseModel
-from typing import List
 import os
+
+from scanlyticsbe.app.email.emailSchema import EmailSchema
 
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")

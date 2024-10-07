@@ -15,12 +15,6 @@ DEFINE FIELD in ON treated_by TYPE record(doctor);
 DEFINE FIELD out ON treated_by TYPE record(patient);
 --
 
-for cascade deletion implement this:
---
-DEFINE EVENT doctor_deleted ON TABLE User WHEN $event == "DELETE" THEN (
-    DELETE Patient WHERE doctor == $before.id
-);
---
 => impletent deletion controll (admin approves deletion of patients, reports)
 => access controll across an organization
 

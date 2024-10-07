@@ -40,7 +40,7 @@ async def initialize_statements(
         )
 
 '''gets scanlytics statements by categories and user statements by categories'''
-@router.get("/categories")
+@router.get("/search")
 async def search_statements(
         searchin: Statement,
         current_user_id = Depends(GetCurrentUserIDService),

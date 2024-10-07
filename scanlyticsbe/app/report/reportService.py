@@ -166,7 +166,6 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllReportsByPatientIDService: {e}")
     
 
-'''delete Report Service'''
 '''add Report deletion to patient deletion'''
 async def DeleteReportService(report_id, current_user_id, db):
     try:
