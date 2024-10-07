@@ -146,7 +146,7 @@ async def search_statements_service(searchin, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
     
-'''works'''
+'''works with last array elements'''
 async def get_statement_service(statement_id, current_user_id, db):
     try:
         try: 
@@ -184,7 +184,7 @@ async def get_statement_service(statement_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
     
-'''to be adapted to return last text elements'''
+'''works with last array elements'''
 async def get_all_statements_service(current_user_id, db):
     try:
         try: 
@@ -201,14 +201,31 @@ async def get_all_statements_service(current_user_id, db):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this user.")
         
         result_without_status = query_result[0]['result']
+
+        result_list = []
+
+        for result_dict in result_without_status:
+            array_last_element = len(result_dict['text']) - 1
+            try: 
+                query_result = await db.query(
+                    f"SELECT text[{array_last_element}], * "
+                    f"FROM Statement WHERE "
+                    f"id = {result_dict['id']};"
+                )
+                DatabaseResultService(query_result)
+                
+                result_list.append(query_result[0]['result'][0])
+    
+            except Exception as e: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
   
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenService(current_user_id), result_list
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
 
     
-'''to be adapted to return last text elements'''
+'''works with list functionality'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
     try:
         try:
