@@ -98,7 +98,7 @@ async def get_last_statement_text_element(statement_id, db):
     
     return last_list_element
 
-
+'''to be adapted to return last text elements'''
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
@@ -168,9 +168,9 @@ async def get_statement_service(statement_id, current_user_id, db):
 
         try: 
             query_result = await db.query(
-                # f"SELECT text[{last_element_number}-1],* FROM Statement "
-                f"SELECT text[{last_element_number}],* FROM Statement "
-                f"WHERE id = '{query_result[0]['result'][0]['id']}';"
+                f"SELECT text[{last_element_number}],* "
+                f"FROM Statement WHERE "
+                f"id = '{query_result[0]['result'][0]['id']}';"
             )
             DatabaseResultService(query_result)
             
@@ -184,7 +184,7 @@ async def get_statement_service(statement_id, current_user_id, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
     
-'''WORKS'''
+'''to be adapted to return last text elements'''
 async def get_all_statements_service(current_user_id, db):
     try:
         try: 
@@ -208,7 +208,7 @@ async def get_all_statements_service(current_user_id, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
 
     
-'''WORKS'''
+'''to be adapted to return last text elements'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
     try:
         try:
@@ -250,8 +250,23 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+    
+        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+
+        try: 
+            query_result = await db.query(
+                f"SELECT text[{last_element_number}],* "
+                f"FROM Statement WHERE "
+                f"id = '{query_result[0]['result'][0]['id']}';"
+            )
+            DatabaseResultService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+        result_without_status = query_result[0]['result']
+  
+        return ReturnAccessTokenService(current_user_id), result_without_status
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
