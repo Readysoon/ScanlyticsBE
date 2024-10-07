@@ -134,11 +134,28 @@ async def search_statements_service(searchin, current_user_id, db):
                 f"(user_owner = '{current_user_id}' OR "
                 f"user_owner = 'User:1');"
             )
-
-            last_element_number = get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
-            
+            print(search_string)
+            print(current_user_id)
+            print(query_result)
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+
+        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+
+        try: 
+            query_result = await db.query(
+                f"SELECT text[{last_element_number}],* "
+                f"FROM Statement WHERE "
+                f"id = '{query_result[0]['result'][0]['id']}';"
+            )
+            DatabaseResultService(query_result)
+            
+        except Exception as e: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
+        
+        result_without_status = query_result[0]['result']
+
+        return ReturnAccessTokenService(current_user_id), result_without_status
         
         # add or remove '[0]' for multiple results
         return ReturnAccessTokenService(current_user_id), query_result[0]['result']
@@ -256,17 +273,17 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
         try:
             # and finally put everything together and send it
             query_result = await db.query(
-                    f"UPDATE ("
-                    f"SELECT * FROM Statement "
-                    f"WHERE id = 'Statement:{statement_id}' "
-                    f"AND user_owner = {current_user_id}"
-                    f") {set_string};"
+                f"UPDATE ("
+                f"SELECT * FROM Statement WHERE "
+                f"id = 'Statement:{statement_id}' "
+                f"AND user_owner = '{current_user_id}'"
+                f") {set_string};"
                 )
 
             DatabaseResultService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work: {e}")
     
         last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
 
