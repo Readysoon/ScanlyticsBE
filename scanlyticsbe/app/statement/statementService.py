@@ -98,7 +98,7 @@ async def get_last_statement_text_element(statement_id, db):
     
     return last_list_element
 
-'''to be adapted to return last text elements'''
+'''works with last array elements'''
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
@@ -129,36 +129,35 @@ async def search_statements_service(searchin, current_user_id, db):
                
         try:
             query_result = await db.query(
-                f"SELECT id FROM Statement "
+                f"SELECT * FROM Statement "
                 f"WHERE {search_string} AND "
                 f"(user_owner = '{current_user_id}' OR "
                 f"user_owner = 'User:1');"
             )
-            print(search_string)
-            print(current_user_id)
-            print(query_result)
+
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
-
-        try: 
-            query_result = await db.query(
-                f"SELECT text[{last_element_number}],* "
-                f"FROM Statement WHERE "
-                f"id = '{query_result[0]['result'][0]['id']}';"
-            )
-            DatabaseResultService(query_result)
-            
-        except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
-        
         result_without_status = query_result[0]['result']
 
-        return ReturnAccessTokenService(current_user_id), result_without_status
-        
-        # add or remove '[0]' for multiple results
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        result_list = []
+
+        for result_dict in result_without_status:
+            array_last_element = len(result_dict['text']) - 1
+            try: 
+                query_result = await db.query(
+                    f"SELECT text[{array_last_element}], * "
+                    f"FROM Statement WHERE "
+                    f"id = {result_dict['id']};"
+                )
+                DatabaseResultService(query_result)
+                
+                result_list.append(query_result[0]['result'][0])
+    
+            except Exception as e: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+  
+        return ReturnAccessTokenService(current_user_id), result_list
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
