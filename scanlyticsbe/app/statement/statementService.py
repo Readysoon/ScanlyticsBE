@@ -244,6 +244,7 @@ async def get_all_statements_service(current_user_id, db):
 '''works with list functionality'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
     try:
+        # collect the update information
         try:
             section = statementin.section
             body_part = statementin.body_part
@@ -269,21 +270,58 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")
         
-        try:
-            # and finally put everything together and send it
-            query_result = await db.query(
-                f"UPDATE ("
-                f"SELECT * FROM Statement WHERE "
-                f"id = 'Statement:{statement_id}' "
-                f"AND user_owner = '{current_user_id}'"
-                f") {set_string};"
-                )
+        # determine the statement owner
+        statement_owner = await db.query(
+            f"(SELECT user_owner FROM Statement WHERE "
+            f"id = 'Statement:{statement_id}' "
+            f"AND user_owner = 'User:1'"
+            f")[0][user_owner];"
+            )
+        
+        # if its a Scanlytics Statement you can only edit the text
+        if statement_owner == "User:1":
+            if section or body_part or medical_condition or modality:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to edit other parameters than 'text' in Scanlytics statements.")
+            if text: 
+                try:
+                    # and finally put everything together and send it
+                    query_result = await db.query(
+                        f"UPDATE ("
+                        f"SELECT * FROM Statement WHERE "
+                        f"id = 'Statement:{statement_id}' "
+                        f"AND user_owner = 'User:1'"
+                        f") SET '{text}';"
+                        )
 
-            DatabaseResultService(query_result)
-            
-        except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work: {e}")
-    
+                    DatabaseResultService(query_result)
+
+                except Exception as e: 
+                    if not query_result[0]['result']:
+                        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You are either not authorized to edit the Statement or it doesnt exist.")
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation for updating Scanlytics statement didnt work: {e}")
+            else: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="You need to enter something.")
+        
+        # otherwise you can update your own statement how you wish
+        else: 
+            try:
+                # and finally put everything together and send it
+                query_result = await db.query(
+                    f"UPDATE ("
+                    f"SELECT * FROM Statement WHERE "
+                    f"id = 'Statement:{statement_id}' "
+                    f"AND user_owner = '{current_user_id}'"
+                    f") {set_string};"
+                    )
+
+                DatabaseResultService(query_result)
+                
+            except Exception as e: 
+                if not query_result[0]['result']:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You are either not authorized to edit the Statement or it doesnt exist.")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation for Updating your own didnt work: {e}")
+
+        # return the Statement only displaying the last text in the array
         last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
 
         try: 
@@ -310,11 +348,12 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
     try:
         try: 
             query_result = await db.query(
-                f"DELETE ("
                 f"SELECT * FROM "
                 f"Statement WHERE "
                 f"id = Statement:{statement_id} "
-                f"AND user_owner = '{current_user_id}');"
+                f"AND ("
+                f"user_owner = '{current_user_id}' "
+                f"OR user_ownder = 'User:1');"
             )
 
             DatabaseResultService(query_result)
@@ -322,9 +361,50 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
+        if query_result[0]['result'][0]['user_owner'] == 'User:1':
+
+            # get the number of the last element
+
+            last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+
+            # iterate backwards to delete each element from the list 
+
+            current_last_number = last_element_number
+
+            while current_last_number > 0:
+
+                query_result = await db.query(
+                f"RETURN array::remove(("
+                f"SELECT text FROM "
+                f"Statement WHERE "
+                f"id = '{statement_id}'"
+                f")[0]['text'], {current_last_number});"
+                )
+
+                current_last_number - 1
+
+            '''under construction'''
+
+            return ReturnAccessTokenService(current_user_id), 
+    
+
+        # try: 
+        #     query_result = await db.query(
+        #         f"DELETE ("
+        #         f"SELECT * FROM "
+        #         f"Statement WHERE "
+        #         f"id = Statement:{statement_id} "
+        #         f"AND user_owner = '{current_user_id}');"
+        #     )
+# 
+        #     DatabaseResultService(query_result)
+        #     
+        # except Exception as e: 
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+        
         '''how to return access token here?'''
         if query_result[0] == '':
-            return HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
+            return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully.")
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"delete_or_reset_statement_service: {e}")  
