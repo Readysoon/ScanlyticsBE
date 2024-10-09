@@ -38,16 +38,10 @@ async def get_db():
         logging.info("Closed SurrealDB connection")
 
 
-'''handle those empty results for when nothing was found'''
-# [
-#     null,
-#     []
-# ]
-'''handling those now with the if not line?'''
 def DatabaseResultService(query_result):
     if not query_result[0]['result']:
         # or return NONE => explore the two options
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Empty Result List: {query_result}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No Result found.")
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DatabaseResultService: Status == 'ERR': {result}")

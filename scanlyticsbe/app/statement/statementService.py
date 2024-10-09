@@ -354,66 +354,83 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
     
 
-
 '''check: implement checking if deletion worked'''
 '''implement removing all additional texts in arrays when deleting a scanlytics statement'''
 async def delete_or_reset_statement_service(statement_id, current_user_id, db):
     try:
         try: 
             query_result = await db.query(
-                f"SELECT * FROM "
-                f"Statement WHERE "
+                f"SELECT * FROM Statement WHERE "
                 f"id = Statement:{statement_id} "
                 f"AND ("
                 f"user_owner = '{current_user_id}' "
-                f"OR user_ownder = 'User:1');"
+                f"OR user_owner = 'User:1');"
             )
 
             DatabaseResultService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Determining the user didnt work: {e}")
         
-        if query_result[0]['result'][0]['user_owner'] == 'User:1':
-
-            last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
-
-            current_last_number = last_element_number
-
-            while current_last_number > 0:
-
+        statement_owner = query_result[0]['result'][0]['user_owner']
+        
+        if statement_owner == 'User:1':
+            try: 
+                # update with update way of doing it 
                 query_result = await db.query(
-                f"RETURN array::remove(("
-                f"SELECT text FROM "
-                f"Statement WHERE "
-                f"id = '{statement_id}'"
-                f")[0]['text'], {current_last_number});"
+                    f"UPDATE ("
+                    f"SELECT * FROM "
+                    f"Statement WHERE "
+                    f"id = 'Statement:{statement_id}'"
+                    f") SET text = ['{query_result[0]['result'][0]['text'][0]}'];"
                 )
 
-                current_last_number - 1
+                DatabaseResultService(query_result)
 
-            '''under construction'''
+            except: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
 
-            return ReturnAccessTokenService(current_user_id), query_result
+            try: 
+                try:
+                    query_result = await db.query(
+                        f"RETURN array::len(("
+                        f"SELECT text "
+                        f"FROM Statement "
+                        f"WHERE id = 'Statement:{statement_id}'"
+                        f")[0]['text']);"
+                    )
+
+                    DatabaseResultService(query_result)
+
+                    len_text_array = query_result[0]['result']
+                except Exception as e:
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
+
+                if len_text_array == 1:
+                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully."), ReturnAccessTokenService(current_user_id)
+                else:
+                    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="len_text_array is not 1"), query_result
+
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Determining successful deletion didnt work: {e}")
     
+        else: 
+            try: 
+                query_result = await db.query(
+                    f"DELETE ("
+                    f"SELECT * FROM "
+                    f"Statement WHERE "
+                    f"id = Statement:{statement_id} "
+                    f"AND user_owner = '{current_user_id}');"
+                )
 
-        # try: 
-        #     query_result = await db.query(
-        #         f"DELETE ("
-        #         f"SELECT * FROM "
-        #         f"Statement WHERE "
-        #         f"id = Statement:{statement_id} "
-        #         f"AND user_owner = '{current_user_id}');"
-        #     )
-# 
-        #     DatabaseResultService(query_result)
-        #     
-        # except Exception as e: 
-        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+                DatabaseResultService(query_result)
+                
+                if query_result[0] == '':
+                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully.")
         
-        '''how to return access token here?'''
-        if query_result[0] == '':
-            return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully.")
+            except Exception as e: 
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deleting a user Statement didnt work: {e}")
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"delete_or_reset_statement_service: {e}")  
