@@ -98,6 +98,7 @@ async def get_last_statement_text_element(statement_id, db):
     
     return last_list_element
 
+
 '''works with last array elements'''
 async def search_statements_service(searchin, current_user_id, db):
     try:
@@ -137,26 +138,35 @@ async def search_statements_service(searchin, current_user_id, db):
 
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-
-        result_without_status = query_result[0]['result']
+        
+        try: 
+            result_without_status = query_result[0]['result']
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Conversion error: {e}")
 
         result_list = []
 
-        for result_dict in result_without_status:
-            array_last_element = len(result_dict['text']) - 1
-            try: 
-                query_result = await db.query(
-                    f"SELECT text[{array_last_element}], * "
-                    f"FROM Statement WHERE "
-                    f"id = {result_dict['id']};"
-                )
-                DatabaseResultService(query_result)
-                
-                result_list.append(query_result[0]['result'][0])
+        try:
+            for result_dict in result_without_status:
+                array_last_element = len(result_dict['text']) - 1
+                try: 
+                    query_result = await db.query(
+                        f"SELECT text[{array_last_element}], * "
+                        f"FROM Statement WHERE "
+                        f"id = {result_dict['id']};"
+                    )
+                    DatabaseResultService(query_result)
+                    
+                    result_list.append(query_result[0]['result'][0])
+        
+                except Exception as e: 
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Loop error: {e}")
     
-            except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
-  
+        if not result_list:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search returned no results.")
+    
         return ReturnAccessTokenService(current_user_id), result_list
                 
     except Exception as e:
@@ -241,7 +251,7 @@ async def get_all_statements_service(current_user_id, db):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
 
     
-'''works with list functionality'''
+'''not tested after implementing User:1/other user differentation'''
 async def update_statement_service(statement_id, statementin, current_user_id, db):
     try:
         # collect the update information
@@ -272,11 +282,14 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
         
         # determine the statement owner
         statement_owner = await db.query(
-            f"(SELECT user_owner FROM Statement WHERE "
+            f"SELECT user_owner FROM Statement WHERE "
             f"id = 'Statement:{statement_id}' "
-            f"AND user_owner = 'User:1'"
-            f")[0][user_owner];"
+            f"AND (user_owner = 'User:1' "
+            f"OR user_owner = '{current_user_id}'"
+            f");"
             )
+        
+        statement_owner = statement_owner[0]['result'][0]['user_owner']
         
         # if its a Scanlytics Statement you can only edit the text
         if statement_owner == "User:1":
@@ -284,15 +297,13 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to edit other parameters than 'text' in Scanlytics statements.")
             if text: 
                 try:
-                    # and finally put everything together and send it
                     query_result = await db.query(
                         f"UPDATE ("
                         f"SELECT * FROM Statement WHERE "
-                        f"id = 'Statement:{statement_id}' "
-                        f"AND user_owner = 'User:1'"
-                        f") SET '{text}';"
+                        f"id = 'Statement:{statement_id}'"
+                        f") SET text += '{text}';"
                         )
-
+                    
                     DatabaseResultService(query_result)
 
                 except Exception as e: 
@@ -341,8 +352,10 @@ async def update_statement_service(statement_id, statementin, current_user_id, d
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
+    
 
-'''implement checking if deletion worked'''
+
+'''check: implement checking if deletion worked'''
 '''implement removing all additional texts in arrays when deleting a scanlytics statement'''
 async def delete_or_reset_statement_service(statement_id, current_user_id, db):
     try:
@@ -363,11 +376,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
         
         if query_result[0]['result'][0]['user_owner'] == 'User:1':
 
-            # get the number of the last element
-
             last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
-
-            # iterate backwards to delete each element from the list 
 
             current_last_number = last_element_number
 
@@ -385,7 +394,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
 
             '''under construction'''
 
-            return ReturnAccessTokenService(current_user_id), 
+            return ReturnAccessTokenService(current_user_id), query_result
     
 
         # try: 
