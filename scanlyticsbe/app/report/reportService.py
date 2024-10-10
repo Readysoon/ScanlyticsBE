@@ -2,29 +2,100 @@ from fastapi import HTTPException, status
 
 from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 from scanlyticsbe.app.db.database import DatabaseResultService
+from scanlyticsbe.app.statement.statementService import get_statement_service
 
 
-async def CreateReportService(patientin, reportin, current_user_id, db):
+async def CreateReportService(reportin, current_user_id, db):
     try:
+        # print(reportin.body_part)
+        # print(reportin.condition)
+        # print(reportin.report_text)
+        # print(reportin.patient_id)
+        # print(reportin.image_id_array)
+
+        text = reportin.report_text
+        index = 0
+        statement_list = []
+        statement_location_list = []
+        
+
+        while True:
+            index = text.find("[Statement:", index)
+            if index == -1:
+                break
+
+            statement_location_list.append(index)
+
+            statement_list.append(text[index+1:index+31])  
+
+            index += 1
+
+        # patient_name: Optional[str] = None
+        # date_of_birth: Optional[str] = None 
+        # gender: Optional[str] = None
+        # contact_number: Optional[str] = None
+        # address: Optional[str] = None
+
+        try:
+            patient_query_result = await db.query(
+                f"SELECT * FROM {reportin.patient_id};"
+            )
+
+            DatabaseResultService(patient_query_result)
+
+            patient_data = patient_query_result[0]['result'][0]
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Zeroth Database operation didnt work. {e}")
+        
+        text_with_replaced_statement = text
+
+        while len(statement_location_list) > 0 and len(statement_list) > 0:
+            last_statement_location = statement_location_list.pop()
+
+            last_statement = statement_list.pop()
+            only_statement_UUID = last_statement[10:]
+
+            get_statement_service_result = await get_statement_service(only_statement_UUID, current_user_id, db)
+            statement_text = get_statement_service_result[1][0]['text']
+            text_with_replaced_statement = text_with_replaced_statement[:last_statement_location] + f"{statement_text}" + text_with_replaced_statement[last_statement_location+32:]
+
+        text_with_patient_data = f"{patient_data['name']}\n{patient_data['address']}\n{patient_data['contact_number']}\n\n{text_with_replaced_statement}"
+
+        '''seperate concerns to relate after creating'''
+        '''patient has to be users'''
+        '''change in db body_type to body_part'''
         try:
             query_result = await db.query(
-                f"SELECT * FROM ("
-                f"RELATE {current_user_id}"
+                f"(RELATE {current_user_id}"
                 f"->Write_Reports->"
                 f"CREATE Report "
-                f"SET body_type = '{reportin.body_type}', "
+                f"SET body_type = '{reportin.body_part}', "
                 f"condition = '{reportin.condition}', "
                 f"report_text = '{reportin.report_text}', "
-                f"patient = 'Patient:{patientin}'"
+                f"patient = '{reportin.patient_id}'"
                 f")[0].out;"
             )
 
             DatabaseResultService(query_result)
+
+            report_id = query_result[0]['result']
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        try:
+            for image in reportin.image_id_array:
+                query_result = await db.query(
+                    f"RELATE {image}->Images_Reports_Join->{report_id}"
+                )
+
+            DatabaseResultService(query_result)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
+        
+        '''return here something proper'''
+        return ReturnAccessTokenService(current_user_id), text_with_patient_data, query_result[0]['result'][0]
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Report didnt work: {e}")

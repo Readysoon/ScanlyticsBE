@@ -14,17 +14,14 @@ router = APIRouter(
 )
 
 '''TO DO: Create reports out of text and statement and patient data'''
-
-@router.post("/{patient_id}")
+@router.post("/")
 async def create_report(
-        patient_id: str,
-        reportin: Report, 
+        report_in: Report, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await CreateReportService(
-            patient_id,
-            reportin, 
+            report_in,
             current_user_id, 
             db
         )
@@ -41,6 +38,7 @@ async def get_report(
             db
         )
 
+'''update to handle the new schema'''
 @router.patch("/{report_id}")
 async def update_report(
         reportin: Report,

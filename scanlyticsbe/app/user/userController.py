@@ -8,16 +8,16 @@ from scanlyticsbe.app.auth.authSchema import Password
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 
 
-'''	1.	Get user profile
-	2.	Update user profile
-	3.	Delete user account
-	4.	Change password (when already logged in)
-	5.	Get user preferences
-	6.	Update user preferences
-	7.	User search/listing (for admin purposes)
+'''	1.	Get user profile - done
+	2.	Update user profile - done
+	3.	Delete user account - done
+	4.	Change password (when already logged in) - done in auth
+	5.	Get user preferences -> not needed yet
+	6.	Update user preferences -> not needed yet
+	7.	User search/listing (for admin purposes) - done in  surrealist
 '''
 
-'''implement that users can give patients access to their data'''
+'''implement that users can give patients access to their data - later'''
 
 router = APIRouter(
     prefix="/user",

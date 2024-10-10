@@ -185,7 +185,7 @@ async def get_statement_service(statement_id, current_user_id, db):
             DatabaseResultService(query_result)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work. {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work (Statement:{statement_id}): {e}")
         
         if not query_result[0]['result']:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this statement.")

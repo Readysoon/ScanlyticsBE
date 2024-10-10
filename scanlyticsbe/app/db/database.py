@@ -41,7 +41,7 @@ async def get_db():
 def DatabaseResultService(query_result):
     if not query_result[0]['result']:
         # or return NONE => explore the two options
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No Result found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DatabaseResultService: No Result found.")
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DatabaseResultService: Status == 'ERR': {result}")
