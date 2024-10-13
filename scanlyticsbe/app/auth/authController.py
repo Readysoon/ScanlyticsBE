@@ -13,7 +13,7 @@ from .authSchema import Login, Token, Password
 	2.	Logout - check
 	3.	Register/Signup - check 
 	4.	Password reset - check
-	5.	Email verification - oauth needed
+	5.	Email verification - pending google workspace subscription
 	6.	Two-factor authentication - oauth needed
 	7.	OAuth/Social login - oauth needed
 	8.	Refresh token - check

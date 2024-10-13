@@ -17,7 +17,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 	5.	Get user preferences
 	6.	Update user preferences
 	7.	User search/listing (for admin purposes)
-    '''
+'''
 
 
 async def GetCurrentUserService(current_user_id, db):

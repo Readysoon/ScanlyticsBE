@@ -95,7 +95,6 @@ async def GetCurrentUserIDService(
     
     return select_user_result
 
-
 def ReturnAccessTokenService(current_user_id):
     try:
         access_token = create_access_token(data={"sub": current_user_id})
@@ -247,7 +246,6 @@ async def ValidateService(current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         
-        print(query_result)
         return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:

@@ -4,7 +4,7 @@ import os
 
 
 def create_access_token(data: dict or str, SECRET_KEY):
-    if isinstance(data, str):
+    if type(data) == str:
         # If data is a string (already a JWT), decode it first
         payload = jwt.decode(data, SECRET_KEY, algorithms=["HS256"])
         to_encode = payload.copy()

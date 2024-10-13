@@ -103,30 +103,27 @@ async def get_last_statement_text_element(statement_id, db):
 async def search_statements_service(searchin, current_user_id, db):
     try:
         try:
-            section = searchin.section
-            body_part = searchin.body_part
-            medical_condition = searchin.medical_condition
-            modality = searchin.modality
-            text = searchin.text
             search_string = ""
 
             # elongate the update_string
-            if text:
+            if searchin.text:
                 '''Do the sql/surreal text search magic here (instead of just this simple version)'''
-                search_string += f"text = '{text}' AND "
-            if section:
-                search_string += f"section = '{section}' AND "
-            if body_part:
-                search_string += f"body_part = '{body_part}' AND "
-            if medical_condition:
-                search_string += f"medical_condition = '{medical_condition}' AND "
-            if modality:
-                search_string += f"modality = '{modality}' AND "
+                search_string += f"text = '{searchin.text}' AND "
+            if searchin.section:
+                search_string += f"section = '{searchin.section}' AND "
+            if searchin.body_part:
+                search_string += f"body_part = '{searchin.body_part}' AND "
+            if searchin.medical_condition:
+                search_string += f"medical_condition = '{searchin.medical_condition}' AND "
+            if searchin.modality:
+                search_string += f"modality = '{searchin.modality}' AND "
             
             search_string = search_string[:-5]
 
+            print(search_string)
+
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Search-string creation failed: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Search-string creation failed: {e}")
                
         try:
             query_result = await db.query(
@@ -376,7 +373,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
         
         if statement_owner == 'User:1':
             try: 
-                # update with update way of doing it 
+                # reset the array to only one element with the first element
                 query_result = await db.query(
                     f"UPDATE ("
                     f"SELECT * FROM "
