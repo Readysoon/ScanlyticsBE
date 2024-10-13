@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from fastapi.responses import HTMLResponse
 
 import logging
@@ -95,11 +96,17 @@ async def landing_page(
         </body>
     </html>
     """
-
-    # print(query_result)
     return HTMLResponse(content=html_content)
 
+
+client = TestClient(app)
+
+def test_read_main():
+        response = client.get("/")
+        assert response.status_code == 200
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    

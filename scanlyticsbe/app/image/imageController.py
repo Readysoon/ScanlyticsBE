@@ -41,12 +41,7 @@ async def get_images_by_patient(
             db
         )
 
-'''
-{
-    "detail": "GetImageByID: list index out of range"
-}
-give out better error for when no result found
-'''
+
 @router.get("/{image_id}")
 async def get_image(
         image_id: str,
