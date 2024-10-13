@@ -156,16 +156,16 @@ async def OrgaSignupService(user_email, user_name, user_password, user_role, org
 
 '''A user can only join an organization if the owner acccepts'''  
 # Organization:1 is for all doctors without an practice
-async def UserSignupService(user_email, user_name, user_password, user_role, db):
-    hashed_password = pwd_context.hash(user_password)
+async def UserSignupService(user_in, db):
+    hashed_password = pwd_context.hash(user_in.user_password)
     try:
         try:
             query_result = await db.query(
                     f"CREATE User Set "
-                    f"email = '{user_email}', "
-                    f"name = '{user_name}', "
+                    f"email = '{user_in.user_email}', "
+                    f"name = '{user_in.user_name}', "
                     f"password = '{hashed_password}', "
-                    f"role = '{user_role}', "
+                    f"role = '{user_in.user_role}', "
                     f"organization = Organization:1"
                 )
             

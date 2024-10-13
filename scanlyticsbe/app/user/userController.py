@@ -14,7 +14,7 @@ from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
 	4.	Change password (when already logged in) - done in auth
 	5.	Get user preferences -> not needed yet
 	6.	Update user preferences -> not needed yet
-	7.	User search/listing (for admin purposes) - done in  surrealist
+	7.	User search/listing (for admin purposes) - can do in surrealist
 '''
 
 '''implement that users can give patients access to their data - later'''

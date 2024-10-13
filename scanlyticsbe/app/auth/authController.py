@@ -54,14 +54,11 @@ async def orga_signup(
 
 @router.post("/user_signup", response_model=Token)
 async def user_signup(
-        userin: User,
+        user_in: User,
         db: Surreal = Depends(get_db)
     ):
     return await UserSignupService(
-            userin.user_email, 
-            userin.user_name, 
-            userin.user_password, 
-            userin.user_role,
+            user_in,
             db
         )
 
