@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends
 from surrealdb import Surreal
+from fastapi import APIRouter, Depends
 
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.auth.authService import GetCurrentUserIDService
@@ -25,7 +25,6 @@ async def create_patient(
             db
         )
 
-# rename this to something more checking if a patient is actually a user's
 @router.get("/{patient_id}")
 async def get_patient(
         patient_id: str,
@@ -52,8 +51,8 @@ async def get_all_patients(
 async def update_patient(
         patientin: CreatePatient,
         patient_id: str,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDService)
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
     return await UpdatePatientService(
             patientin, 

@@ -43,8 +43,8 @@ async def get_report(
 async def update_report(
         reportin: Report,
         report_id: str,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDService)
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
     return await UpdateReportService(
             reportin,
@@ -75,5 +75,4 @@ async def delete_patient(
             report_id,
             current_user_id,
             db
-                
         )

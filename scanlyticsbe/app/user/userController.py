@@ -39,8 +39,8 @@ async def get_user(
 @router.patch("/")
 async def patch_user(
         userin: User,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDService)
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
     return await PatchUserService(
             userin, 

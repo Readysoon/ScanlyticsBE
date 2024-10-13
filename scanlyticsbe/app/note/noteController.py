@@ -55,8 +55,8 @@ async def get_all_notes_by_patient_id(
 async def update_note(
         note_in: Note,
         note_id: str,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDService)
+        current_user_id = Depends(GetCurrentUserIDService),
+        db: Surreal = Depends(get_db)
     ):
     return await UpdateNoteService(
             note_in, 

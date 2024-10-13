@@ -3,7 +3,7 @@ from pydantic.networks import EmailStr
 from surrealdb import Surreal
 
 from scanlyticsbe.app.db.database import get_db
-from scanlyticsbe.app.user.userSchema import OrgaSignup, User
+from scanlyticsbe.app.user.userSchema import UserOrga, User
 
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, update_password_service
 from .authSchema import Login, Token, Password
@@ -38,7 +38,7 @@ async def check_mail(
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=Token)
 async def orga_signup(
-        user_in: OrgaSignup, 
+        user_in: UserOrga, 
         db: Surreal = Depends(get_db)
     ):
     return await OrgaSignupService(

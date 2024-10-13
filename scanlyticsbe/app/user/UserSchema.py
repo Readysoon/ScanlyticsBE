@@ -1,22 +1,17 @@
 from pydantic import BaseModel, EmailStr
 
-class OrgaSignup(BaseModel):
-    user_email: EmailStr
-    user_name: str
-    user_password: str
-    user_role: str
-    orga_address: str
-    orga_email: EmailStr
-    orga_name: str
-
 '''unused so far'''
+'''question to Fabio: does this make sense or can i write it per class duplicate?'''
 class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str
 
-class User(BaseModel):
-    user_email: EmailStr
+class User(UserSimple):
     user_name: str
-    user_password: str
     user_role: str
+
+class UserOrga(User):
+    orga_address: str
+    orga_email: EmailStr
+    orga_name: str
 
