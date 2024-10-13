@@ -38,17 +38,11 @@ async def check_mail(
 # first user of a organization has to sign up for the organization too
 @router.post("/orga_signup", response_model=Token)
 async def orga_signup(
-        userin: OrgaSignup, 
+        user_in: OrgaSignup, 
         db: Surreal = Depends(get_db)
     ):
     return await OrgaSignupService(
-            userin.user_email, 
-            userin.user_name, 
-            userin.user_password, 
-            userin.user_role,
-            userin.orga_address,
-            userin.orga_email,
-            userin.orga_name,
+            user_in,
             db
         )
 
@@ -68,8 +62,8 @@ async def login(
         db: Surreal = Depends(get_db)
     ):
     return await LoginService(
-            db,
-            user_data
+            user_data,
+            db
         )
 
 @router.patch("/password")

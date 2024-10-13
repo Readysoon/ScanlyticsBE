@@ -124,22 +124,21 @@ async def CheckMailService(user_email, db):
 
 # an user can only exist within an organization -> the first creates it, the others join
 '''logic for joining an organization has to be yet implemented'''
-async def OrgaSignupService(user_email, user_name, user_password, user_role, orga_address, orga_email, orga_name, db):
-    hashed_password = pwd_context.hash(user_password)
-    print(user_email)
+async def OrgaSignupService(user_in, db):
+    hashed_password = pwd_context.hash(user_in.user_password)
     try: 
         try:
             query_result = await db.query(
                     f"CREATE User Set "
-                    f"email = '{user_email}', "
-                    f"name = '{user_name}', "
+                    f"email = '{user_in.user_email}', "
+                    f"name = '{user_in.user_name}', "
                     f"password = '{hashed_password}', "
-                    f"role = '{user_role}', "
+                    f"role = '{user_in.user_role}', "
                     f"organization = "
                     f"((CREATE Organization Set "
-                    f"address = '{orga_address}', "
-                    f"name = '{orga_name}', "
-                    f"email = '{orga_email}'"
+                    f"address = '{user_in.orga_address}', "
+                    f"name = '{user_in.orga_name}', "
+                    f"email = '{user_in.orga_email}'"
                     f").id)[0]"
                 )
             
@@ -182,7 +181,7 @@ async def UserSignupService(user_in, db):
 
 # this takes email and password and "logs in" meaning it checks in the database 
 # if the two match and then returns the access token valid for 15 min
-async def LoginService(db, user_data):
+async def LoginService(user_data, db):
     try:
         try:
             query_result = await db.query(
