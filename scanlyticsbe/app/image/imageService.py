@@ -123,12 +123,12 @@ async def DeleteImageByID(image_id, current_user_id, db):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DeleteImageByID: {e}")
     
 
-async def UpdateImageService(Image, image_id, current_user_id, db):
+async def UpdateImageService(image_in, image_id, current_user_id, db):
         try:
             try:
-                image_name = Image.image_name
-                body_part = Image.body_part
-                modality = Image.modality
+                image_name = image_in.image_name
+                body_part = image_in.body_part
+                modality = image_in.modality
                 set_string = "SET "
 
                 # elongate the update_string

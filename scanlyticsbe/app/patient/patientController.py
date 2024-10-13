@@ -15,12 +15,12 @@ router = APIRouter(
 
 @router.post("/")
 async def create_patient(
-        patientin: CreatePatient, 
+        patient_in: CreatePatient, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await CreatePatientService(
-            patientin, 
+            patient_in, 
             current_user_id, 
             db
         )
@@ -49,13 +49,13 @@ async def get_all_patients(
 
 @router.patch("/{patient_id}")
 async def update_patient(
-        patientin: CreatePatient,
+        patient_in: CreatePatient,
         patient_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await UpdatePatientService(
-            patientin, 
+            patient_in, 
             patient_id, 
             current_user_id, 
             db

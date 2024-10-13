@@ -73,13 +73,13 @@ async def delete_image(
 
 @router.patch("/{image_id}")
 async def update_patient(
-        imagein: Image,
+        image_in: Image,
         image_id: str,
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDService)
     ):
     return await UpdateImageService(
-            imagein, 
+            image_in, 
             image_id, 
             current_user_id, 
             db

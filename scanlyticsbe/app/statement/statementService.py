@@ -7,16 +7,16 @@ from scanlyticsbe.app.auth.authService import ReturnAccessTokenService
 
 from scanlyticsbe.app.statement.statementSchema import Statement
 
-async def write_statement_service(statementin, current_user_id, db):
+async def write_statement_service(statement_in, current_user_id, db):
     try:
         try:
             query_result = await db.query(
                 f"CREATE Statement "
-                f"SET text += '{statementin.text}', "
-                f"body_part = '{statementin.body_part}', "
-                f"medical_condition = '{statementin.medical_condition}', "
-                f"modality = '{statementin.modality}', "
-                f"section = '{statementin.section}', "
+                f"SET text += '{statement_in.text}', "
+                f"body_part = '{statement_in.body_part}', "
+                f"medical_condition = '{statement_in.medical_condition}', "
+                f"modality = '{statement_in.modality}', "
+                f"section = '{statement_in.section}', "
                 f"user_owner = '{current_user_id}';"
             )
 
@@ -100,23 +100,23 @@ async def get_last_statement_text_element(statement_id, db):
 
 
 '''works with last array elements'''
-async def search_statements_service(searchin, current_user_id, db):
+async def search_statements_service(search_in, current_user_id, db):
     try:
         try:
             search_string = ""
 
             # elongate the update_string
-            if searchin.text:
+            if search_in.text:
                 '''Do the sql/surreal text search magic here (instead of just this simple version)'''
-                search_string += f"text = '{searchin.text}' AND "
-            if searchin.section:
-                search_string += f"section = '{searchin.section}' AND "
-            if searchin.body_part:
-                search_string += f"body_part = '{searchin.body_part}' AND "
-            if searchin.medical_condition:
-                search_string += f"medical_condition = '{searchin.medical_condition}' AND "
-            if searchin.modality:
-                search_string += f"modality = '{searchin.modality}' AND "
+                search_string += f"text = '{search_in.text}' AND "
+            if search_in.section:
+                search_string += f"section = '{search_in.section}' AND "
+            if search_in.body_part:
+                search_string += f"body_part = '{search_in.body_part}' AND "
+            if search_in.medical_condition:
+                search_string += f"medical_condition = '{search_in.medical_condition}' AND "
+            if search_in.modality:
+                search_string += f"modality = '{search_in.modality}' AND "
             
             search_string = search_string[:-5]
 
@@ -249,15 +249,15 @@ async def get_all_statements_service(current_user_id, db):
 
     
 '''not tested after implementing User:1/other user differentation'''
-async def update_statement_service(statement_id, statementin, current_user_id, db):
+async def update_statement_service(statement_id, statement_in, current_user_id, db):
     try:
         # collect the update information
         try:
-            section = statementin.section
-            body_part = statementin.body_part
-            medical_condition = statementin.medical_condition
-            modality = statementin.modality
-            text = statementin.text
+            section = statement_in.section
+            body_part = statement_in.body_part
+            medical_condition = statement_in.medical_condition
+            modality = statement_in.modality
+            text = statement_in.text
             set_string = "SET "
 
             # elongate the update_string

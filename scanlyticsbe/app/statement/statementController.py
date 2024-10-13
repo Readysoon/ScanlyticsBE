@@ -21,12 +21,12 @@ router = APIRouter(
 
 @router.post("/")
 async def create_statement(
-        statementin: Statement, 
+        statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await write_statement_service(
-            statementin,
+            statement_in,
             current_user_id,
             db
         )
@@ -42,12 +42,12 @@ async def initialize_statements(
 '''gets scanlytics statements by categories and user statements by categories'''
 @router.get("/search")
 async def search_statements(
-        searchin: Statement,
+        search_in: Statement,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await search_statements_service(
-            searchin,
+            search_in,
             current_user_id,
             db
         )
@@ -80,13 +80,13 @@ async def get_all_statement(
 @router.patch("/{statement_id}")
 async def update_statement(
         statement_id: str,
-        statementin: Statement, 
+        statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await update_statement_service(
             statement_id,
-            statementin,
+            statement_in,
             current_user_id,
             db
         )

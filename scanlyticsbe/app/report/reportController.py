@@ -41,13 +41,13 @@ async def get_report(
 '''update to handle the new schema'''
 @router.patch("/{report_id}")
 async def update_report(
-        reportin: Report,
+        report_in: Report,
         report_id: str,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await UpdateReportService(
-            reportin,
+            report_in,
             report_id, 
             current_user_id, 
             db
