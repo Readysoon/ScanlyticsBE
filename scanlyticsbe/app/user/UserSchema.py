@@ -1,7 +1,8 @@
 from pydantic import BaseModel, EmailStr
 
-'''unused so far'''
 '''question to Fabio: does this make sense or can i write it per class duplicate?'''
+
+'''unused so far'''
 class UserSimple(BaseModel):
     user_email: EmailStr
     user_password: str
