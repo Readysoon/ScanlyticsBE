@@ -9,6 +9,7 @@ import os
 import datetime
 
 from scanlyticsbe.app.db.database import get_db, DatabaseResultService
+from scanlyticsbe.app.email.emailService import simple_send_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -172,6 +173,11 @@ async def UserSignupService(user_in, db):
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+        
+        try:
+            await simple_send_service(user_in.user_email)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Sending the verification mail didnt work: {e}")
         
         return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
