@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from scanlyticsbe.app.db.database import get_db
 from scanlyticsbe.app.user.userSchema import UserOrga, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, update_password_service
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, update_password_service, VerificationService
 from .authSchema import Login, Token, Password
 
 
@@ -85,6 +85,16 @@ async def validate(
     ):
     return await ValidateService(
              current_user_id,
+             db
+        )
+
+@router.get("/verify/{token}")
+async def validate(
+        token: str,
+        db: Surreal = Depends(get_db)
+    ):
+    return await VerificationService(
+             token,
              db
         )
 

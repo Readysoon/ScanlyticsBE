@@ -4,12 +4,13 @@ from passlib.context import CryptContext
 from jose import jwt
 
 from fastapi.security import OAuth2PasswordBearer
+from starlette.responses import JSONResponse
 
 import os
 import datetime
 
 from scanlyticsbe.app.db.database import get_db, DatabaseResultService
-from scanlyticsbe.app.email.emailService import simple_send_service
+from scanlyticsbe.app.email.emailService import email_verification_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -54,6 +55,7 @@ def create_access_token(data: dict):
 
 
 def verify_access_token(token):
+    '''this doesnt make sense'''
     try:
         SECRET_KEY = os.getenv("secret_key")
         if SECRET_KEY == None:
@@ -96,6 +98,7 @@ async def GetCurrentUserIDService(
     
     return select_user_result
 
+# takes current_user_id only in the format without 'User:' ?! still needs to checked if actually true
 def ReturnAccessTokenService(current_user_id):
     try:
         access_token = create_access_token(data={"sub": current_user_id})
@@ -173,13 +176,18 @@ async def UserSignupService(user_in, db):
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
-        
+    
+        token = ReturnAccessTokenService(query_result[0]['result'][0]['id'])['access_token']
+    
         try:
-            await simple_send_service(user_in.user_email)
+            await email_verification_service(user_in.user_email, token)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Sending the verification mail didnt work: {e}")
         
-        return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
+        return JSONResponse(status_code=200, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
+        
+        # old version (before email verification):
+        # return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
@@ -187,11 +195,12 @@ async def UserSignupService(user_in, db):
 
 # this takes email and password and "logs in" meaning it checks in the database 
 # if the two match and then returns the access token valid for 15 min
+'''adapt to return if credentials where right but email not verified'''
 async def LoginService(user_data, db):
     try:
         try:
             query_result = await db.query(
-                    f"SELECT id, email, password "
+                    f"SELECT id, email, password, verified "
                     f"FROM User WHERE "
                     f"email = '{user_data.user_email}';"
                 )
@@ -200,6 +209,9 @@ async def LoginService(user_data, db):
             
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+        
+        if not query_result[0]['result'][0]['verified']: 
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"You have not verified your mail")
         
         if not query_result[0]['result']:
             # user not found
@@ -243,7 +255,8 @@ async def ValidateService(current_user_id, db):
             query_result = await db.query(
                     f"SELECT id "
                     f"FROM User WHERE "
-                    f"id = '{current_user_id}';"
+                    f"id = '{current_user_id}' AND "
+                    f"verified = true;"
                 )
             
             DatabaseResultService(query_result)
@@ -255,3 +268,26 @@ async def ValidateService(current_user_id, db):
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
+    
+async def VerificationService(token, db):
+    try:
+        current_user_id = verify_access_token(token)
+
+        try:
+            query_result = await db.query(
+                    f"Update ("
+                    f"SELECT * "
+                    f"FROM User WHERE "
+                    f"id = 'User:{current_user_id}'"
+                    f") SET "
+                    f"verified = true;"
+                )
+            
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+        
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id']), JSONResponse(status_code=200, content={"message": f"{query_result[0]['result'][0]['email']} has been verified"})
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"VerificationService: {e}")
+

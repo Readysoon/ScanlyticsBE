@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from scanlyticsbe.app.email.emailSchema import EmailSchema
-from scanlyticsbe.app.email.emailService import simple_send_service
+from scanlyticsbe.app.email.emailService import email_verification_service
 
 
 router = APIRouter(
@@ -14,4 +14,4 @@ router = APIRouter(
 async def simple_send(
     email: EmailSchema
     ):
-    return await simple_send_service(email)
+    return await email_verification_service(email)

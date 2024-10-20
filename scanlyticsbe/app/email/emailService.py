@@ -16,6 +16,7 @@ MAIL_STARTTLS = os.getenv("MAIL_STARTTLS")
 MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS")
 USE_CREDENTIALS = os.getenv("USE_CREDENTIALS")
 VALIDATE_CERTS = os.getenv("VALIDATE_CERTS")
+APP_URL = os.getenv("APP_URL")
 
 
 # outsource to .env
@@ -32,9 +33,12 @@ conf = ConnectionConfig(
     VALIDATE_CERTS = VALIDATE_CERTS
 )
 
-async def simple_send_service(email):
+async def email_verification_service(email, token):
     try:
-        html = """<p>Hi this test mail, thanks for using Fastapi-mail</p> """
+        html = f"""
+        <p>Hi this test mail, thanks for using Fastapi-mail</p> 
+        <a>{APP_URL}/auth/verify/{token}</a> 
+        """
 
         email_list = []
 

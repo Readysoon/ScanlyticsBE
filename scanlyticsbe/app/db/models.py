@@ -27,6 +27,8 @@ async def initializedb():
             "DEFINE FIELD name ON User TYPE string;",
             "DEFINE FIELD email ON User TYPE string ASSERT string::is::email($value);",
             "DEFINE FIELD password ON User TYPE string;",
+            # funktioniert so nicht, warum keine Ahnung...
+            "DEFINE FIELD verified ON User TYPE bool DEFAULT false;",
             "DEFINE FIELD role ON User TYPE string;",
             "DEFINE FIELD created_at ON User TYPE datetime DEFAULT time::now();",
             "DEFINE FIELD updated_at ON User TYPE datetime DEFAULT time::now() VALUE time::now();",
