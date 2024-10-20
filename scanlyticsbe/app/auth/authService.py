@@ -180,7 +180,9 @@ async def UserSignupService(user_in, db):
         token = ReturnAccessTokenService(query_result[0]['result'][0]['id'])['access_token']
     
         try:
-            await email_verification_service(user_in.user_email, token)
+            first_name = user_in.user_name.split()[0]
+
+            await email_verification_service(user_in.user_email, token, first_name)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Sending the verification mail didnt work: {e}")
         
@@ -286,7 +288,7 @@ async def VerificationService(token, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
         
-        return ReturnAccessTokenService(query_result[0]['result'][0]['id']), JSONResponse(status_code=200, content={"message": f"{query_result[0]['result'][0]['email']} has been verified"})
+        return ReturnAccessTokenService(query_result[0]['result'][0]['id']), {"message": f"{query_result[0]['result'][0]['email']} has been verified"}
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"VerificationService: {e}")

@@ -9,7 +9,7 @@ router = APIRouter(
         tags=["email"],
     )
 
-
+'''redundant route'''
 @router.post("/verify")
 async def simple_send(
     email: EmailSchema

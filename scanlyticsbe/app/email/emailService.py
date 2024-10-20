@@ -33,11 +33,26 @@ conf = ConnectionConfig(
     VALIDATE_CERTS = VALIDATE_CERTS
 )
 
-async def email_verification_service(email, token):
+async def email_verification_service(email, token, first_name):
     try:
         html = f"""
-        <p>Hi this test mail, thanks for using Fastapi-mail</p> 
-        <a>{APP_URL}/auth/verify/{token}</a> 
+        <p>Hi {first_name}, this is a test mail. Thanks for using Fastapi-mail!</p>
+        <p>Please click the button below to verify your email:</p>
+        <table width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+                <td>
+                    <table cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td style="border-radius: 2px;" bgcolor="#007BFF">
+                                <a href="{APP_URL}/auth/verify/{token}" target="_blank" style="padding: 8px 12px; border: 1px solid #007BFF;border-radius: 2px;font-family: Helvetica, Arial, sans-serif;font-size: 14px; color: #ffffff;text-decoration: none;font-weight:bold;display: inline-block;">
+                                    Verify Email
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
         """
 
         email_list = []
