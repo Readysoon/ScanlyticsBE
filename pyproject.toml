@@ -50,6 +50,7 @@ websocat = "1.13.0"
 websockets = "10.4"
 boto3 = "^1.35.28"
 fastapi-mail = "^1.4.1"
+pytest = "^8.3.3"
 
 
 [build-system]

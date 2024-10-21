@@ -33,10 +33,10 @@ conf = ConnectionConfig(
     VALIDATE_CERTS = VALIDATE_CERTS
 )
 
-async def email_verification_service(email, token, first_name):
+async def EmailVerificationService(email, token, first_name):
     try:
         html = f"""
-        <p>Hi {first_name}, this is a test mail. Thanks for using Fastapi-mail!</p>
+        <p>Hi {first_name},</p>
         <p>Please click the button below to verify your email:</p>
         <table width="100%" cellspacing="0" cellpadding="0">
             <tr>
