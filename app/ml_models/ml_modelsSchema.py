@@ -2,11 +2,14 @@ from pydantic import BaseModel, model_validator
 from typing import Optional
 
 
-class Model(BaseModel):
-    name: str
+class Model_IN(BaseModel):
+    model_name: str
+
+
+
+
+class Model_OUT(BaseModel):
+    model_name: str
     version: str
-    category: str
     link: str
-    description: Optional[str]
-
-
+    
