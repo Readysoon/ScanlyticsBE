@@ -124,6 +124,14 @@ async def initializedb():
             "DEFINE TABLE Statements_Reports_Join SCHEMAFULL;",
             "DEFINE TABLE Images_Reports_Join SCHEMAFULL;",
             "DEFINE TABLE Write_Reports SCHEMAFULL;",
+
+
+            "DEFINE TABLE models SCHEMAFULL;",
+            "DEFINE FIELD name ON TABLE models TYPE string;",
+            "DEFINE FIELD version ON TABLE models TYPE string;",
+            "DEFINE FIELD category ON TABLE models TYPE string;",
+            "DEFINE FIELD link ON TABLE models TYPE string;",
+            "DEFINE FIELD created_at ON TABLE models TYPE datetime DEFAULT time::now();"
         ]
 
         for command in surreal_command_list:
