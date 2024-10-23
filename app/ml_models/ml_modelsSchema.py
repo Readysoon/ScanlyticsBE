@@ -6,10 +6,3 @@ class Model_IN(BaseModel):
     model_name: str
 
 
-
-
-class Model_OUT(BaseModel):
-    model_name: str
-    version: str
-    link: str
-    
