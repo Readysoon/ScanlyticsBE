@@ -5,18 +5,30 @@ from starlette.responses import JSONResponse
 from fastapi import HTTPException, status
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
-
+# claude fix:
 MAIL_USERNAME = os.getenv("MAIL_USERNAME")
 MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_FROM = os.getenv("MAIL_FROM")
-MAIL_PORT = os.getenv("MAIL_PORT")
+MAIL_PORT = int(os.getenv("MAIL_PORT"))  # Convert to integer
 MAIL_SERVER = os.getenv("MAIL_SERVER")
 MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME")
-MAIL_STARTTLS = os.getenv("MAIL_STARTTLS")
-MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS")
-USE_CREDENTIALS = os.getenv("USE_CREDENTIALS")
-VALIDATE_CERTS = os.getenv("VALIDATE_CERTS")
+MAIL_STARTTLS = os.getenv("MAIL_STARTTLS") == "True"  # Convert to boolean
+MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS") == "True"  # Convert to boolean
+USE_CREDENTIALS = os.getenv("USE_CREDENTIALS") == "True"  # Convert to boolean
+VALIDATE_CERTS = os.getenv("VALIDATE_CERTS") == "True"  # Convert to boolean
 APP_URL = os.getenv("APP_URL")
+
+# MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+# MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+# MAIL_FROM = os.getenv("MAIL_FROM")
+# MAIL_PORT = os.getenv("MAIL_PORT")
+# MAIL_SERVER = os.getenv("MAIL_SERVER")
+# MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME")
+# MAIL_STARTTLS = os.getenv("MAIL_STARTTLS")
+# MAIL_SSL_TLS = os.getenv("MAIL_SSL_TLS")
+# USE_CREDENTIALS = os.getenv("USE_CREDENTIALS")
+# VALIDATE_CERTS = os.getenv("VALIDATE_CERTS")
+# APP_URL = os.getenv("APP_URL")
 
 
 # outsource to .env
