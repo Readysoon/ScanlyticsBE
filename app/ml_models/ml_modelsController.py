@@ -17,12 +17,12 @@ router = APIRouter(
 
 @router.get("/")
 async def get_model(
-        ml_model: str,
+        model_name: str,
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await GetModel(
-            ml_model, 
+            model_name, 
             current_user_id, 
             db
         )
