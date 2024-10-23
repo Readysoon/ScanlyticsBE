@@ -11,7 +11,7 @@ services:
     # - see https://chatgpt.com/share/1d06d7e0-9f0a-4d79-9668-02416b4e8c8b
     volumes:
       - ./app:/usr/src/app/app
-    command: /app/.venv/bin/uvicorn scanlyticsbe.app.main:app --host 0.0.0.0 --port 8001 --reload
+    command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     environment:
       APP_URL: http://0.0.0.0:8001
       SURREALDB_URL: ws://surrealdb:8000/rpc
