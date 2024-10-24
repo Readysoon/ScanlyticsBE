@@ -18,6 +18,7 @@ from app.statement.statementController import router as statement_router
 from app.note.noteController import router as note_router
 from app.email.emailController import router as email_router
 from app.classifier.classifierController import router as classifier_router
+from app.ml_models.ml_modelsController import router as ml_models
 
 
 
@@ -36,6 +37,7 @@ app.include_router(statement_router)
 app.include_router(note_router)
 app.include_router(email_router)
 app.include_router(classifier_router)
+app.include_router(ml_models)
 
 
 '''to make initialize_statements_service work it needs db as a parameter'''
