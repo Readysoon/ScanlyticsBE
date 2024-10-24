@@ -13,7 +13,7 @@ from .authSchema import Login, Token, Password
 	2.	Logout - check
 	3.	Register/Signup - check 
 	4.	Password reset - check
-	5.	Email verification - pending google workspace subscription
+	5.	Email verification - check (Mailchimp)
 	6.	Two-factor authentication - oauth needed
 	7.	OAuth/Social login - oauth needed
 	8.	Refresh token - check
@@ -24,7 +24,6 @@ router = APIRouter(
             tags=["auth"],
         )
 
-# first check if the mail is already in the database before entering all the other information
 @router.post("/check_mail")
 async def check_mail(
         user_email: EmailStr = Form(...),
@@ -35,7 +34,7 @@ async def check_mail(
             db
         )
 
-# first user of a organization has to sign up for the organization too
+'''first user of a organization has to sign up for the organization too'''
 @router.post("/orga_signup", response_model=Token)
 async def orga_signup(
         user_in: UserOrga, 
@@ -89,7 +88,7 @@ async def validate(
         )
 
 @router.get("/verify/{token}")
-async def validate(
+async def verify(
         token: str,
         db: Surreal = Depends(get_db)
     ):

@@ -66,7 +66,7 @@ def verify_access_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Decoding the payload didnt work: {e}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"verify_access_token: {e}")
     id: str = payload.get("sub")
     return id
 
@@ -194,10 +194,6 @@ async def UserSignupService(user_in, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
     
-
-# this takes email and password and "logs in" meaning it checks in the database 
-# if the two match and then returns the access token valid for 15 min
-'''adapt to return if credentials where right but email not verified'''
 async def LoginService(user_data, db):
     try:
         try:
@@ -210,8 +206,11 @@ async def LoginService(user_data, db):
             DatabaseResultService(query_result)
             
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-        
+            if e == "No Result found.":
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{e}")
+            else:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+            
         if not query_result[0]['result'][0]['verified']: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"You have not verified your mail")
         
@@ -226,7 +225,8 @@ async def LoginService(user_data, db):
         return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
+        raise Exception(f"LoginService: {str(e)}")
+        # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"LoginService: {e}")
     
 async def update_password_service(password, current_user_id, db):
     hashed_password = pwd_context.hash(password.password)
