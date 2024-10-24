@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from scanlyticsbe.app.seed.seedService import SeedUserService
-from scanlyticsbe.app.auth.authSchema import Token
-from scanlyticsbe.app.db.database import get_db
+from app.seed.seedService import SeedUserService
+from app.auth.authSchema import Token
+from app.db.database import get_db
 
 
 router = APIRouter(

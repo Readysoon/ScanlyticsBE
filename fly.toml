@@ -18,7 +18,7 @@ primary_region = 'ams'
 
 # Poetry stores the venv dependencies in "/app/.venv/bin/"
 [processes]
-  app = "/app/.venv/bin/uvicorn scanlyticsbe.app.main:app --host 0.0.0.0 --port 8080 --workers 1 --reload"
+  app = "/app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080 --workers 1 --reload"
 
 [[vm]]
   memory = '1gb'

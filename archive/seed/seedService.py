@@ -1,7 +1,7 @@
 from surrealdb import Surreal
-from scanlyticsbe.app.auth.authSchema import Token
-from scanlyticsbe.app.auth.authService import signup_service
-from scanlyticsbe.app.user.userSchema import UserSignup
+from app.auth.authSchema import Token
+from app.auth.authService import signup_service
+from app.user.userSchema import UserSignup
 
 async def SeedUserService(db: Surreal, response_model=Token):
     # Seed user information
