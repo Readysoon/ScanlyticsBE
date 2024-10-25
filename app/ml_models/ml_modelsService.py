@@ -20,7 +20,7 @@ def get_s3_client():
 
 s3_client = get_s3_client()
 
-async def GetModel(model_name, current_user_id, db):
+async def RetrieveModelService(model_name, current_user_id, db):
     model_name_str = model_name.model_name if hasattr(model_name, 'model_name') else model_name
     model_name_str = model_name_str.replace('.onnx', '')
     
