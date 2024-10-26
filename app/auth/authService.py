@@ -11,6 +11,7 @@ import datetime
 
 from app.db.database import get_db, DatabaseResultService
 from app.email.emailService import EmailVerificationService
+from app.error.errorService import ErrorStack
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -194,39 +195,49 @@ async def UserSignupService(user_in, db):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
     
+
 async def LoginService(user_data, db):
+    error_stack = ErrorStack()
+
     try:
         try:
             query_result = await db.query(
-                    f"SELECT id, email, password, verified "
-                    f"FROM User WHERE "
-                    f"email = '{user_data.user_email}';"
-                )
-            
-            DatabaseResultService(query_result)
-            
+                f"SELECT id, email, password, verified "
+                f"FROM User WHERE "
+                f"email = '{user_data.user_email}';"
+            )
+
+            db_exception_handler = DatabaseResultService(query_result)
+            if db_exception_handler.errors:
+                for error in db_exception_handler.errors:
+                    error_stack.add_error(error["code"], error["detail"], error.get("function"))
+                raise error_stack
+
         except Exception as e:
-            if e == "No Result found.":
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{e}")
-            else:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-            
-        if not query_result[0]['result'][0]['verified']: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"You have not verified your mail")
-        
-        if not query_result[0]['result']:
-            # user not found
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Wrong credentials")
-        
-        if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
-            # wrong password
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="wrong credentials")
-        
+            error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "Query error.", LoginService.__name__)
+
+        if not query_result or not query_result[0]['result']:
+            error_stack.add_error(status.HTTP_404_NOT_FOUND, "User not found.", LoginService.__name__)
+        else:
+            if not query_result[0]['result'][0]['verified']:
+                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "You have not verified your email", LoginService.__name__)
+
+            if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
+                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "Wrong password", LoginService.__name__)
+
+        if error_stack.errors:
+            raise error_stack
+
         return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
 
     except Exception as e:
-        raise Exception(f"LoginService: {str(e)}")
-        # raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"LoginService: {e}")
+        print(f"{LoginService.__name__}: Printed error stack: \n{error_stack}")
+        last_error = error_stack.get_last_error()
+        if last_error:
+            raise HTTPException(status_code=last_error["code"], detail=f"Function: {last_error.get('function', 'Unknown')}, Detail: {last_error['detail']}")
+        else:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
     
 async def update_password_service(password, current_user_id, db):
     hashed_password = pwd_context.hash(password.password)

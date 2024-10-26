@@ -2,7 +2,9 @@ import os
 import logging
 from surrealdb import Surreal
 from dotenv import load_dotenv
-from fastapi import HTTPException, status
+from fastapi import status
+
+from app.error.errorService import ErrorStack
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -39,10 +41,15 @@ async def get_db():
 
 
 def DatabaseResultService(query_result):
+    error_stack = ErrorStack()
+
     if not query_result[0]['result']:
-        # or return NONE => explore the two options
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"DatabaseResultService: No Result found.")
+        print(f"{DatabaseResultService.__name__}: if not query_result[0]['result']:")
+        error_stack.add_error(status.HTTP_404_NOT_FOUND, "No Result found.", DatabaseResultService.__name__)
+        print(error_stack)
+
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"DatabaseResultService: Status == 'ERR': {result}")
-    
+        error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Status == 'ERR': {result}", DatabaseResultService.__name__)
+
+    return error_stack
