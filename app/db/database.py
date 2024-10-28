@@ -44,9 +44,7 @@ def DatabaseResultService(query_result):
     error_stack = ErrorStack()
 
     if not query_result[0]['result']:
-        print(f"{DatabaseResultService.__name__}: if not query_result[0]['result']:")
         error_stack.add_error(status.HTTP_404_NOT_FOUND, "No Result found.", DatabaseResultService.__name__)
-        print(error_stack)
 
     if query_result[0]['status'] == 'ERR':
         result = query_result[0]['result']

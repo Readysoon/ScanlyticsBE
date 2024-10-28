@@ -20,11 +20,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # print(data)
 # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
-#
-# == Write this if you want to return the token to the user == 
-# access_token = create_access_token(data={"sub": user_id})
-# and return it as the final answer to the user
-# return {"access_token": access_token, "token_type": "bearer"}
 def create_access_token(data: dict):
     to_encode = data.copy()
     try:
@@ -182,16 +177,16 @@ async def UserSignupService(user_in, db):
     
         try:
             first_name = user_in.user_name.split()[0]
-
+            
+            # '''proper solution for testing has to be found'''
             await EmailVerificationService(user_in.user_email, token, first_name)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Sending the verification mail didnt work: {e}")
         
-        return JSONResponse(status_code=200, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
+        # '''proper solution for testing has to be found'''
+        return JSONResponse(status_code=201, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
+        # return JSONResponse(status_code=201, content=ReturnAccessTokenService(query_result[0]['result'][0]['id']))
         
-        # old version (before email verification):
-        # return ReturnAccessTokenService(query_result[0]['result'][0]['id'])
-
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
     
@@ -211,7 +206,6 @@ async def LoginService(user_data, db):
             if db_exception_handler.errors:
                 for error in db_exception_handler.errors:
                     error_stack.add_error(error["code"], error["detail"], error.get("function"))
-                raise error_stack
 
         except Exception as e:
             error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "Query error.", LoginService.__name__)
@@ -220,10 +214,10 @@ async def LoginService(user_data, db):
             error_stack.add_error(status.HTTP_404_NOT_FOUND, "User not found.", LoginService.__name__)
         else:
             if not query_result[0]['result'][0]['verified']:
-                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "You have not verified your email", LoginService.__name__)
+                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "You have not verified your email.", LoginService.__name__)
 
             if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
-                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "Wrong password", LoginService.__name__)
+                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "Wrong password.", LoginService.__name__)
 
         if error_stack.errors:
             raise error_stack

@@ -51,12 +51,10 @@ async def patch_user(
 
 @router.delete("/")
 async def delete_user(
-        password: Password, 
-        current_user = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
     return await DeleteUserService(   
-            password,  
-            current_user,
+            current_user_id,
             db
         )
