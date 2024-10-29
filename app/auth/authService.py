@@ -50,7 +50,7 @@ def CreateAccessTokenHelper(data: dict):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Encoding and returning the jwt-token didnt work: {e}")
 
 
-def verify_access_token(token):
+def VerifyAccessTokenHelper(token):
     '''this doesnt make sense'''
     try:
         SECRET_KEY = os.getenv("secret_key")
@@ -62,7 +62,7 @@ def verify_access_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"verify_access_token: {e}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"VerifyAccessTokenHelper: {e}")
     id: str = payload.get("sub")
     return id
 
@@ -73,15 +73,15 @@ async def GetCurrentUserIDService(
     db: Surreal = Depends(get_db)
     ):
     
-    # verify_access_token returns the id when given the token
+    # VerifyAccessTokenHelper returns the id when given the token
     try:
-        user_id = verify_access_token(token)
+        user_id = VerifyAccessTokenHelper(token)
         print(f"GetCurrentUserIDService: {user_id}")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Verifying the access token didnt work: {e}")
 
-    # from the id given by verify_access_token the user is selected in the database
+    # from the id given by VerifyAccessTokenHelper the user is selected in the database
     # can also be: (SELECT id FROM User WHERE id = 'User:bsb2xdhxgn0arxgjp8mq')[0].id
     try: 
         query_result = await db.query(f"((SELECT * FROM User WHERE id = 'User:{user_id}').id)[0];")
@@ -295,7 +295,7 @@ async def VerificationService(token, db):
     error_stack = ErrorStack()
     
     try:
-        current_user_id = verify_access_token(token)
+        current_user_id = VerifyAccessTokenHelper(token)
 
         try:
             query_result = await db.query(
