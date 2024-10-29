@@ -20,7 +20,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # print(data)
 # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
-def create_access_token(data: dict):
+def CreateAccessTokenHelper(data: dict):
     to_encode = data.copy()
     try:
         SECRET_KEY = os.getenv("secret_key")
@@ -97,7 +97,7 @@ async def GetCurrentUserIDService(
 # takes current_user_id only in the format without 'User:' ?! still needs to checked if actually true
 def ReturnAccessTokenHelper(current_user_id):
     try:
-        access_token = create_access_token(data={"sub": current_user_id})
+        access_token = CreateAccessTokenHelper(data={"sub": current_user_id})
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ReturnAccessTokenHelper: {e}")
