@@ -3,7 +3,7 @@ import os
 from fastapi import HTTPException, status
 
 from app.db.database import DatabaseResultService
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 
 from app.statement.statementSchema import Statement
 
@@ -27,7 +27,7 @@ async def write_statement_service(statement_in, current_user_id, db):
         
         '''differentiate between a statement writen by the user and by the initialization'''
         if current_user_id != "User:1":
-            return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+            return ReturnAccessTokenHelper(current_user_id), query_result[0]['result'][0]
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement_service: {e}")
@@ -164,7 +164,7 @@ async def search_statements_service(search_in, current_user_id, db):
         if not result_list:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search returned no results.")
     
-        return ReturnAccessTokenService(current_user_id), result_list
+        return ReturnAccessTokenHelper(current_user_id), result_list
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
@@ -202,7 +202,7 @@ async def get_statement_service(statement_id, current_user_id, db):
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
@@ -242,7 +242,7 @@ async def get_all_statements_service(current_user_id, db):
             except Exception as e: 
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
   
-        return ReturnAccessTokenService(current_user_id), result_list
+        return ReturnAccessTokenHelper(current_user_id), result_list
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
@@ -345,7 +345,7 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
                 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
@@ -404,7 +404,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
 
                 if len_text_array == 1:
-                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully."), ReturnAccessTokenService(current_user_id)
+                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully."), ReturnAccessTokenHelper(current_user_id)
                 else:
                     return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="len_text_array is not 1"), query_result
 

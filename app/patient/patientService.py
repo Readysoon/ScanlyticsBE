@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 from app.report.reportService import GetAllReportsByPatientIDService, DeleteReportService
 from app.db.database import DatabaseResultService
 from app.image.imageService import GetImagesByPatient, DeleteImageByID
@@ -30,7 +30,7 @@ async def CreatePatientService(patientin, current_user_id, db):
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
@@ -60,7 +60,7 @@ async def GetPatientByID(patient_id, current_user_id, db):
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
@@ -109,7 +109,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
             
-            return ReturnAccessTokenService(current_user_id)
+            return ReturnAccessTokenHelper(current_user_id)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
@@ -131,7 +131,7 @@ async def GetAllPatientsByUserID(current_user_id, db):
         
         result_without_status = query_result[0]['result']
 
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")

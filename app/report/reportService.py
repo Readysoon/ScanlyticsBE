@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 from app.db.database import DatabaseResultService
 from app.statement.statementService import get_statement_service
 
@@ -106,7 +106,7 @@ async def CreateReportService(reportin, current_user_id, db):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Relate image-report query failed. {e}")
         
         '''return here something proper'''
-        return ReturnAccessTokenService(current_user_id), text_with_patient_data, create_query_result[0]['result'][0]
+        return ReturnAccessTokenHelper(current_user_id), text_with_patient_data, create_query_result[0]['result'][0]
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Report didnt work: {e}")
@@ -164,7 +164,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
 
                             DatabaseResultService(final_query_result)
 
-                            return ReturnAccessTokenService(current_user_id), final_query_result[0]['result'][0]
+                            return ReturnAccessTokenHelper(current_user_id), final_query_result[0]['result'][0]
                             
                         except Exception as e:
                             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Error in 'SELECT * FROM Report WHERE id = Report:report_id': {e}")
@@ -217,7 +217,7 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result']
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
@@ -245,7 +245,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
 
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result']
         
     except Exception as e: 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllReportsByPatientIDService: {e}")

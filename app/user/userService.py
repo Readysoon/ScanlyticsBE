@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from starlette.responses import JSONResponse
 
-from app.auth.authService import DatabaseResultService, ReturnAccessTokenService
+from app.auth.authService import DatabaseResultService, ReturnAccessTokenHelper
 from app.patient.patientService import DeletePatientService, GetAllPatientsByUserID
 
 from app.error.errorService import ErrorStack
@@ -37,7 +37,7 @@ async def GetCurrentUserService(current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result'][0]
 
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetCurrentUserService: {e}")   
@@ -80,7 +80,7 @@ async def PatchUserService(userin, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
         
-        return ReturnAccessTokenService(current_user_id)
+        return ReturnAccessTokenHelper(current_user_id)
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")

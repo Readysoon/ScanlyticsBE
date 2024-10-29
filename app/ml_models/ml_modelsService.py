@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from botocore.exceptions import ClientError
 from fastapi.responses import JSONResponse
 
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 from app.db.database import DatabaseResultService
 from functools import lru_cache
 

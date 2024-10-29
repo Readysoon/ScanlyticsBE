@@ -5,7 +5,7 @@ from surrealdb import Surreal
 from app.db.database import get_db
 from app.user.userSchema import UserOrga, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, update_password_service, VerificationService
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, UpdatePasswordService, VerificationService
 from .authSchema import Login, Token, Password
 
 
@@ -71,7 +71,7 @@ async def update_password(
         current_user_id = Depends(GetCurrentUserIDService),
         db: Surreal = Depends(get_db)
     ):
-    return await update_password_service(
+    return await UpdatePasswordService(
              password,
              current_user_id,
              db

@@ -1,4 +1,4 @@
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 
 from app.statement.statementSchema import Statement
 from app.statement.statementService import search_statements_service
@@ -30,4 +30,4 @@ async def classify_service(image_array, current_user_id, db):
         statement_id = statement['id'], statement['text']
         statement_id_list.append(statement_id)
 
-    return ReturnAccessTokenService(current_user_id), statement_id_list
+    return ReturnAccessTokenHelper(current_user_id), statement_id_list

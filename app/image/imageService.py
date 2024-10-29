@@ -4,7 +4,7 @@ from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 from fastapi import HTTPException, status
 
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 from app.db.database import DatabaseResultService
 
 
@@ -53,7 +53,7 @@ async def UploadImageService(file, patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
 
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result']
 
     except NoCredentialsError:
         raise HTTPException(status_code=403, detail="Credentials not available")
@@ -75,7 +75,7 @@ async def GetImagesByPatient(patient_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result']
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result']
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImagesByPatient: {e}")
@@ -95,7 +95,7 @@ async def GetImageByID(image_id, current_user_id, db):
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
         
-        return ReturnAccessTokenService(current_user_id), query_result[0]['result'][0]
+        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result'][0]
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetImageByID: {e}")
@@ -159,7 +159,7 @@ async def UpdateImageService(image_in, image_id, current_user_id, db):
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
             
-            return ReturnAccessTokenService(current_user_id)
+            return ReturnAccessTokenHelper(current_user_id)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the Image didnt work: {e}")

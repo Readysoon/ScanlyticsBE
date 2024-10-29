@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.authService import ReturnAccessTokenService
+from app.auth.authService import ReturnAccessTokenHelper
 from app.db.database import DatabaseResultService
 
 '''Works'''
@@ -25,7 +25,7 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db):
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"CreateNoteService: {e}")
@@ -50,7 +50,7 @@ async def GetNoteByID(note_id, current_user_id, db):
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetNoteByID: {e}")
@@ -75,7 +75,7 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db):
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllNotesByPatientID: {e}")
@@ -130,7 +130,7 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db):
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenService(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id), result_without_status
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
@@ -156,7 +156,7 @@ async def DeleteNoteService(note_id, current_user_id, db):
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
         
-        return ReturnAccessTokenService(current_user_id)
+        return ReturnAccessTokenHelper(current_user_id)
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
