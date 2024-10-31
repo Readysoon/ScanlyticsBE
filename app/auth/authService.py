@@ -17,10 +17,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
-
+# use the function only in try and except block
 # print(data)
 # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
-def CreateAccessTokenHelper(data: dict):
+def CreateAccessTokenHelper(data: dict, error_stack):
     to_encode = data.copy()
     try:
         SECRET_KEY = os.getenv("secret_key")
@@ -95,12 +95,14 @@ async def GetCurrentUserIDService(
     return select_user_result
 
 # takes current_user_id only in the format without 'User:' ?! still needs to checked if actually true
-def ReturnAccessTokenHelper(current_user_id):
+def ReturnAccessTokenHelper(current_user_id, error_stack):
     try:
-        access_token = CreateAccessTokenHelper(data={"sub": current_user_id})
+        # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
+        access_token = CreateAccessTokenHelper({"sub": current_user_id}, error_stack)
+        
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ReturnAccessTokenHelper: {e}")
+        raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Creating the Access Token didnt work.", e, ReturnAccessTokenHelper.__name__)
 
 
 '''potential security risk'''
@@ -164,14 +166,36 @@ async def OrgaSignupService(user_in, db):
 
     except Exception as e:   
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user with orga didnt work: {e}")
+    
+
+def ExceptionHelper(function_name, error_stack, e):
+    print("Exception Helper: ")
+    print(f"{function_name.__name__}: Printed error stack: \n{error_stack}")
+    
+    if error_stack is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error stack is None: {str(e)}"
+        )
+    
+    last_error = error_stack.get_last_error()
+    if last_error:
+        raise HTTPException(status_code=last_error["code"], detail=f"Function: {last_error.get('function', 'Unknown')}, Description: {last_error['detail']}")
+    else:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 '''A user can only join an organization if the owner acccepts'''  
 # Organization:1 is for all doctors without an practice
+# Organization should be None
 async def UserSignupService(user_in, db):
-    hashed_password = pwd_context.hash(user_in.user_password)
+
+    error_stack = ErrorStack()
+
     try:
-        try:
+        hashed_password = pwd_context.hash(user_in.user_password)
+
+        try:       
             query_result = await db.query(
                     f"CREATE User Set "
                     f"email = '{user_in.user_email}', "
@@ -181,30 +205,54 @@ async def UserSignupService(user_in, db):
                     f"organization = Organization:1"
                 )
             
-            DatabaseResultService(query_result)
+            try: 
+                error_stack = DatabaseResultService(query_result, error_stack)
+            except Exception as e:
+                raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Query error.", e, UserSignupService.__name__)
             
-        except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
-    
-        token = ReturnAccessTokenHelper(query_result[0]['result'][0]['id'])['access_token']
-    
-        try:
-            first_name = user_in.user_name.split()[0]
-            
-            '''proper solution for testing has to be found'''
-            await EmailVerificationService(user_in.user_email, token, first_name)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Sending the verification mail didnt work: {e}")
+            raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Query error.", e, UserSignupService.__name__)
+
+        try:
+            if error_stack == None:
+                pass
+            elif "already contains" in error_stack:
+                return JSONResponse(status_code=409, content={"message": f"Email '{user_in.user_email}' is already registered."})
+        except Exception as e:
+            raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"'error_stack'/'already contains' error.", e, UserSignupService.__name__)
         
+        try:
+            try:
+                token = ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+            except Exception as e:
+                print("Error here or here.")
+
+        except Exception as e:
+            print(f"0.5: {e}")
+
+        first_name = user_in.user_name.split()[0]
+    
         '''proper solution for testing has to be found'''
-        return JSONResponse(status_code=201, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
-        # return JSONResponse(status_code=201, content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id']))
-        
+        testing = True
+
+        if testing == False:
+            try:
+                await EmailVerificationService(user_in.user_email, token, first_name)
+                return JSONResponse(status_code=201, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
+            except Exception as e:
+                raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Sending mail failed.", e, UserSignupService.__name__)
+        else: 
+            try:
+                return JSONResponse(status_code=201, content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack))
+            except Exception as e:
+                raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Returning Access Token failed.", e, UserSignupService.__name__)
+            
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user without orga didnt work: {e}")
+        ExceptionHelper(UserSignupService, error_stack, e)
     
 
 async def LoginService(user_data, db):
+
     error_stack = ErrorStack()
 
     try:

@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from dotenv import load_dotenv
 from fastapi import status
 
-from app.error.errorService import ErrorStack
+from fastapi import HTTPException
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -40,14 +40,44 @@ async def get_db():
         logging.info("Closed SurrealDB connection")
 
 
-def DatabaseResultService(query_result):
-    error_stack = ErrorStack()
+def DatabaseResultService(query_result, error_stack):
+    if query_result is None:
+        error_stack.add_error(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            f"Query result: {query_result}", 
+            DatabaseResultService.__name__
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_stack.get_last_error()
+        )
 
     if not query_result[0]['result']:
-        error_stack.add_error(status.HTTP_404_NOT_FOUND, "No Result found.", DatabaseResultService.__name__)
+        error_stack.add_error(
+            status.HTTP_404_NOT_FOUND, 
+            f"No Result found: {query_result[0]['result']}", 
+            DatabaseResultService.__name__
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=error_stack.get_last_error()
+        )
 
     if query_result[0]['status'] == 'ERR':
-        result = query_result[0]['result']
-        error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Status == 'ERR': {result}", DatabaseResultService.__name__)
+        print("Error raised?")
+        error_stack.add_error(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            f"Status == 'ERR': {query_result[0]['result']}", 
+            DatabaseResultService.__name__
+        )
+        if "already contains" in query_result[0]['result']:
+            return query_result[0]['result']
+        else: 
+            print("Error should have been raised")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=error_stack.get_last_error()
+            )
+    
 
-    return error_stack
+
