@@ -40,27 +40,19 @@ async def get_db():
         logging.info("Closed SurrealDB connection")
 
 
-def DatabaseResultService(query_result, error_stack):
+def DatabaseResultHelper(query_result, error_stack):
     if query_result is None:
-        error_stack.add_error(
+        raise error_stack.add_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR, 
             f"Query result: {query_result}", 
-            DatabaseResultService.__name__
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_stack.get_last_error()
+            DatabaseResultHelper.__name__
         )
 
     if not query_result[0]['result']:
-        error_stack.add_error(
+        raise error_stack.add_error(
             status.HTTP_404_NOT_FOUND, 
             f"No Result found: {query_result[0]['result']}", 
-            DatabaseResultService.__name__
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=error_stack.get_last_error()
+            DatabaseResultHelper.__name__
         )
 
     if query_result[0]['status'] == 'ERR':
@@ -68,7 +60,7 @@ def DatabaseResultService(query_result, error_stack):
         error_stack.add_error(
             status.HTTP_500_INTERNAL_SERVER_ERROR, 
             f"Status == 'ERR': {query_result[0]['result']}", 
-            DatabaseResultService.__name__
+            DatabaseResultHelper.__name__
         )
         if "already contains" in query_result[0]['result']:
             return query_result[0]['result']

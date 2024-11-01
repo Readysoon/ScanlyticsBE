@@ -5,8 +5,8 @@ from surrealdb import Surreal
 from app.db.database import get_db
 from app.user.userSchema import UserOrga, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDService, ValidateService, UpdatePasswordService, VerificationService
-from .authSchema import Login, Token, Password
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDHelper, ValidateService, UpdatePasswordService, VerificationService
+from .authSchema import Login, Email, Password, Token
 
 
 '''	1.	Login - check
@@ -26,7 +26,7 @@ router = APIRouter(
 
 @router.post("/check_mail")
 async def check_mail(
-        user_email: EmailStr = Form(...),
+        user_email: Email,
         db: Surreal = Depends(get_db)
     ):
     return await CheckMailService(
@@ -68,7 +68,7 @@ async def login(
 @router.patch("/password")
 async def update_password(
         password: Password,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await UpdatePasswordService(
@@ -79,7 +79,7 @@ async def update_password(
 
 @router.post("/validate")
 async def validate(
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await ValidateService(

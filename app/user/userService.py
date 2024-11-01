@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from starlette.responses import JSONResponse
 
-from app.auth.authService import DatabaseResultService, ReturnAccessTokenHelper
+from app.auth.authService import DatabaseResultHelper, ReturnAccessTokenHelper
 from app.patient.patientService import DeletePatientService, GetAllPatientsByUserID
 
 from app.error.errorService import ErrorStack
@@ -32,7 +32,7 @@ async def GetCurrentUserService(current_user_id, db):
                 f"id = '{current_user_id}'"
             )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -75,7 +75,7 @@ async def PatchUserService(userin, current_user_id, db):
                     f"{set_string};"
                 )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -95,7 +95,7 @@ async def DeleteUserService(current_user_id, db):
             f"WHERE id = {current_user_id};"
         )
 
-        db_exception_handler = DatabaseResultService(query_result)
+        db_exception_handler = DatabaseResultHelper(query_result)
         if db_exception_handler.errors:
             for error in db_exception_handler.errors:
                 error_stack.add_error(error["code"], error["detail"], error.get("function"))
@@ -124,7 +124,7 @@ async def DeleteUserService(current_user_id, db):
             query_result = await db.query(
                 f"DELETE {current_user_id};"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
         
@@ -134,7 +134,7 @@ async def DeleteUserService(current_user_id, db):
                 f"WHERE id = {current_user_id};"
             )
 
-            db_exception_handler = DatabaseResultService(query_result)
+            db_exception_handler = DatabaseResultHelper(query_result)
             if db_exception_handler.errors:
                 for error in db_exception_handler.errors:
                     error_stack.add_error(error["code"], error["detail"], error.get("function"))

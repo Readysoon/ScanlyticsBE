@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.db.database import DatabaseResultService
+from app.db.database import DatabaseResultHelper
 from app.statement.statementService import get_statement_service
 
 '''-> get body_part(check), condition (deleted), patient_id (ceck) from statements and images - check'''
@@ -41,7 +41,7 @@ async def CreateReportService(reportin, current_user_id, db):
                 f"out = {current_user_id});"
             )
 
-            DatabaseResultService(patient_query_result)
+            DatabaseResultHelper(patient_query_result)
 
             patient_data = patient_query_result[0]['result'][0]
 
@@ -89,7 +89,7 @@ async def CreateReportService(reportin, current_user_id, db):
                 f")[0].out;"
             )
 
-            DatabaseResultService(relate_query_result)
+            DatabaseResultHelper(relate_query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Relate user-report query failed {e}")
@@ -101,7 +101,7 @@ async def CreateReportService(reportin, current_user_id, db):
                     f"RELATE {image}->Images_Reports_Join->{report_id}"
                 )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Relate image-report query failed. {e}")
         
@@ -128,7 +128,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                 f"SELECT * FROM Report WHERE id = Report:{report_id};"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database 'SELECT * FROM Report [...]' operation didnt work. {e}")
@@ -144,7 +144,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                 f"SELECT * FROM Treated_By WHERE out = {current_user_id};"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"SELECT Treate_By failed: {e}")
@@ -162,7 +162,7 @@ async def GetReportByIDService(report_id, current_user_id, db):
                                 f"SELECT * FROM Report WHERE id = Report:{report_id};"
                             )
 
-                            DatabaseResultService(final_query_result)
+                            DatabaseResultHelper(final_query_result)
 
                             return ReturnAccessTokenHelper(current_user_id), final_query_result[0]['result'][0]
                             
@@ -212,7 +212,7 @@ async def UpdateReportService(reportin, report_id, current_user_id, db):
                     f"{set_string};"
                 )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -240,7 +240,7 @@ async def GetAllReportsByPatientIDService(patient_id, current_user_id, db):
                 f")[0].in;"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -264,7 +264,7 @@ async def DeleteReportService(report_id, current_user_id, db):
                     f")[0]['out'];"
                 )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")

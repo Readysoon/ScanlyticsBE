@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.db.database import DatabaseResultService
+from app.db.database import DatabaseResultHelper
 
 '''Works'''
 async def CreateNoteService(patient_id, note_in, current_user_id, db):
@@ -18,7 +18,7 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db):
                 f"user_owner = '{current_user_id}';"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -40,7 +40,7 @@ async def GetNoteByID(note_id, current_user_id, db):
                 f"AND user_owner = {current_user_id};"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -65,7 +65,7 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db):
                 f"AND user_owner = {current_user_id};"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -123,7 +123,7 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db):
                     f") {set_string};"
                 )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -151,7 +151,7 @@ async def DeleteNoteService(note_id, current_user_id, db):
                 f"AND user_owner = {current_user_id})"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")

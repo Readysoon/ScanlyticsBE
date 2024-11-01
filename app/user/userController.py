@@ -5,7 +5,7 @@ from app.db.database import get_db
 from app.user.userSchema import User
 from app.user.userService import GetCurrentUserService, DeleteUserService, PatchUserService
 from app.auth.authSchema import Password
-from app.auth.authService import GetCurrentUserIDService
+from app.auth.authService import GetCurrentUserIDHelper
 
 
 '''	1.	Get user profile - done
@@ -27,7 +27,7 @@ router = APIRouter(
 
 @router.get("/")
 async def get_user(
-        current_user = Depends(GetCurrentUserIDService),
+        current_user = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await GetCurrentUserService(
@@ -39,7 +39,7 @@ async def get_user(
 @router.patch("/")
 async def patch_user(
         user_in: User,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await PatchUserService(
@@ -51,7 +51,7 @@ async def patch_user(
 
 @router.delete("/")
 async def delete_user(
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await DeleteUserService(   

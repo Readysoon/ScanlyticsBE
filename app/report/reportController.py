@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
 from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDService
+from app.auth.authService import GetCurrentUserIDHelper
 
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
@@ -17,7 +17,7 @@ router = APIRouter(
 @router.post("/")
 async def create_report(
         report_in: Report, 
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await CreateReportService(
@@ -29,7 +29,7 @@ async def create_report(
 @router.get("/{report_id}")
 async def get_report(
         report_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await GetReportByIDService(
@@ -43,7 +43,7 @@ async def get_report(
 async def update_report(
         report_in: Report,
         report_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await UpdateReportService(
@@ -56,7 +56,7 @@ async def update_report(
 @router.get("/all/{patient_id}")
 async def get_all_reports_by_patient_and_user(
         patient_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await GetAllReportsByPatientIDService(
@@ -68,7 +68,7 @@ async def get_all_reports_by_patient_and_user(
 @router.delete("/{report_id}")
 async def delete_patient(
         report_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db),
     ):
     return await DeleteReportService(

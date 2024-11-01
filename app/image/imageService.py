@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, status
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.db.database import DatabaseResultService
+from app.db.database import DatabaseResultHelper
 
 
 # Load .env file from a specific path
@@ -48,7 +48,7 @@ async def UploadImageService(file, patient_id, current_user_id, db):
                 f"user = '{current_user_id}'"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
@@ -70,7 +70,7 @@ async def GetImagesByPatient(patient_id, current_user_id, db):
                 f"AND patient = 'Patient:{patient_id}';"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
@@ -90,7 +90,7 @@ async def GetImageByID(image_id, current_user_id, db):
                 f"AND id = 'Image:{image_id}';"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")
@@ -111,7 +111,7 @@ async def DeleteImageByID(image_id, current_user_id, db):
                     f"AND id = 'Image:{image_id}';"
                 )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -154,7 +154,7 @@ async def UpdateImageService(image_in, image_id, current_user_id, db):
                     f";"
                 )
                 
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
    
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
 from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDService
+from app.auth.authService import GetCurrentUserIDHelper
 
 from app.note.noteSchema import Note
 from app.note.noteService import CreateNoteService, GetNoteByID, GetAllNotesByPatientID, UpdateNoteService, DeleteNoteService
@@ -16,7 +16,7 @@ router = APIRouter(
 async def create_note(
         patient_id: str,
         note_in: Note, 
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await CreateNoteService(
@@ -30,7 +30,7 @@ async def create_note(
 @router.get("/{note_id}")
 async def get_note(
         note_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await GetNoteByID(
@@ -42,7 +42,7 @@ async def get_note(
 @router.get("/patient/{patient_id}")
 async def get_all_notes_by_patient_id(
         patient_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await GetAllNotesByPatientID(
@@ -55,7 +55,7 @@ async def get_all_notes_by_patient_id(
 async def update_note(
         note_in: Note,
         note_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await UpdateNoteService(
@@ -69,7 +69,7 @@ async def update_note(
 @router.delete("/{note_id}")
 async def delete_note(
         note_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await DeleteNoteService(

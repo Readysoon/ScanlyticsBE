@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 
 from app.auth.authService import ReturnAccessTokenHelper
 from app.report.reportService import GetAllReportsByPatientIDService, DeleteReportService
-from app.db.database import DatabaseResultService
+from app.db.database import DatabaseResultHelper
 from app.image.imageService import GetImagesByPatient, DeleteImageByID
 
 
@@ -23,7 +23,7 @@ async def CreatePatientService(patientin, current_user_id, db):
                 f").in)[0];"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -50,7 +50,7 @@ async def GetPatientByID(patient_id, current_user_id, db):
                 f"AND out = '{current_user_id}'"
                 f").in;"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -104,7 +104,7 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                         f"{set_string};"
                     )
                 
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
    
             except Exception as e:
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -124,7 +124,7 @@ async def GetAllPatientsByUserID(current_user_id, db):
                     f"Treated_By WHERE "
                     f"out = {current_user_id};"
                 )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -180,7 +180,7 @@ async def DeletePatientService(patient_id, db, current_user_id):
                     f"out = {current_user_id}).in;"
                 )
             
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
    
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")

@@ -2,7 +2,7 @@ import os
 
 from fastapi import HTTPException, status
 
-from app.db.database import DatabaseResultService
+from app.db.database import DatabaseResultHelper
 from app.auth.authService import ReturnAccessTokenHelper
 
 from app.statement.statementSchema import Statement
@@ -20,7 +20,7 @@ async def write_statement_service(statement_in, current_user_id, db):
                 f"user_owner = '{current_user_id}';"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
@@ -90,7 +90,7 @@ async def get_last_statement_text_element(statement_id, db):
             f")[0]['text']);"
         )
 
-        DatabaseResultService(query_result)
+        DatabaseResultHelper(query_result)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"get_last_statement_text_element: {e}")
     
@@ -152,7 +152,7 @@ async def search_statements_service(search_in, current_user_id, db):
                         f"FROM Statement WHERE "
                         f"id = {result_dict['id']};"
                     )
-                    DatabaseResultService(query_result)
+                    DatabaseResultHelper(query_result)
                     
                     result_list.append(query_result[0]['result'][0])
         
@@ -179,7 +179,7 @@ async def get_statement_service(statement_id, current_user_id, db):
                 f"AND (user_owner = {current_user_id} "
                 f"OR user_owner = 'User:1');"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work (Statement:{statement_id}): {e}")
@@ -195,7 +195,7 @@ async def get_statement_service(statement_id, current_user_id, db):
                 f"FROM Statement WHERE "
                 f"id = '{query_result[0]['result'][0]['id']}';"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
@@ -215,7 +215,7 @@ async def get_all_statements_service(current_user_id, db):
                 f"SELECT * FROM Statement "
                 f"WHERE user_owner = '{current_user_id}';"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
@@ -235,7 +235,7 @@ async def get_all_statements_service(current_user_id, db):
                     f"FROM Statement WHERE "
                     f"id = {result_dict['id']};"
                 )
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
                 
                 result_list.append(query_result[0]['result'][0])
     
@@ -301,7 +301,7 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                         f") SET text += '{text}';"
                         )
                     
-                    DatabaseResultService(query_result)
+                    DatabaseResultHelper(query_result)
 
                 except Exception as e: 
                     if not query_result[0]['result']:
@@ -322,7 +322,7 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                     f") {set_string};"
                     )
 
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
                 
             except Exception as e: 
                 if not query_result[0]['result']:
@@ -338,7 +338,7 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                 f"FROM Statement WHERE "
                 f"id = '{query_result[0]['result'][0]['id']}';"
             )
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
@@ -364,7 +364,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                 f"OR user_owner = 'User:1');"
             )
 
-            DatabaseResultService(query_result)
+            DatabaseResultHelper(query_result)
             
         except Exception as e: 
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Determining the user didnt work: {e}")
@@ -382,7 +382,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                     f") SET text = ['{query_result[0]['result'][0]['text'][0]}'];"
                 )
 
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
 
             except: 
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
@@ -397,7 +397,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                         f")[0]['text']);"
                     )
 
-                    DatabaseResultService(query_result)
+                    DatabaseResultHelper(query_result)
 
                     len_text_array = query_result[0]['result']
                 except Exception as e:
@@ -421,7 +421,7 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                     f"AND user_owner = '{current_user_id}');"
                 )
 
-                DatabaseResultService(query_result)
+                DatabaseResultHelper(query_result)
                 
                 if query_result[0] == '':
                     return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully.")

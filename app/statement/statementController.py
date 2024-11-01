@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.auth.authService import GetCurrentUserIDService
+from app.auth.authService import GetCurrentUserIDHelper
 from app.db.database import get_db
 
 from app.statement.statementService import write_statement_service, initialize_statements_service, search_statements_service, get_statement_service, get_all_statements_service, update_statement_service, delete_or_reset_statement_service
@@ -22,7 +22,7 @@ router = APIRouter(
 @router.post("/")
 async def create_statement(
         statement_in: Statement, 
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await write_statement_service(
@@ -43,7 +43,7 @@ async def initialize_statements(
 @router.get("/search")
 async def search_statements(
         search_in: Statement,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await search_statements_service(
@@ -56,7 +56,7 @@ async def search_statements(
 @router.get("/{statement_id}")
 async def get_statement(
         statement_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await get_statement_service(
@@ -68,7 +68,7 @@ async def get_statement(
 '''gets all users statements'''
 @router.get("/")
 async def get_all_statement(
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await get_all_statements_service(
@@ -81,7 +81,7 @@ async def get_all_statement(
 async def update_statement(
         statement_id: str,
         statement_in: Statement, 
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await update_statement_service(
@@ -95,7 +95,7 @@ async def update_statement(
 @router.delete("/{statement_id}")
 async def delete_statement(
         statement_id: str,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await delete_or_reset_statement_service(

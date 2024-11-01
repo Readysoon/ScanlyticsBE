@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
 from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDService
+from app.auth.authService import GetCurrentUserIDHelper
 
 from app.classifier.classifierService import classify_service
 from app.classifier.classifierSchema import Images
@@ -18,7 +18,7 @@ router = APIRouter(
 @router.get("/")
 async def classify(
         image_array: Images,
-        current_user_id = Depends(GetCurrentUserIDService),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
     return await classify_service(
