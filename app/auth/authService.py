@@ -79,15 +79,13 @@ async def OrgaSignupService(user_in, db, error_stack):
                 OrgaSignupService
             )
         
-        print(DatabaseErrorHelperResultText)
-
         if DatabaseErrorHelperResultText is None:
             pass
         elif "already contains" in DatabaseErrorHelperResultText:
             error_stack.add_error(
                 status.HTTP_409_CONFLICT,
                 f"Email '{user_in.user_email}' is already registered.", 
-                e,
+                "None",
                 OrgaSignupService
             )
 

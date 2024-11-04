@@ -52,14 +52,14 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
                     f"WHERE id = {reportin.statement_id_array[0]}"
                 )
 
-            DatabaseErrorHelper(patient_query_result, error_stack)
+            DatabaseErrorHelper(body_part_query_result, error_stack)
 
             reportin.body_part = body_part_query_result[0]['result'][0]['body_part']
         
         except Exception as e:
             error_stack.add_error(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "extract body_part from Statement query error",
+                f"extract body_part from Statement query error: {body_part_query_result}",
                 e,
                 CreateReportService
             )

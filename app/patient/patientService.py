@@ -208,7 +208,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
     try:
         # Delete Images
         try:
-            json_response = await GetImagesByPatient(patient_id, current_user_id, db)
+            json_response = await GetImagesByPatient(patient_id, current_user_id, db, error_stack)
             images = json_response[1]
         except Exception as e:
             error_stack.add_error(
@@ -221,7 +221,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
         try:
             for image in images:
                 image_id = image['id']
-                DeleteImageByID(image_id, current_user_id, db)
+                DeleteImageByID(image_id, current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -232,7 +232,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
 
         # Delete Patients
         try:
-            json_response = await GetAllReportsByPatientIDService(patient_id, current_user_id, db)
+            json_response = await GetAllReportsByPatientIDService(patient_id, current_user_id, db, error_stack)
             reports = json_response[1]
         except Exception as e:
             error_stack.add_error(
@@ -245,7 +245,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
         try:
             for report in reports:
                 report_id = report['id']
-                DeleteReportService(report_id, current_user_id, db)
+                DeleteReportService(report_id, current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,

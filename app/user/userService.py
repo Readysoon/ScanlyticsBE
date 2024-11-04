@@ -61,6 +61,7 @@ status.HTTP_409_CONFLICT  # for email already in use
 status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
+'''patching mail should send new verification and set account to unverified'''
 async def PatchUserService(userin, current_user_id, db, error_stack):
     try:
         try:
@@ -107,11 +108,30 @@ async def PatchUserService(userin, current_user_id, db, error_stack):
                     e,
                     PatchUserService
                 )
-                    
-        return JSONResponse(
-            status_code=200, 
-            content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
-            )
+        try:   
+
+            return JSONResponse(
+                status_code=200, 
+                content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                )
+        
+        except Exception as e:
+            if query_result is None:
+                pass
+            elif "already contains" in query_result[0]['result']:
+                error_stack.add_error(
+                    status.HTTP_409_CONFLICT,
+                    f"Email '{userin.user_email}' is already registered.", 
+                    e,
+                    PatchUserService
+                )
+            else:
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "JSON Response error.",
+                        e,
+                        PatchUserService
+                    )
 
     except Exception as e:
         ExceptionHelper(PatchUserService, error_stack, e)
