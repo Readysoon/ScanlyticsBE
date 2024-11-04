@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDHelper
-
 from app.ml_models.ml_modelsService import RetrieveModelService
 from .ml_modelsSchema import Model_IN
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
+
+
 
 router = APIRouter(
         prefix="/ml_models",
@@ -19,9 +23,11 @@ async def retrieve_model(
         db: Surreal = Depends(get_db)
     ):
     print("model_name", model_name)
+    error_stack = ErrorStack()
     return await RetrieveModelService(
             model_name, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 

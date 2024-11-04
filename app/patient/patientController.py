@@ -1,11 +1,13 @@
 from surrealdb import Surreal
 from fastapi import APIRouter, Depends
 
-from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDHelper
-
-from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserID, DeletePatientService
+from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
 
 
 router = APIRouter(
@@ -19,10 +21,12 @@ async def create_patient(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await CreatePatientService(
             patient_in, 
             current_user_id, 
-            db
+            db, 
+            error_stack
         )
 
 @router.get("/{patient_id}")
@@ -31,10 +35,12 @@ async def get_patient(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetPatientByID(
             patient_id, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 
 @router.get("/")
@@ -42,9 +48,11 @@ async def get_all_patients(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
-    return await GetAllPatientsByUserID(
+    error_stack = ErrorStack()
+    return await GetAllPatientsByUserIDService(
             current_user_id, 
-            db
+            db, 
+            error_stack
         )
 
 @router.patch("/{patient_id}")
@@ -54,23 +62,27 @@ async def update_patient(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await UpdatePatientService(
             patient_in, 
             patient_id, 
             current_user_id, 
-            db
+            db, 
+            error_stack
         )
 
 
 @router.delete("/{patient_id}")
 async def delete_patient(
         patient_id: str,
-        db: Surreal = Depends(get_db),
-        current_user_id = Depends(GetCurrentUserIDHelper)
+        current_user_id = Depends(GetCurrentUserIDHelper),
+        db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await DeletePatientService(
             patient_id,
+            current_user_id,
             db,
-            current_user_id
+            error_stack
         )
 

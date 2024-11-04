@@ -1,13 +1,23 @@
 import os
 
+from starlette.responses import JSONResponse
+
 from fastapi import HTTPException, status
 
-from app.db.database import DatabaseResultHelper
 from app.auth.authService import ReturnAccessTokenHelper
-
 from app.statement.statementSchema import Statement
 
-async def write_statement_service(statement_in, current_user_id, db):
+from app.statement.statementHelper import GetLastStatementTextElementHelper
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
+
+'''
+# Suggested:
+status.HTTP_201_CREATED  # for successful creation
+status.HTTP_400_BAD_REQUEST  # for invalid statement data
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def CreateStatementService(statement_in, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -20,87 +30,105 @@ async def write_statement_service(statement_in, current_user_id, db):
                 f"user_owner = '{current_user_id}';"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error.",
+                e,
+                GetLastStatementTextElementHelper
+            )
         
         '''differentiate between a statement writen by the user and by the initialization'''
         if current_user_id != "User:1":
-            return ReturnAccessTokenHelper(current_user_id), query_result[0]['result'][0]
+            return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result'][0]
                 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"write_statement_service: {e}")
+        ExceptionHelper(CreateStatementService, error_stack, e)  
     
 
+
+'''
+status.HTTP_201_CREATED  # for successful initialization
+status.HTTP_409_CONFLICT  # when statements already exist
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
-async def initialize_statements_service(db):
-    for file_name in os.listdir(TEMPLATES_DIR):
-        if file_name.endswith('.txt'):
-            file_path = os.path.join(TEMPLATES_DIR, file_name)
-            with open(file_path, 'r', encoding='utf-8') as file:
-
-                base_name, _ = os.path.splitext(file_name)  # Split the file name from its extension
-
-                file_name_parts = base_name.split() # split Röntgen and the body_part
-
-                content = file.read()
-
-                lines = content.splitlines()  
-
-                statement_instance = Statement()
-
-                statement_instance.section = ""
-                statement_instance.body_part = file_name_parts[1]
-                statement_instance.medical_condition = "sick"
-                statement_instance.modality = file_name_parts[0]
-                statement_instance.text = ""
-
-                for line in lines:
-                    line = line.strip()  
-
-                    if line in ["__Indikation__", "__Technik__", "__Klinik__", "__Vergleich__", "__Befund__", "__Beurteilung__"]:
-                        statement_instance.section = line
-
-                    elif line:  
-                        statement_instance.text = line
-                    
-                        # find some other way to check if it already in the database
-                        try:
-                            query_result = await db.query(
-                                f"SELECT * FROM Statement "
-                                f"WHERE text = '{statement_instance.text}' "
-                                f"AND body_part = '{statement_instance.body_part}';"
-                            )
-                        except Exception as e:
-                            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Select Statements didnt work: {e}")
-                        
-                        if not query_result[0]['result'] and statement_instance.section:
-                            await write_statement_service(statement_instance, "User:1", db)
-
-
-async def get_last_statement_text_element(statement_id, db):
+async def InitializeStatementsService(db, error_stack):
     try:
-        query_result = await db.query(
-            f"RETURN array::len(("
-            f"SELECT text FROM "
-            f"Statement WHERE "
-            f"id = '{statement_id}'"
-            f")[0]['text']);"
-        )
+        for file_name in os.listdir(TEMPLATES_DIR):
+            if file_name.endswith('.txt'):
+                file_path = os.path.join(TEMPLATES_DIR, file_name)
+                with open(file_path, 'r', encoding='utf-8') as file:
 
-        DatabaseResultHelper(query_result)
+                    base_name, _ = os.path.splitext(file_name)  # Split the file name from its extension
+
+                    file_name_parts = base_name.split() # split Röntgen and the body_part
+
+                    content = file.read()
+
+                    lines = content.splitlines()  
+
+                    statement_instance = Statement()
+
+                    statement_instance.section = ""
+                    statement_instance.body_part = file_name_parts[1]
+                    statement_instance.medical_condition = "sick"
+                    statement_instance.modality = file_name_parts[0]
+                    statement_instance.text = ""
+
+                    for line in lines:
+                        line = line.strip()  
+
+                        if line in ["__Indikation__", "__Technik__", "__Klinik__", "__Vergleich__", "__Befund__", "__Beurteilung__"]:
+                            statement_instance.section = line
+
+                        elif line:  
+                            statement_instance.text = line
+                        
+                            # find some other way to check if it already in the database
+                            try:
+                                query_result = await db.query(
+                                    f"SELECT * FROM Statement "
+                                    f"WHERE text = '{statement_instance.text}' "
+                                    f"AND body_part = '{statement_instance.body_part}';"
+                                )
+                            except Exception as e:
+                                error_stack.add_error(
+                                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    f"Select Statements didnt work",
+                                    e,
+                                    InitializeStatementsService
+                                )
+                                
+                            try: 
+                                if not query_result[0]['result'] and statement_instance.section:
+                                    await CreateStatementService(statement_instance, "User:1", db, error_stack)
+                            except Exception as e:
+                                error_stack.add_error(
+                                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    f"CreateStatementService",
+                                    e,
+                                    InitializeStatementsService
+                                )
+
+        return JSONResponse(status_code=200, content={"message": "Statements initialized."})  
+    
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"get_last_statement_text_element: {e}")
-    
-    last_list_element = query_result[0]['result'] - 1
-    
-    return last_list_element
+        ExceptionHelper(InitializeStatementsService, error_stack, e)  
 
 
 '''works with last array elements'''
-async def search_statements_service(search_in, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful search (even with empty results)
+status.HTTP_400_BAD_REQUEST  # for invalid search parameters
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for malformed search criteria
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors‚
+'''
+async def SearchStatementService(search_in, current_user_id, db, error_stack):
     try:
         try:
             search_string = ""
@@ -120,10 +148,13 @@ async def search_statements_service(search_in, current_user_id, db):
             
             search_string = search_string[:-5]
 
-            print(search_string)
-
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Search-string creation failed: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Search-string creation failed.",
+                e,
+                SearchStatementService
+            )
                
         try:
             query_result = await db.query(
@@ -134,12 +165,22 @@ async def search_statements_service(search_in, current_user_id, db):
             )
 
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error.",
+                e,
+                SearchStatementService
+            )
         
         try: 
             result_without_status = query_result[0]['result']
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Conversion error: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Conversion error.",
+                e,
+                SearchStatementService
+            )
 
         result_list = []
 
@@ -152,25 +193,48 @@ async def search_statements_service(search_in, current_user_id, db):
                         f"FROM Statement WHERE "
                         f"id = {result_dict['id']};"
                     )
-                    DatabaseResultHelper(query_result)
+                    DatabaseErrorHelper(query_result, error_stack)
                     
                     result_list.append(query_result[0]['result'][0])
         
                 except Exception as e: 
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+                    error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Query error.",
+                        e,
+                        SearchStatementService
+                    )
+
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Loop error: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Loop error.",
+                e,
+                SearchStatementService
+            )
     
         if not result_list:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search returned no results.")
+            error_stack.add_error(
+                status.HTTP_404_NOT_FOUND,
+                "Search returned no results.",
+                "None",
+                SearchStatementService
+            )
     
-        return ReturnAccessTokenHelper(current_user_id), result_list
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_list
                 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"search_statements_service: {e}")
+        ExceptionHelper(GetStatementByIDService, error_stack, e)
     
 '''works with last array elements'''
-async def get_statement_service(statement_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval
+status.HTTP_404_NOT_FOUND  # keep this
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetStatementByIDService(statement_id, current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
@@ -179,15 +243,25 @@ async def get_statement_service(statement_id, current_user_id, db):
                 f"AND (user_owner = {current_user_id} "
                 f"OR user_owner = 'User:1');"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"First Database operation didnt work (Statement:{statement_id}): {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"First Database operation didnt work (Statement:{statement_id})",
+                e,
+                GetStatementByIDService
+            )
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this statement.")
+            error_stack.add_error(
+                status.HTTP_404_NOT_FOUND,
+                f"No record was found for this statement.",
+                "None",
+                GetStatementByIDService
+            )
         
-        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+        last_element_number = await GetLastStatementTextElementHelper(query_result[0]['result'][0]['id'], db, error_stack)
 
         try: 
             query_result = await db.query(
@@ -195,33 +269,57 @@ async def get_statement_service(statement_id, current_user_id, db):
                 f"FROM Statement WHERE "
                 f"id = '{query_result[0]['result'][0]['id']}';"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"Second Database operation didnt work (Statement:{statement_id})",
+                e,
+                GetStatementByIDService
+            )
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
+        ExceptionHelper(GetStatementByIDService, error_stack, e)
     
+
 '''works with last array elements'''
-async def get_all_statements_service(current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful update
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission (instead of 401)
+status.HTTP_404_NOT_FOUND  # keep this
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetAllStatementsByUserService(current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
                 f"SELECT * FROM Statement "
                 f"WHERE user_owner = '{current_user_id}';"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"Query error.",
+                e,
+                GetAllStatementsByUserService
+            )
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this user.")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"No record was found for this user.",
+                "None",
+                GetAllStatementsByUserService
+            )
         
         result_without_status = query_result[0]['result']
 
@@ -235,21 +333,33 @@ async def get_all_statements_service(current_user_id, db):
                     f"FROM Statement WHERE "
                     f"id = {result_dict['id']};"
                 )
-                DatabaseResultHelper(query_result)
+                DatabaseErrorHelper(query_result, error_stack)
                 
                 result_list.append(query_result[0]['result'][0])
     
             except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Query error.",
+                    e,
+                    GetAllStatementsByUserService
+                )
   
-        return ReturnAccessTokenHelper(current_user_id), result_list
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_list
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"get_statement_service: {e}")  
+        ExceptionHelper(GetStatementByIDService, error_stack, e)
 
     
 '''not tested after implementing User:1/other user differentation'''
-async def update_statement_service(statement_id, statement_in, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_204_NO_CONTENT  # for successful deletion (more appropriate)
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission
+status.HTTP_404_NOT_FOUND  # when statement doesn't exist
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def UpdateStatementService(statement_id, statement_in, current_user_id, db, error_stack):
     try:
         # collect the update information
         try:
@@ -275,21 +385,41 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
             set_string = set_string[:-2]
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")
-        
-        # determine the statement owner
-        statement_owner = await db.query(
-            f"SELECT user_owner FROM Statement WHERE "
-            f"id = 'Statement:{statement_id}' "
-            f"AND (user_owner = 'User:1' "
-            f"OR user_owner = '{current_user_id}'"
-            f");"
-            )
-        
-        statement_owner = statement_owner[0]['result'][0]['user_owner']
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Set-string creation failed.",
+                    e,
+                    UpdateStatementService
+                )
+        try:        
+            # determine the statement owner
+            query_result = await db.query(
+                f"SELECT user_owner FROM Statement WHERE "
+                f"id = 'Statement:{statement_id}' "
+                f"AND (user_owner = 'User:1' "
+                f"OR user_owner = '{current_user_id}'"
+                f");"
+                )
+
+        except Exception as e:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Query error: {query_result}",
+                    e,
+                    UpdateStatementService
+                )
+        try:  
+            statement_owner_conversed = query_result[0]['result'][0]['user_owner']
+        except Exception as e:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"You cannot edit this statement.",
+                    e,
+                    UpdateStatementService
+                )
         
         # if its a Scanlytics Statement you can only edit the text
-        if statement_owner == "User:1":
+        if statement_owner_conversed == "User:1":
             if section or body_part or medical_condition or modality:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not authorized to edit other parameters than 'text' in Scanlytics statements.")
             if text: 
@@ -301,15 +431,30 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                         f") SET text += '{text}';"
                         )
                     
-                    DatabaseResultHelper(query_result)
+                    DatabaseErrorHelper(query_result, error_stack)
 
                 except Exception as e: 
                     if not query_result[0]['result']:
-                        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You are either not authorized to edit the Statement or it doesnt exist.")
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation for updating Scanlytics statement didnt work: {e}")
+                        error_stack.add_error(
+                            status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            f"You are either not authorized to edit the Statement or it doesnt exist.",
+                            "None",
+                            UpdateStatementService
+                        )
+                    error_stack.add_error(
+                            status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            f"Database operation for updating Scanlytics statement didnt work",
+                            e,
+                            UpdateStatementService
+                        )
             else: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="You need to enter something.")
-        
+                error_stack.add_error(
+                            status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            f"You need to enter something.",
+                            e,
+                            UpdateStatementService
+                        )
+                        
         # otherwise you can update your own statement how you wish
         else: 
             try:
@@ -322,15 +467,33 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                     f") {set_string};"
                     )
 
-                DatabaseResultHelper(query_result)
+                DatabaseErrorHelper(query_result, error_stack)
                 
             except Exception as e: 
                 if not query_result[0]['result']:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You are either not authorized to edit the Statement or it doesnt exist.")
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation for Updating your own didnt work: {e}")
+                    error_stack.add_error(
+                            status.HTTP_404_NOT_FOUND,
+                            f"You are either not authorized to edit the Statement or it doesnt exist.",
+                            "None",
+                            UpdateStatementService
+                        )
+                error_stack.add_error(
+                            status.HTTP_404_NOT_FOUND,
+                            f"Database operation for Updating your own didnt work.",
+                            e,
+                            UpdateStatementService
+                        )
+        try:
+            # return the Statement only displaying the last text in the array
+            last_element_number = await GetLastStatementTextElementHelper(query_result[0]['result'][0]['id'], db, error_stack)
 
-        # return the Statement only displaying the last text in the array
-        last_element_number = await get_last_statement_text_element(query_result[0]['result'][0]['id'], db)
+        except Exception as e:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"GetLastStatementTextElementHelper",
+                    e,
+                    UpdateStatementService
+                )
 
         try: 
             query_result = await db.query(
@@ -338,22 +501,27 @@ async def update_statement_service(statement_id, statement_in, current_user_id, 
                 f"FROM Statement WHERE "
                 f"id = '{query_result[0]['result'][0]['id']}';"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Second Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Query error.",
+                    e,
+                    UpdateStatementService
+                )
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
                 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"update_statement_service: {e}")
+        ExceptionHelper(UpdateStatementService, error_stack, e)
     
 
 '''check: implement checking if deletion worked'''
 '''implement removing all additional texts in arrays when deleting a scanlytics statement'''
-async def delete_or_reset_statement_service(statement_id, current_user_id, db):
+async def DeleteOrResetStatementService(statement_id, current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
@@ -364,10 +532,15 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                 f"OR user_owner = 'User:1');"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Determining the user didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Query error.",
+                    e,
+                    DeleteOrResetStatementService
+                )
         
         statement_owner = query_result[0]['result'][0]['user_owner']
         
@@ -382,10 +555,15 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                     f") SET text = ['{query_result[0]['result'][0]['text'][0]}'];"
                 )
 
-                DatabaseResultHelper(query_result)
+                DatabaseErrorHelper(query_result, error_stack)
 
-            except: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
+            except Exception as e: 
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Deletion 1 for Scanlytics Statement didnt work.",
+                    e,
+                    DeleteOrResetStatementService
+                )
 
             try: 
                 try:
@@ -397,20 +575,35 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                         f")[0]['text']);"
                     )
 
-                    DatabaseResultHelper(query_result)
+                    DatabaseErrorHelper(query_result, error_stack)
 
                     len_text_array = query_result[0]['result']
+
                 except Exception as e:
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deletion for Scanlytics Statement didnt work: {e}")
+                    error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Deletion 2 for Scanlytics Statement didnt work.",
+                        e,
+                        DeleteOrResetStatementService
+                    )
 
                 if len_text_array == 1:
-                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully."), ReturnAccessTokenHelper(current_user_id)
+                    return JSONResponse(status_code=200, content={"message": "Statement was deleted successfully."}), ReturnAccessTokenHelper(current_user_id, error_stack) 
                 else:
-                    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="len_text_array is not 1"), query_result
+                    error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "len_text_array is not 1.",
+                        "None",
+                        DeleteOrResetStatementService
+                    )
 
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Determining successful deletion didnt work: {e}")
-    
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Determining successful deletion didnt work.",
+                        e,
+                        DeleteOrResetStatementService
+                    )    
         else: 
             try: 
                 query_result = await db.query(
@@ -421,14 +614,21 @@ async def delete_or_reset_statement_service(statement_id, current_user_id, db):
                     f"AND user_owner = '{current_user_id}');"
                 )
 
-                DatabaseResultHelper(query_result)
+                DatabaseErrorHelper(query_result, error_stack)
                 
-                if query_result[0] == '':
-                    return HTTPException(status_code=status.HTTP_200_OK, detail="Statement was deleted successfully.")
+                if not query_result[0]['result']:
+                    return JSONResponse(status_code=200, 
+                                        content={"message": "Statement was deleted successfully."}
+                                        ), ReturnAccessTokenHelper(current_user_id, error_stack) 
         
             except Exception as e: 
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Deleting a user Statement didnt work: {e}")
-    
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Determining successful deletion didnt work.",
+                        e,
+                        DeleteOrResetStatementService
+                    )  
+                
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"delete_or_reset_statement_service: {e}")  
+        ExceptionHelper(UpdateStatementService, error_stack, e)
 

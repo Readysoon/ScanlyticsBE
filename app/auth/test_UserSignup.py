@@ -11,7 +11,7 @@ client = TestClient(app)
 @pytest.fixture
 def user_data_login():
     return {
-        "user_email": "ghhjasddasdasfdssssdddf@inohm.com",
+        "user_email": "ghhjasddasdasddfgssufdssssdddf@inohm.com",
         "user_password": "SecurePassword123"
     }
 

@@ -2,16 +2,18 @@ from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
 from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDHelper
 
-from app.classifier.classifierService import classify_service
+from app.classifier.classifierService import ClassifyService
 from app.classifier.classifierSchema import Images
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
 
 '''"Analyzes" an image and returns a set of categories which then are used in get_statements_by category to pregenerate a report"'''
 
 router = APIRouter(
-        prefix="/classifier",
-        tags=["classifier"],
+        prefix="/classify",
+        tags=["classify"],
     )
 
 # rename this to something more checking if a patient is actually a user's
@@ -21,9 +23,11 @@ async def classify(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
-    return await classify_service(
+    error_stack = ErrorStack()
+    return await ClassifyService(
             image_array, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 

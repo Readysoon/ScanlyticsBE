@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.db.database import get_db
 from app.user.userSchema import User
 from app.user.userService import GetCurrentUserService, DeleteUserService, PatchUserService
-from app.auth.authSchema import Password
-from app.auth.authService import GetCurrentUserIDHelper
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
 
 
 '''	1.	Get user profile - done
@@ -27,12 +29,14 @@ router = APIRouter(
 
 @router.get("/")
 async def get_user(
-        current_user = Depends(GetCurrentUserIDHelper),
+        current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetCurrentUserService(
-        current_user,
-        db
+            current_user_id,
+            db,
+            error_stack
         )
 
 
@@ -42,19 +46,22 @@ async def patch_user(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await PatchUserService(
             user_in, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
-
 
 @router.delete("/")
 async def delete_user(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await DeleteUserService(   
             current_user_id,
-            db
+            db,
+            error_stack
         )

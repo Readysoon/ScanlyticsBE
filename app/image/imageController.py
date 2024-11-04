@@ -2,10 +2,13 @@ from fastapi import UploadFile, File, HTTPException, APIRouter, Depends
 from surrealdb import Surreal
 from fastapi import APIRouter
 
-from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDHelper
 from app.image.imageService import UploadImageService, GetImagesByPatient, GetImageByID, DeleteImageByID, UpdateImageService
 from app.image.imageSchema import Image
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
 
 
 router = APIRouter(
@@ -21,11 +24,13 @@ async def upload_image(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await UploadImageService(
             file,
             patient_id,
             current_user_id,
-            db
+            db,
+            error_stack
         )
 
 '''to do: get all images service'''
@@ -35,10 +40,12 @@ async def get_images_by_patient(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetImagesByPatient(
             patient_id,
             current_user_id,
-            db
+            db,
+            error_stack
         )
 
 
@@ -48,10 +55,12 @@ async def get_image(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetImageByID(
             image_id,
             current_user_id,
-            db
+            db,
+            error_stack
         )
 
 @router.delete("/{image_id}")
@@ -60,10 +69,12 @@ async def delete_image(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await DeleteImageByID(
             image_id,
             current_user_id,
-            db
+            db,
+            error_stack
         )
 
 @router.patch("/{image_id}")
@@ -73,10 +84,12 @@ async def update_patient(
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDHelper)
     ):
+    error_stack = ErrorStack()
     return await UpdateImageService(
             image_in, 
             image_id, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 

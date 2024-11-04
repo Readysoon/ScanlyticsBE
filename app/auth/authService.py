@@ -4,11 +4,11 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from starlette.responses import JSONResponse
 
-from app.db.database import DatabaseResultHelper
-from app.email.emailService import EmailVerificationService
-from app.error.errorService import ErrorStack, ExceptionHelper
 
-from app.auth.authHelper import CreateAccessTokenHelper, ReturnAccessTokenHelper, VerifyAccessTokenHelper, GetCurrentUserIDHelper
+from app.email.emailService import EmailVerificationService
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
+
+from app.auth.authHelper import ReturnAccessTokenHelper, VerifyAccessTokenHelper
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -18,34 +18,42 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 '''potential security risk'''
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
-async def CheckMailService(user_email, db):
-    error_stack = ErrorStack()
-    query_result = None
-
+async def CheckMailService(user_email, db, error_stack):
     try:
-        query_result = await db.query(
-                f"SELECT VALUE email "
-                f"FROM User WHERE "
-                f"email = '{user_email}';"
+        try: 
+            query_result = await db.query(
+                    f"SELECT VALUE email "
+                    f"FROM User WHERE "
+                    f"email = '{user_email.user_email}';"
+                )
+            
+            DatabaseErrorHelper(query_result, error_stack)
+
+        except Exception as e:
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error.",
+                e,
+                CheckMailService
             )
-        
-        DatabaseResultHelper(query_result, error_stack)
         
         email = query_result[0]['result']
         
         if email:
-            return JSONResponse(status_code=226, content={"message": "Email in use."})    
+            return JSONResponse(status_code=409, content={"message": "Email in use."})    
         else:
             return JSONResponse(status_code=200, content={"message": "Email can be used."})    
                      
     except Exception as e:
-        ExceptionHelper(CheckMailService, query_result, error_stack, e)
+        ExceptionHelper(CheckMailService, error_stack, e)
 
 
 # an user can only exist within an organization -> the first creates it, the others join
 '''logic for joining an organization has to be yet implemented'''
-async def OrgaSignupService(user_in, db):
+async def OrgaSignupService(user_in, db, error_stack):
+
     hashed_password = pwd_context.hash(user_in.user_password)
+
     try: 
         try:
             query_result = await db.query(
@@ -61,25 +69,49 @@ async def OrgaSignupService(user_in, db):
                     f"email = '{user_in.orga_email}'"
                     f").id)[0]"
                 )
-            
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
    
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation failed: {e}")  
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error.",
+                e,
+                OrgaSignupService
+            )
+        
+        print(DatabaseErrorHelperResultText)
 
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'])
+        if DatabaseErrorHelperResultText is None:
+            pass
+        elif "already contains" in DatabaseErrorHelperResultText:
+            error_stack.add_error(
+                status.HTTP_409_CONFLICT,
+                f"Email '{user_in.user_email}' is already registered.", 
+                e,
+                OrgaSignupService
+            )
+
+        try:
+            return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+        except Exception as e:
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                f"ReturnAccessTokenHelper.", 
+                e,
+                OrgaSignupService
+            )
 
     except Exception as e:   
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Adding the user with orga didnt work: {e}")
+        ExceptionHelper(OrgaSignupService, error_stack, e)
 
 
 '''A user can only join an organization if the owner acccepts'''  
 # Organization:1 is for all doctors without an practice
 # Organization should be None
-async def UserSignupService(user_in, db):
+async def UserSignupService(user_in, db, error_stack):
 
-    error_stack = ErrorStack()
-
+    DatabaseErrorHelperResultText = ""
+     
     try:
         hashed_password = pwd_context.hash(user_in.user_password)
 
@@ -93,23 +125,25 @@ async def UserSignupService(user_in, db):
                     f"organization = Organization:1"
                 )
             
-            DatabaseResultHelperResultText = DatabaseResultHelper(query_result, error_stack)
-   
-        except Exception as e:
-            raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Query error.", e, UserSignupService.__name__)
+            DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
 
-        try:
-            # why did i put this if statement here?
-            # if error_stack is None:
-            #     pass
-            # if -> elif 
-            if DatabaseResultHelperResultText is None:
-                pass
-            elif "already contains" in DatabaseResultHelperResultText:
-                return JSONResponse(status_code=409, content={"message": f"Email '{user_in.user_email}' is already registered."})
         except Exception as e:
-            raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"'error_stack'/'already contains' error.", e, UserSignupService.__name__)
-    
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error.", 
+                e,
+                UserSignupService
+            )
+
+        if DatabaseErrorHelperResultText is None:
+            pass
+        elif "already contains" in DatabaseErrorHelperResultText:
+            error_stack.add_error(
+                status.HTTP_409_CONFLICT,
+                f"Email '{user_in.user_email}' is already registered.",
+                "None",
+                UserSignupService
+            )
 
         token = ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
 
@@ -120,23 +154,39 @@ async def UserSignupService(user_in, db):
         if testing == False:
             try:
                 await EmailVerificationService(user_in.user_email, token, first_name)
-                return JSONResponse(status_code=201, content={"message": f"Verification mail has been sent to {user_in.user_email}."})
+                return JSONResponse(
+                        status_code=201, 
+                        content={"message": f"Verification mail has been sent to {user_in.user_email}."}
+                    )
+            
             except Exception as e:
-                raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Sending mail failed.", e, UserSignupService.__name__)
+                error_stack.add_error(
+                    status.HTTP_409_CONFLICT,
+                    f"Email '{user_in.user_email}' is already registered.",
+                    e,
+                    UserSignupService
+                )
         else: 
             try:
-                return JSONResponse(status_code=201, content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack))
+                return JSONResponse(
+                        status_code=201, 
+                        content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], 
+                                                        error_stack)
+                    )
+            
             except Exception as e:
-                raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Returning Access Token failed.", e, UserSignupService.__name__)
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Returning Access Token failed.",
+                    e,
+                    UserSignupService
+                )
             
     except Exception as e:
         ExceptionHelper(UserSignupService, error_stack, e)
     
 
-async def LoginService(user_data, db):
-
-    error_stack = ErrorStack()
-
+async def LoginService(user_data, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -145,39 +195,50 @@ async def LoginService(user_data, db):
                 f"email = '{user_data.user_email}';"
             )
 
-            db_exception_handler = DatabaseResultHelper(query_result)
-            if db_exception_handler.errors:
-                for error in db_exception_handler.errors:
-                    error_stack.add_error(error["code"], error["detail"], error.get("function"))
+            DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
-            error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "Query error.", LoginService.__name__)
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.", 
+                    e,
+                    LoginService
+                )
 
         if not query_result or not query_result[0]['result']:
-            error_stack.add_error(status.HTTP_404_NOT_FOUND, "User not found.", LoginService.__name__)
+            error_stack.add_error(
+                    status.HTTP_404_NOT_FOUND,
+                    "User not found.", 
+                    "None",
+                    LoginService
+                )
         else:
             if not query_result[0]['result'][0]['verified']:
-                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "You have not verified your email.", LoginService.__name__)
+                error_stack.add_error(
+                    status.HTTP_403_FORBIDDEN,
+                    "You have not verified your email.", 
+                    "None",
+                    LoginService
+                )
 
             if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
-                error_stack.add_error(status.HTTP_401_UNAUTHORIZED, "Wrong password.", LoginService.__name__)
+                error_stack.add_error(
+                    status.HTTP_401_UNAUTHORIZED,
+                    "Wrong password.", 
+                    "None",
+                    LoginService
+                )
 
-        if error_stack.errors:
-            raise error_stack
-
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'])
+        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
 
     except Exception as e:
-        print(f"{LoginService.__name__}: Printed error stack: \n{error_stack}")
-        last_error = error_stack.get_last_error()
-        if last_error:
-            raise HTTPException(status_code=last_error["code"], detail=f"Function: {last_error.get('function', 'Unknown')}, Detail: {last_error['detail']}")
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        ExceptionHelper(LoginService, error_stack, e)
 
     
-async def UpdatePasswordService(password, current_user_id, db):
-    hashed_password = pwd_context.hash(password.password)
+async def UpdatePasswordService(password, current_user_id, db, error_stack):
+
+    hashed_password = pwd_context.hash(password.user_password)
+
     try:
         try:
             query_result = await db.query(
@@ -188,44 +249,65 @@ async def UpdatePasswordService(password, current_user_id, db):
                     f"SET password = '{hashed_password}';"
                 )
             
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.", 
+                    e,
+                    UpdatePasswordService
+                )
         
-        print(query_result)
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'])
+        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
+        ExceptionHelper(UpdatePasswordService, error_stack, e)
     
 
-async def ValidateService(current_user_id, db):
+async def ValidateService(current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
-                    f"SELECT id "
+                    f"SELECT verified, id "
                     f"FROM User WHERE "
-                    f"id = '{current_user_id}' AND "
-                    f"verified = true;"
+                    f"id = '{current_user_id}';"
                 )
             
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Querying didnt work: {e}")
-        
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'])
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.", 
+                    e,
+                    ValidateService
+                )
+
+        if not query_result[0]['result']:
+            error_stack.add_error(
+                    status.HTTP_401_UNAUTHORIZED,
+                    "No user found for this token.",
+                    "None",
+                    ValidateService
+                )
+        elif query_result[0]['result'][0]['verified'] == True:
+            return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+        else:
+            error_stack.add_error(
+                    status.HTTP_403_FORBIDDEN,
+                    "Please verify your email.",
+                    "None",
+                    ValidateService
+                )
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Login didnt work: {e}")
-    
+        ExceptionHelper(ValidateService, error_stack, e)
+     
 
-async def VerificationService(token, db):
-    error_stack = ErrorStack()
-    
+async def VerificationService(token, db, error_stack):
     try:
-        current_user_id = VerifyAccessTokenHelper(token)
+        current_user_id = VerifyAccessTokenHelper(token, error_stack)
 
         try:
             query_result = await db.query(
@@ -237,21 +319,18 @@ async def VerificationService(token, db):
                     f"verified = true;"
                 )
             
-            db_exception_handler = DatabaseResultHelper(query_result)
-            if db_exception_handler.errors:
-                for error in db_exception_handler.errors:
-                    error_stack.add_error(error["code"], error["detail"], error.get("function"))
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e:
-            error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Query error: {e}", VerificationService.__name__)
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    VerificationService
+                )
         
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id']), {"message": f"{query_result[0]['result'][0]['email']} has been verified"}
+        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack), {"message": f"{query_result[0]['result'][0]['email']} has been verified"}
 
     except Exception as e:
-        print(f"{LoginService.__name__}: Printed error stack: \n{error_stack}")
-        last_error = error_stack.get_last_error()
-        if last_error:
-            raise HTTPException(status_code=last_error["code"], detail=f"Function: {last_error.get('function', 'Unknown')}, Detail: {last_error['detail']}")
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        ExceptionHelper(VerificationService, error_stack, e)
 

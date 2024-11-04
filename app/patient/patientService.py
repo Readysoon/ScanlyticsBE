@@ -2,11 +2,18 @@ from fastapi import HTTPException, status
 
 from app.auth.authService import ReturnAccessTokenHelper
 from app.report.reportService import GetAllReportsByPatientIDService, DeleteReportService
-from app.db.database import DatabaseResultHelper
 from app.image.imageService import GetImagesByPatient, DeleteImageByID
 
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
-async def CreatePatientService(patientin, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_201_CREATED  # for successful creation
+status.HTTP_400_BAD_REQUEST  # for invalid patient data
+status.HTTP_409_CONFLICT  # if patient already exists
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def CreatePatientService(patientin, current_user_id, db, error_stack):
     try:
         try:
             # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
@@ -23,22 +30,34 @@ async def CreatePatientService(patientin, current_user_id, db):
                 f").in)[0];"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    CreatePatientService
+                ) 
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Something creating the Patient didnt work: {e}")
+        ExceptionHelper(CreatePatientService, error_stack, e)
 
 
 # Looks with the patient_id and current_user_id which patients are to user 
 # with the id and returns information about the patient
-async def GetPatientByID(patient_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist (change from 500)
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to access patient
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetPatientByID(patient_id, current_user_id, db, error_stack):
     # Checking if patient is user's patient
     try:
         try: 
@@ -50,23 +69,40 @@ async def GetPatientByID(patient_id, current_user_id, db):
                 f"AND out = '{current_user_id}'"
                 f").in;"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    GetPatientByID
+                ) 
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "No record was found for this patient.",
+                    "Null",
+                    GetPatientByID
+                ) 
         
         result_without_status = query_result[0]['result']
   
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Looking up Patient didnt work: {e}")  
+        ExceptionHelper(CreatePatientService, error_stack, e)
 
-
-async def UpdatePatientService(patientin, patient_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful update
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to update
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def UpdatePatientService(patientin, patient_id, current_user_id, db, error_stack):
         try:
             try:
                 name = patientin.patient_name
@@ -91,7 +127,12 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                 set_string = set_string[:-2]
 
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")       
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Set-string creation failed",
+                    e,
+                    UpdatePatientService
+                ) 
 
             try: 
                 # and finally put everything together and send it
@@ -104,19 +145,29 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db):
                         f"{set_string};"
                     )
                 
-                DatabaseResultHelper(query_result)
+                DatabaseErrorHelper(query_result, error_stack)
    
             except Exception as e:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    UpdatePatientService
+                ) 
             
-            return ReturnAccessTokenHelper(current_user_id)
+            return ReturnAccessTokenHelper(current_user_id, error_stack)
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the patient didnt work: {e}")
+            ExceptionHelper(UpdatePatientService, error_stack, e)
 
 
-# access token is here created from current_user_id !!!
-async def GetAllPatientsByUserID(current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval (even with empty array)
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetAllPatientsByUserIDService(current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
@@ -124,52 +175,84 @@ async def GetAllPatientsByUserID(current_user_id, db):
                     f"Treated_By WHERE "
                     f"out = {current_user_id};"
                 )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
    
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    GetAllPatientsByUserIDService
+                ) 
         
         result_without_status = query_result[0]['result']
 
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Getting all patients didnt work: {e}")
+        ExceptionHelper(GetAllPatientsByUserIDService, error_stack, e)
     
 
 # Tested: Deleting the Patient automatically deletes the Treated_By relation too
-'''insert db check afterwards if the patient was actually deleted'''
 '''insert check with output that shows the user if they can delete this patient'''
 '''add Note deletion'''
-async def DeletePatientService(patient_id, db, current_user_id):
+'''
+# Suggested:
+status.HTTP_204_NO_CONTENT  # for successful deletion
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
+status.HTTP_409_CONFLICT  # when patient can't be deleted (has dependencies)
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def DeletePatientService(patient_id, current_user_id, db, error_stack):
     try:
         # Delete Images
         try:
             json_response = await GetImagesByPatient(patient_id, current_user_id, db)
             images = json_response[1]
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"[...] await GetAllReportsByPatientIDService(patient_id, current_user_id, db) [...]: {e}")
-
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "GetImagesByPatient error",
+                    e,
+                    DeletePatientService
+                ) 
+            
         try:
             for image in images:
                 image_id = image['id']
                 DeleteImageByID(image_id, current_user_id, db)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"for report in reports [...]: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "DeleteImageByID error",
+                    e,
+                    DeletePatientService
+                ) 
 
         # Delete Patients
         try:
             json_response = await GetAllReportsByPatientIDService(patient_id, current_user_id, db)
             reports = json_response[1]
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"[...] await GetAllReportsByPatientIDService(patient_id, current_user_id, db) [...]: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "GetAllReportsByPatientIDService error",
+                    e,
+                    DeletePatientService
+                ) 
 
         try:
             for report in reports:
                 report_id = report['id']
                 DeleteReportService(report_id, current_user_id, db)
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"for report in reports [...]: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "DeleteReportService error",
+                    e,
+                    DeletePatientService
+                ) 
  
         try: 
             query_result = await db.query(
@@ -180,16 +263,26 @@ async def DeletePatientService(patient_id, db, current_user_id):
                     f"out = {current_user_id}).in;"
                 )
             
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
    
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Final Patient deletion Query error",
+                    e,
+                    DeletePatientService
+                ) 
         
         if query_result[0] == '':
-            return HTTPException(status_code=status.HTTP_200_OK, detail="Patient was deleted successfully.")
-    
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Patient deletion successfull.",
+                    "Null",
+                    DeletePatientService
+                )
+                
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Patient deletion didnt work: {e}")
+        ExceptionHelper(DeletePatientService, error_stack, e)
 
 
 

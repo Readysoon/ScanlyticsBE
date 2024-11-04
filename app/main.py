@@ -3,8 +3,6 @@ from fastapi.responses import HTMLResponse
 
 import logging
 
-'''For Gcloud deploying add "." to the imports and remove for development.'''
-
 # from db.seeds import seeddoc2patients
 from app.db.models import initializedb
 
@@ -40,11 +38,44 @@ app.include_router(classifier_router)
 app.include_router(ml_models)
 
 
-'''to make initialize_statements_service work it needs db as a parameter'''
+'''to make InitializeStatementsService work it needs db as a parameter'''
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    # await initialize_statements_service()
+    # await InitializeStatementsService()
+
+
+
+# from fastapi.exceptions import RequestValidationError
+# from fastapi import HTTPException, Request
+# from fastapi.responses import JSONResponse
+
+
+# # Add this at the top level of your FastAPI app
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request: Request, exc: RequestValidationError):
+#     errors = exc.errors()
+#     
+#     for error in errors:
+#         print(error)
+#         if error["type"] == "value_error":
+#             if "email" in str(error["loc"]):
+#                 return JSONResponse(
+#                     status_code=400,
+#                     content={
+#                         "message": "Invalid email format",
+#                         "detail": "Please provide a valid email address"
+#                     }
+#                 )
+#     
+#     # For other validation errors
+#     return JSONResponse(
+#         status_code=400,
+#         content={
+#             "message": "Validation error",
+#             "detail": str(exc)
+#         }
+#     )
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(

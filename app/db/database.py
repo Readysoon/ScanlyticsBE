@@ -4,8 +4,6 @@ from surrealdb import Surreal
 from dotenv import load_dotenv
 from fastapi import status
 
-from fastapi import HTTPException
-
 # Load environment variables from the .env file
 load_dotenv()
 
@@ -40,36 +38,6 @@ async def get_db():
         logging.info("Closed SurrealDB connection")
 
 
-def DatabaseResultHelper(query_result, error_stack):
-    if query_result is None:
-        raise error_stack.add_error(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            f"Query result: {query_result}", 
-            DatabaseResultHelper.__name__
-        )
-
-    if not query_result[0]['result']:
-        raise error_stack.add_error(
-            status.HTTP_404_NOT_FOUND, 
-            f"No Result found: {query_result[0]['result']}", 
-            DatabaseResultHelper.__name__
-        )
-
-    if query_result[0]['status'] == 'ERR':
-        print("Error raised?")
-        error_stack.add_error(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            f"Status == 'ERR': {query_result[0]['result']}", 
-            DatabaseResultHelper.__name__
-        )
-        if "already contains" in query_result[0]['result']:
-            return query_result[0]['result']
-        else: 
-            print("Error should have been raised")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=error_stack.get_last_error()
-            )
     
 
 

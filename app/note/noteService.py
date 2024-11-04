@@ -1,10 +1,17 @@
-from fastapi import HTTPException, status
+from fastapi import status
 
-from app.auth.authService import ReturnAccessTokenHelper
-from app.db.database import DatabaseResultHelper
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
+from app.auth.authHelper import ReturnAccessTokenHelper
 
-'''Works'''
-async def CreateNoteService(patient_id, note_in, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_201_CREATED  # for successful creation
+status.HTTP_404_NOT_FOUND  # if patient doesn't exist
+status.HTTP_403_FORBIDDEN  # if user doesn't have permission to create notes for this patient
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid note data
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def CreateNoteService(patient_id, note_in, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -18,20 +25,31 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db):
                 f"user_owner = '{current_user_id}';"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    CreateNoteService
+                ) 
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"CreateNoteService: {e}")
+        ExceptionHelper(CreateNoteService, error_stack, e)
 
-'''works'''
-async def GetNoteByID(note_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval
+status.HTTP_404_NOT_FOUND  # when note doesn't exist (change from 500)
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to access the note
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetNoteByID(note_id, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -40,23 +58,39 @@ async def GetNoteByID(note_id, current_user_id, db):
                 f"AND user_owner = {current_user_id};"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    GetNoteByID
+                ) 
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this note.")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "No Note found.",
+                    "None",
+                    GetNoteByID
+                ) 
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetNoteByID: {e}")
+        ExceptionHelper(GetNoteByID, error_stack, e)
 
-'''works'''
-async def GetAllNotesByPatientID(patient_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval (even with empty array)
+status.HTTP_404_NOT_FOUND  # if patient doesn't exist
+status.HTTP_403_FORBIDDEN  # if user doesn't have permission to view patient's notes
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -65,25 +99,43 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db):
                 f"AND user_owner = {current_user_id};"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    GetNoteByID
+                ) 
         
         if not query_result[0]['result']:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No record was found for this patient.")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "No Note was found for this patient.",
+                    "None",
+                    GetNoteByID
+                ) 
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllNotesByPatientID: {e}")
+        ExceptionHelper(GetNoteByID, error_stack, e)
 
 
 '''find a solution for updating parameter "patient" properly, maybe doctor just has to delete it?'''
 '''Works - except for when wrong parameter was given'''
-async def UpdateNoteService(note_in, note_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful update
+status.HTTP_404_NOT_FOUND  # when note doesn't exist
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to update
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def UpdateNoteService(note_in, note_id, current_user_id, db, error_stack):
     try:
         try:
             symptoms = note_in.symptoms
@@ -111,7 +163,12 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db):
             set_string = set_string[:-2]
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Set-string creation failed.",
+                    e,
+                    UpdateNoteService
+                ) 
         
         try:
             # and finally put everything together and send it
@@ -123,21 +180,32 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db):
                     f") {set_string};"
                 )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    UpdateNoteService
+                ) 
         
         result_without_status = query_result[0]['result']
         
-        return ReturnAccessTokenHelper(current_user_id), result_without_status
+        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
+        ExceptionHelper(UpdateNoteService, error_stack, e)
     
     
-'''works but unfinished''' 
-async def DeleteNoteService(note_id, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_204_NO_CONTENT  # for successful deletion
+status.HTTP_404_NOT_FOUND  # when note doesn't exist
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+''' 
+async def DeleteNoteService(note_id, current_user_id, db, error_stack):
     try:
         # try:
         #     # search before deletion
@@ -151,14 +219,19 @@ async def DeleteNoteService(note_id, current_user_id, db):
                 f"AND user_owner = {current_user_id})"
             )
 
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
             
         except Exception as e: 
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work. {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    DeleteNoteService
+                ) 
         
-        return ReturnAccessTokenHelper(current_user_id)
+        return ReturnAccessTokenHelper(current_user_id, error_stack)
             
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"UpdateNoteService: {e}")
+        ExceptionHelper(DeleteNoteService, error_stack, e)
 
 

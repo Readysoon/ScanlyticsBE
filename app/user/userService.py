@@ -1,16 +1,14 @@
-from surrealdb import Surreal
-from pydantic import BaseModel
-from fastapi import HTTPException, status
+from fastapi import status
 from passlib.context import CryptContext
 from starlette.responses import JSONResponse
 
-from app.auth.authService import DatabaseResultHelper, ReturnAccessTokenHelper
-from app.patient.patientService import DeletePatientService, GetAllPatientsByUserID
+from app.auth.authService import ReturnAccessTokenHelper
+from app.patient.patientService import DeletePatientService, GetAllPatientsByUserIDService
 
-from app.error.errorService import ErrorStack
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
-
 
 
 '''	1.	Get user profile
@@ -23,7 +21,15 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 '''
 
 
-async def GetCurrentUserService(current_user_id, db):
+# make this proper; you cant just claim a not found when theres a main exception
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval
+status.HTTP_404_NOT_FOUND  # when user not found
+status.HTTP_401_UNAUTHORIZED  # when token is invalid
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetCurrentUserService(current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
@@ -32,18 +38,30 @@ async def GetCurrentUserService(current_user_id, db):
                 f"id = '{current_user_id}'"
             )
             
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    GetCurrentUserService
+                )
         
-        return ReturnAccessTokenHelper(current_user_id), query_result[0]['result'][0]
+        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result'][0]
 
-    except:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"GetCurrentUserService: {e}")   
+    except Exception  as e:
+        ExceptionHelper(GetCurrentUserService, error_stack, e)
     
-
-async def PatchUserService(userin, current_user_id, db):
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful update
+status.HTTP_400_BAD_REQUEST  # for invalid input data
+status.HTTP_409_CONFLICT  # for email already in use
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def PatchUserService(userin, current_user_id, db, error_stack):
     try:
         try:
             email = userin.user_email
@@ -65,8 +83,13 @@ async def PatchUserService(userin, current_user_id, db):
             set_string = set_string[:-2]
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Set-string creation failed: {e}")   
-        
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Set-string creation failed.",
+                    e,
+                    PatchUserService
+                )
+                    
         try: 
             # and finally put everything together and send it
             query_result = await db.query(
@@ -75,82 +98,124 @@ async def PatchUserService(userin, current_user_id, db):
                     f"{set_string};"
                 )
             
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database operation didnt work: {e}")
-        
-        return ReturnAccessTokenHelper(current_user_id)
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    PatchUserService
+                )
+                    
+        return JSONResponse(
+            status_code=200, 
+            content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+            )
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Updating the user didnt work: {e}")
+        ExceptionHelper(PatchUserService, error_stack, e)
     
-
-async def DeleteUserService(current_user_id, db):
-    error_stack = ErrorStack()
-
+'''
+# Suggested:
+status.HTTP_204_NO_CONTENT  # for successful deletion
+status.HTTP_404_NOT_FOUND  # when user not found
+status.HTTP_409_CONFLICT  # when deletion fails due to dependencies
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def DeleteUserService(current_user_id, db, error_stack):
     try:
         query_result = await db.query(
             f"SELECT * FROM User "
             f"WHERE id = {current_user_id};"
         )
 
-        db_exception_handler = DatabaseResultHelper(query_result)
-        if db_exception_handler.errors:
-            for error in db_exception_handler.errors:
-                error_stack.add_error(error["code"], error["detail"], error.get("function"))
+        DatabaseErrorHelper(query_result, error_stack)
 
     except Exception as e:
-        error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "Query error.", DeleteUserService.__name__)
+        error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Search User Query error.",
+                e,
+                DeleteUserService
+            )
 
     if not query_result[0]['result']:
-        raise error_stack.add_error(status.HTTP_404_NOT_FOUND, "No such user.", DeleteUserService.__name__)
+        error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "No such user.",
+                "None",
+                DeleteUserService
+            )
 
     try:             
         try:
-            json_response = await GetAllPatientsByUserID(current_user_id, db)
+            json_response = await GetAllPatientsByUserIDService(current_user_id, db, error_stack)
             patients = json_response[1]
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"GetAllPatientsByUserID: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "GetAllPatientsByUserIDService.",
+                e,
+                DeleteUserService
+            )
         
         try:
             for patient in patients:
                 patient_id = patient['in']
                 DeletePatientService(patient_id, db, current_user_id)
+
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Patient deletion error: {e}")
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "DeletePatientService.",
+                e,
+                DeleteUserService
+            )
         
         try:
             query_result = await db.query(
                 f"DELETE {current_user_id};"
             )
-            DatabaseResultHelper(query_result)
+            DatabaseErrorHelper(query_result, error_stack)
+
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"User deletion error: {e}")
-        
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Delete query error.",
+                e,
+                DeleteUserService
+            )
+
         try:
             query_result = await db.query(
                 f"SELECT * FROM User "
                 f"WHERE id = {current_user_id};"
             )
 
-            db_exception_handler = DatabaseResultHelper(query_result)
-            if db_exception_handler.errors:
-                for error in db_exception_handler.errors:
-                    error_stack.add_error(error["code"], error["detail"], error.get("function"))
+            DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
-            error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "Query error.", DeleteUserService.__name__)
-
-        if not query_result[0]['result']:
-            return JSONResponse(status_code=200, content={"message": "User deletion successful."})
-        else: 
-            return JSONResponse(status_code=500, content={"message": "User deletion unsuccessful."})
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Controll query error.",
+                e,
+                DeleteUserService
+            )
+        
+        try:
+            if not query_result[0]['result']:
+                return JSONResponse(status_code=200, content={"message": "User deletion successful."})
+            else: 
+                return JSONResponse(status_code=500, content={"message": "User deletion unsuccessful."})
+            
+        except Exception as e:
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Returning JSONResponse failed.",
+                e,
+                DeleteUserService
+            )
         
     except Exception as e:
-        print(f"{DeleteUserService.__name__}: Printed error stack: \n{error_stack}")
-        last_error = error_stack.get_last_error()
-        if last_error:
-            raise HTTPException(status_code=last_error["code"], detail=f"Function: {last_error.get('function', 'Unknown')}, Detail: {last_error['detail']}")
-        else:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        ExceptionHelper(DeleteUserService, error_stack, e)

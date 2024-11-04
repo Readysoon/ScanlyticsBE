@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.db.database import get_db
-from app.auth.authService import GetCurrentUserIDHelper
-
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
 
 
 router = APIRouter(
@@ -20,10 +22,12 @@ async def create_report(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await CreateReportService(
             report_in,
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 
 @router.get("/{report_id}")
@@ -32,10 +36,12 @@ async def get_report(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetReportByIDService(
             report_id,
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 
 '''update to handle the new schema'''
@@ -46,11 +52,13 @@ async def update_report(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await UpdateReportService(
             report_in,
             report_id, 
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 
 @router.get("/all/{patient_id}")
@@ -59,10 +67,12 @@ async def get_all_reports_by_patient_and_user(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await GetAllReportsByPatientIDService(
             patient_id,
             current_user_id, 
-            db
+            db,
+            error_stack
         )
 
 @router.delete("/{report_id}")
@@ -71,8 +81,10 @@ async def delete_patient(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db),
     ):
+    error_stack = ErrorStack()
     return await DeleteReportService(
             report_id,
             current_user_id,
-            db
+            db,
+            error_stack
         )

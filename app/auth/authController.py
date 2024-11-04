@@ -1,12 +1,16 @@
-from fastapi import APIRouter, Form, Depends
+from fastapi import APIRouter, Depends
 from pydantic.networks import EmailStr
 from surrealdb import Surreal
 
 from app.db.database import get_db
-from app.user.userSchema import UserOrga, User
 
-from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, GetCurrentUserIDHelper, ValidateService, UpdatePasswordService, VerificationService
+from app.user.userSchema import UserOrga, User
 from .authSchema import Login, Email, Password, Token
+
+from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
+
+from app.error.errorHelper import ErrorStack
+from app.auth.authHelper import GetCurrentUserIDHelper
 
 
 '''	1.	Login - check
@@ -29,9 +33,11 @@ async def check_mail(
         user_email: Email,
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await CheckMailService(
             user_email, 
-            db
+            db,
+            error_stack
         )
 
 '''first user of a organization has to sign up for the organization too'''
@@ -40,9 +46,11 @@ async def orga_signup(
         user_in: UserOrga, 
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await OrgaSignupService(
             user_in,
-            db
+            db,
+            error_stack
         )
 
 @router.post("/user_signup", response_model=Token)
@@ -50,9 +58,11 @@ async def user_signup(
         user_in: User,
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await UserSignupService(
             user_in,
-            db
+            db,
+            error_stack
         )
 
 @router.post("/login")
@@ -60,9 +70,11 @@ async def login(
         user_data: Login, 
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await LoginService(
             user_data,
-            db
+            db,
+            error_stack
         )
 
 @router.patch("/password")
@@ -71,10 +83,12 @@ async def update_password(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = current_user_id
     return await UpdatePasswordService(
              password,
              current_user_id,
-             db
+             db,
+             error_stack
         )
 
 @router.post("/validate")
@@ -82,9 +96,11 @@ async def validate(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await ValidateService(
              current_user_id,
-             db
+             db,
+             error_stack
         )
 
 @router.get("/verify/{token}")
@@ -92,9 +108,11 @@ async def verify(
         token: str,
         db: Surreal = Depends(get_db)
     ):
+    error_stack = ErrorStack()
     return await VerificationService(
              token,
-             db
+             db,
+             error_stack
         )
 
 

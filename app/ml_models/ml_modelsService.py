@@ -5,9 +5,10 @@ from fastapi import HTTPException, status
 from botocore.exceptions import ClientError
 from fastapi.responses import JSONResponse
 
-from app.auth.authService import ReturnAccessTokenHelper
-from app.db.database import DatabaseResultHelper
 from functools import lru_cache
+
+from app.error.errorHelper import ExceptionHelper
+
 
 @lru_cache()
 def get_s3_client():
@@ -20,19 +21,30 @@ def get_s3_client():
 
 s3_client = get_s3_client()
 
-async def RetrieveModelService(model_name, current_user_id, db):
-    model_name_str = model_name.model_name if hasattr(model_name, 'model_name') else model_name
-    model_name_str = model_name_str.replace('.onnx', '')
-    
+async def RetrieveModelService(model_name, current_user_id, db, error_stack):
     try:
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={
-                'Bucket': os.getenv('S3_BUCKET_NAME'),
-                'Key': f'{model_name_str}.onnx'
-            },
-            ExpiresIn=3600
-        )
-        return JSONResponse(content={"url": url})
-    except ClientError as e:
-        raise HTTPException(status_code=404, detail="Model not found")
+        model_name_str = model_name.model_name if hasattr(model_name, 'model_name') else model_name
+        model_name_str = model_name_str.replace('.onnx', '')
+        
+        try:
+            url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': os.getenv('S3_BUCKET_NAME'),
+                    'Key': f'{model_name_str}.onnx'
+                },
+                ExpiresIn=3600
+            )
+            return JSONResponse(content={"url": url})
+        
+        except ClientError as e:
+            error_stack.add_error(
+                    status.HTTP_404_NOT_FOUND,
+                    "Model not found.",
+                    e,
+                    RetrieveModelService
+                )
+           
+    except Exception as e:
+        ExceptionHelper(RetrieveModelService, error_stack, e)
+
