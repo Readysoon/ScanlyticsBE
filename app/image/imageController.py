@@ -1,6 +1,7 @@
 from fastapi import UploadFile, File, HTTPException, APIRouter, Depends
 from surrealdb import Surreal
 from fastapi import APIRouter
+from starlette.responses import JSONResponse
 
 from app.image.imageService import UploadImageService, GetImagesByPatient, GetImageByID, DeleteImageByID, UpdateImageService
 from app.image.imageSchema import Image
@@ -41,12 +42,13 @@ async def get_images_by_patient(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await GetImagesByPatient(
+    response = await GetImagesByPatient(
             patient_id,
             current_user_id,
             db,
             error_stack
         )
+    return JSONResponse(status_code=200, content=response)
 
 
 @router.get("/{image_id}")

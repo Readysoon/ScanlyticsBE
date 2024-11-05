@@ -1,5 +1,6 @@
 import os
 import boto3
+from typing import Set
 from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 from fastapi import status
@@ -25,20 +26,88 @@ s3_client = boto3.client(
     region_name=S3_REGION,
 )
 
-'''status.HTTP_413_REQUEST_ENTITY_TOO_LARGE  # for files exceeding size limit (add this check)'''
-'''status.HTTP_415_UNSUPPORTED_MEDIA_TYPE  # for invalid file types (add this check)'''
+MAX_FILE_SIZE: int = 5 * 1024 * 1024  # 5MB in bytes
+ALLOWED_FILE_TYPES: Set[str] = {
+    'jpeg',
+    'jpg',
+    'png',
+    'gif',
+    'webp'
+}
+
 async def UploadImageService(file, patient_id, current_user_id, db, error_stack):   
     try:
         try:
-            file.filename = file.filename.replace(" ", "_")
+            # first verify patient is users
+            try:
+                query_result = await db.query(
+                f"SELECT * FROM Patient WHERE "
+                f"id = Patient:{patient_id} AND "
+                f"(SELECT * FROM Treated_By WHERE "
+                f"out = {current_user_id});"
+                )
+ 
+                DatabaseErrorHelper(query_result, error_stack)
 
-            file_type = file.filename.rsplit('.', 1)[-1] if '.' in file.filename else 'unknown'
+            except Exception as e:
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"Select Patient Query error: {query_result}",
+                    e,
+                    UploadImageService
+                ) 
 
-            # Upload the file to S3
-            s3_client.upload_fileobj(file.file, S3_BUCKET, file.filename)
+            if not query_result[0]['result']:
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    f"No Patient was found for this id: '{patient_id}'. Maybe check for Typo?",
+                    "None",
+                    UploadImageService
+                ) 
+            # end of patient ownership verification part - maybe own function?
+    
+            try:
+                file.filename = file.filename.replace(" ", "_")
 
-            # Construct the S3 URL for the uploaded file
-            s3_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file.filename}"
+                file_type = file.filename.rsplit('.', 1)[-1] if '.' in file.filename else 'unknown'
+
+            except Exception as e:
+                error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "File name/type handling error.",
+                    e,
+                    UploadImageService
+                )
+
+            if file.size > MAX_FILE_SIZE:
+                error_stack.add_error(
+                    status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    "File size exceeds maximum limit",
+                    "None",
+                    UploadImageService
+                )
+
+            if file_type not in ALLOWED_FILE_TYPES:
+                error_stack.add_error(
+                    status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    f"File type not supported; file type: {file_type}",
+                    "None",
+                    UploadImageService
+                )
+            try:
+                # Upload the file to S3
+                s3_client.upload_fileobj(file.file, S3_BUCKET, file.filename)
+
+                # Construct the S3 URL for the uploaded file
+                s3_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file.filename}"
+
+            except Exception as e:
+                error_stack.add_error(
+                    status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    "S3 uploading/URL construction error.",
+                    e,
+                    UploadImageService
+                )
 
             # Save image metadata in SurrealDB
             try:
@@ -63,7 +132,13 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     UploadImageService
                 ) 
 
-            return JSONResponse(status_code=200, content={"message": "Image has been uploaded"}), ReturnAccessTokenHelper(current_user_id, error_stack)
+            # return JSONResponse(status_code=200, content={"message": "Image has been uploaded"}), ReturnAccessTokenHelper(current_user_id, error_stack)
+            return [
+            {
+                "message": "Image has been uploaded"
+            },
+            ReturnAccessTokenHelper(current_user_id, error_stack)
+            ]
 
         except NoCredentialsError as e:
             error_stack.add_error(
@@ -72,7 +147,7 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     e,
                     UploadImageService
                 ) 
-        
+    
     except Exception as e:
         ExceptionHelper(UploadImageService, error_stack, e)
     

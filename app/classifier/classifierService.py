@@ -7,8 +7,8 @@ from app.statement.statementService import SearchStatementService
 
 from app.error.errorHelper import ExceptionHelper
 
-'''"Analyzes" an image and returns a set of categories which then are used in get_statements_by category to pregenerate a report"'''
 
+'''"Analyzes" an image and returns a set of categories which then are used in get_statements_by category to pregenerate a report"'''
 async def ClassifyService(image_array, current_user_id, db, error_stack):
     try:
         # random_body_part = random.choice(['Fuß', 'LWS', 'Thorax', 'Thorax', 'Hand', 'Hüfte', 'Ellbogen', 'Schulter'])
