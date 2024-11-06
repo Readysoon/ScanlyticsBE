@@ -96,7 +96,7 @@ async def landing_page(
                         user_role: formData.get('user_role')
                     }};
 
-                    const response = await fetch('auth/user_signup', {{
+                    const return await fetch('auth/user_signup', {{
                         method: 'POST',
                         headers: {{
                             'Content-Type': 'application/json',

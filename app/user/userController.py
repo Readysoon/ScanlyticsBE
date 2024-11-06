@@ -54,6 +54,7 @@ async def patch_user(
             error_stack
         )
 
+
 @router.delete("/")
 async def delete_user(
         current_user_id = Depends(GetCurrentUserIDHelper),

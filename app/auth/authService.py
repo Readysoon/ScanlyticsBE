@@ -40,12 +40,27 @@ async def CheckMailService(user_email, db, error_stack):
         email = query_result[0]['result']
         
         if email:
-            return JSONResponse(status_code=409, content={"message": "Email in use."})    
+            return JSONResponse(
+                    status_code=409, 
+                    content=[
+                        {
+                            "message": "Email in use."
+                        }
+                        ]
+                    )
+        
         else:
-            return JSONResponse(status_code=200, content={"message": "Email can be used."})    
+            return JSONResponse(
+                    status_code=200, 
+                    content=[
+                        {
+                            "message": "Email can be used."
+                        }
+                        ]
+                    )
                      
     except Exception as e:
-        ExceptionHelper(CheckMailService, error_stack, e)
+        ExceptionHelper(CheckMailService, e, error_stack)
 
 
 # an user can only exist within an organization -> the first creates it, the others join
@@ -90,7 +105,16 @@ async def OrgaSignupService(user_in, db, error_stack):
             )
 
         try:
-            return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+            return JSONResponse(
+                    status_code=201, 
+                    content=[
+                        {
+                            "message": "User signed up with organization."
+                        },
+                        ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                        ]
+                    )
+        
         except Exception as e:
             error_stack.add_error(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -100,7 +124,7 @@ async def OrgaSignupService(user_in, db, error_stack):
             )
 
     except Exception as e:   
-        ExceptionHelper(OrgaSignupService, error_stack, e)
+        ExceptionHelper(OrgaSignupService, e, error_stack)
 
 
 '''A user can only join an organization if the owner acccepts'''  
@@ -167,9 +191,13 @@ async def UserSignupService(user_in, db, error_stack):
         else: 
             try:
                 return JSONResponse(
-                        status_code=201, 
-                        content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], 
-                                                        error_stack)
+                    status_code=201, 
+                    content=[
+                        {
+                            "message": "User registered."
+                        },
+                        ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                        ]
                     )
             
             except Exception as e:
@@ -181,7 +209,7 @@ async def UserSignupService(user_in, db, error_stack):
                 )
             
     except Exception as e:
-        ExceptionHelper(UserSignupService, error_stack, e)
+        ExceptionHelper(UserSignupService, e, error_stack)
     
 
 async def LoginService(user_data, db, error_stack):
@@ -227,10 +255,18 @@ async def LoginService(user_data, db, error_stack):
                     LoginService
                 )
 
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+        return JSONResponse(
+            status_code=200, 
+            content=[
+                {
+                    "message": "User logged in."
+                },
+                ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack),
+                ]
+            )
 
     except Exception as e:
-        ExceptionHelper(LoginService, error_stack, e)
+        ExceptionHelper(LoginService, e, error_stack)
 
     
 async def UpdatePasswordService(password, current_user_id, db, error_stack):
@@ -257,10 +293,18 @@ async def UpdatePasswordService(password, current_user_id, db, error_stack):
                     UpdatePasswordService
                 )
         
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": "Updated password successfully."
+                    },
+                    ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                    ]
+                )
 
     except Exception as e:
-        ExceptionHelper(UpdatePasswordService, error_stack, e)
+        ExceptionHelper(UpdatePasswordService, e, error_stack)
     
 
 async def ValidateService(current_user_id, db, error_stack):
@@ -290,7 +334,15 @@ async def ValidateService(current_user_id, db, error_stack):
                     ValidateService
                 )
         elif query_result[0]['result'][0]['verified'] == True:
-            return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+            return JSONResponse(
+                    status_code=200, 
+                    content=[
+                        {
+                            "message": "User validated."
+                        },
+                        ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                        ]
+                    ) 
         else:
             error_stack.add_error(
                     status.HTTP_403_FORBIDDEN,
@@ -300,7 +352,7 @@ async def ValidateService(current_user_id, db, error_stack):
                 )
 
     except Exception as e:
-        ExceptionHelper(ValidateService, error_stack, e)
+        ExceptionHelper(ValidateService, e, error_stack)
      
 
 async def VerificationService(token, db, error_stack):
@@ -327,8 +379,16 @@ async def VerificationService(token, db, error_stack):
                     VerificationService
                 )
         
-        return ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack), {"message": f"{query_result[0]['result'][0]['email']} has been verified"}
+        return JSONResponse(
+                    status_code=200, 
+                    content=[
+                        {
+                            "message": f"User verified email '{query_result[0]['result'][0]['email']}'."
+                        },
+                        ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
+                        ]
+                    ) 
 
     except Exception as e:
-        ExceptionHelper(VerificationService, error_stack, e)
+        ExceptionHelper(VerificationService, e, error_stack)
 

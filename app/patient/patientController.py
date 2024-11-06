@@ -1,5 +1,6 @@
 from surrealdb import Surreal
 from fastapi import APIRouter, Depends
+from starlette.responses import JSONResponse
 
 from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
@@ -29,6 +30,7 @@ async def create_patient(
             error_stack
         )
 
+
 @router.get("/{patient_id}")
 async def get_patient(
         patient_id: str,
@@ -43,6 +45,7 @@ async def get_patient(
             error_stack
         )
 
+
 @router.get("/")
 async def get_all_patients(
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -54,6 +57,7 @@ async def get_all_patients(
             db, 
             error_stack
         )
+
 
 @router.patch("/{patient_id}")
 async def update_patient(

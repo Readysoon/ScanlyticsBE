@@ -3,7 +3,8 @@ from passlib.context import CryptContext
 from starlette.responses import JSONResponse
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.patient.patientService import DeletePatientService, GetAllPatientsByUserIDService
+from app.patient.patientService import DeletePatientService
+from app.patient.patientHelper import GetAllPatientsByUserIDHelper
 
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
@@ -47,11 +48,20 @@ async def GetCurrentUserService(current_user_id, db, error_stack):
                     e,
                     GetCurrentUserService
                 )
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result'][0]
+            
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetching user '{current_user_id}' successfull."
+                    }, 
+                    query_result[0]['result'][0],
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
 
     except Exception  as e:
-        ExceptionHelper(GetCurrentUserService, error_stack, e)
+        ExceptionHelper(GetCurrentUserService, e, error_stack)
     
 '''
 # Suggested:
@@ -108,33 +118,42 @@ async def PatchUserService(userin, current_user_id, db, error_stack):
                     e,
                     PatchUserService
                 )
-        try:   
+            
+        if query_result is None:
+            pass
+        elif "already contains" in query_result[0]['result']:
+            error_stack.add_error(
+                status.HTTP_409_CONFLICT,
+                f"Email '{userin.user_email}' is already registered.", 
+                "None",
+                PatchUserService
+            )
+    
+        try: 
 
-            return JSONResponse(
-                status_code=200, 
-                content=ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
-                )
-        
+            updated_user = query_result[0]['result'][0]
+
         except Exception as e:
-            if query_result is None:
-                pass
-            elif "already contains" in query_result[0]['result']:
-                error_stack.add_error(
-                    status.HTTP_409_CONFLICT,
-                    f"Email '{userin.user_email}' is already registered.", 
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Result conversion error.",
                     e,
                     PatchUserService
                 )
-            else:
-                error_stack.add_error(
-                        status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        "JSON Response error.",
-                        e,
-                        PatchUserService
-                    )
+            
+        return JSONResponse(
+            status_code=200, 
+            content=[
+                {
+                    "message": f"Updated user '{current_user_id}'."
+                }, 
+                updated_user,
+                ReturnAccessTokenHelper(current_user_id, error_stack)
+                ]
+            )
 
     except Exception as e:
-        ExceptionHelper(PatchUserService, error_stack, e)
+        ExceptionHelper(PatchUserService, e, error_stack)
     
 '''
 # Suggested:
@@ -170,18 +189,17 @@ async def DeleteUserService(current_user_id, db, error_stack):
 
     try:             
         try:
-            json_response = await GetAllPatientsByUserIDService(current_user_id, db, error_stack)
-            patients = json_response[1]
+            patient_list = await GetAllPatientsByUserIDHelper(current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "GetAllPatientsByUserIDService.",
+                "GetAllPatientsByUserIDHelper.",
                 e,
                 DeleteUserService
             )
         
         try:
-            for patient in patients:
+            for patient in patient_list:
                 patient_id = patient['in']
                 DeletePatientService(patient_id, db, current_user_id)
 
@@ -225,9 +243,25 @@ async def DeleteUserService(current_user_id, db, error_stack):
         
         try:
             if not query_result[0]['result']:
-                return JSONResponse(status_code=200, content={"message": "User deletion successful."})
+                return JSONResponse(
+                    status_code=200, 
+                    content=[
+                        {
+                            "message": f"User deletion successful."
+                        }, 
+                        ReturnAccessTokenHelper(current_user_id, error_stack)
+                        ]
+                    )
             else: 
-                return JSONResponse(status_code=500, content={"message": "User deletion unsuccessful."})
+                return JSONResponse(
+                    status_code=204, 
+                    content=[
+                        {
+                            "message": f"User deletion unsuccessful."
+                        }, 
+                        ReturnAccessTokenHelper(current_user_id, error_stack)
+                        ]
+                    )
             
         except Exception as e:
             error_stack.add_error(
@@ -238,4 +272,4 @@ async def DeleteUserService(current_user_id, db, error_stack):
             )
         
     except Exception as e:
-        ExceptionHelper(DeleteUserService, error_stack, e)
+        ExceptionHelper(DeleteUserService, e, error_stack)

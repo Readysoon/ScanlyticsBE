@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
+from starlette.responses import JSONResponse
 
 from app.db.database import get_db
 

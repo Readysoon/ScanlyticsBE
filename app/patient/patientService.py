@@ -1,9 +1,14 @@
 from fastapi import HTTPException, status
+from starlette.responses import JSONResponse
+
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.report.reportService import GetAllReportsByPatientIDService, DeleteReportService
-from app.image.imageService import GetImagesByPatient, DeleteImageByID
 
+from app.report.reportService import DeleteReportService
+from app.report.reportHelper import GetAllReportsByPatientIDHelper
+
+from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
+from app.patient.patientHelper import GetAllPatientsByUserIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 '''
@@ -40,12 +45,21 @@ async def CreatePatientService(patientin, current_user_id, db, error_stack):
                     CreatePatientService
                 ) 
         
-        result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+        result_without_status = query_result[0]['result'][0]
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Created patient."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(CreatePatientService, error_stack, e)
+        ExceptionHelper(CreatePatientService, e, error_stack)
 
 
 # Looks with the patient_id and current_user_id which patients are to user 
@@ -88,11 +102,52 @@ async def GetPatientByID(patient_id, current_user_id, db, error_stack):
                 ) 
         
         result_without_status = query_result[0]['result']
-  
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetched patient data."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
     
     except Exception as e:
-        ExceptionHelper(CreatePatientService, error_stack, e)
+        ExceptionHelper(CreatePatientService, e, error_stack)
+
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval (even with empty array)
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def GetAllPatientsByUserIDService(current_user_id, db, error_stack):
+
+    try:
+        patient_list = await GetAllPatientsByUserIDHelper(current_user_id, db, error_stack)
+
+        patient_count = 0
+
+        for patient in patient_list:
+            patient_count += 1
+
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetched all {patient_count} patient(s) for user '{current_user_id}'."
+                    }, 
+                    patient_list,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
+    
+    except Exception as e:
+        ExceptionHelper(GetAllPatientsByUserIDService, e, error_stack)
+
 
 '''
 # Suggested:
@@ -155,42 +210,19 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db, error
                     UpdatePatientService
                 ) 
             
-            return ReturnAccessTokenHelper(current_user_id, error_stack)
-
-        except Exception as e:
-            ExceptionHelper(UpdatePatientService, error_stack, e)
-
-
-'''
-# Suggested:
-status.HTTP_200_OK  # for successful retrieval (even with empty array)
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
-'''
-async def GetAllPatientsByUserIDService(current_user_id, db, error_stack):
-    try:
-        try: 
-            query_result = await db.query(
-                    f"SELECT * FROM "
-                    f"Treated_By WHERE "
-                    f"out = {current_user_id};"
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Updated patient."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
                 )
-            DatabaseErrorHelper(query_result, error_stack)
-   
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    GetAllPatientsByUserIDService
-                ) 
-        
-        result_without_status = query_result[0]['result']
 
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
-    
-    except Exception as e:
-        ExceptionHelper(GetAllPatientsByUserIDService, error_stack, e)
+        except Exception as e:
+            ExceptionHelper(UpdatePatientService, e, error_stack)
+
     
 
 # Tested: Deleting the Patient automatically deletes the Treated_By relation too
@@ -208,32 +240,30 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
     try:
         # Delete Images
         try:
-            json_response = await GetImagesByPatient(patient_id, current_user_id, db, error_stack)
-            images = json_response[1]
+            image_list = await GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "GetImagesByPatient error",
+                    "GetImagesByPatientHelper error",
                     e,
                     DeletePatientService
                 ) 
             
         try:
-            for image in images:
+            for image in image_list:
                 image_id = image['id']
-                DeleteImageByID(image_id, current_user_id, db, error_stack)
+                DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "DeleteImageByID error",
+                    "DeleteImageByIDHelper error",
                     e,
                     DeletePatientService
                 ) 
 
-        # Delete Patients
+        # Delete Reports
         try:
-            json_response = await GetAllReportsByPatientIDService(patient_id, current_user_id, db, error_stack)
-            reports = json_response[1]
+            report_list = await GetAllReportsByPatientIDHelper(patient_id, current_user_id, db, error_stack)
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -243,7 +273,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
                 ) 
 
         try:
-            for report in reports:
+            for report in report_list:
                 report_id = report['id']
                 DeleteReportService(report_id, current_user_id, db, error_stack)
         except Exception as e:
@@ -273,16 +303,19 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
                     DeletePatientService
                 ) 
         
-        if query_result[0] == '':
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Patient deletion successfull.",
-                    "Null",
-                    DeletePatientService
+        if not query_result[0]['result'] and query_result[0]['status'] == 'OK':
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Deleted patient '{patient_id}'."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
                 )
                 
     except Exception as e:
-        ExceptionHelper(DeletePatientService, error_stack, e)
+        ExceptionHelper(DeletePatientService, e, error_stack)
 
 
 

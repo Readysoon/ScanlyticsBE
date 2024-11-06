@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic.networks import EmailStr
 from surrealdb import Surreal
+from starlette.responses import JSONResponse
 
 from app.db.database import get_db
 
@@ -40,6 +41,7 @@ async def check_mail(
             error_stack
         )
 
+
 '''first user of a organization has to sign up for the organization too'''
 @router.post("/orga_signup", response_model=Token)
 async def orga_signup(
@@ -53,6 +55,7 @@ async def orga_signup(
             error_stack
         )
 
+
 @router.post("/user_signup", response_model=Token)
 async def user_signup(
         user_in: User,
@@ -65,6 +68,7 @@ async def user_signup(
             error_stack
         )
 
+
 @router.post("/login")
 async def login(
         user_data: Login, 
@@ -76,6 +80,7 @@ async def login(
             db,
             error_stack
         )
+
 
 @router.patch("/password")
 async def update_password(
@@ -91,6 +96,7 @@ async def update_password(
              error_stack
         )
 
+
 @router.post("/validate")
 async def validate(
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -103,6 +109,7 @@ async def validate(
              error_stack
         )
 
+
 @router.get("/verify/{token}")
 async def verify(
         token: str,
@@ -114,6 +121,7 @@ async def verify(
              db,
              error_stack
         )
+
 
 
 

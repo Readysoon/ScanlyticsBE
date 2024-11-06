@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
+from starlette.responses import JSONResponse
 
 from app.note.noteSchema import Note
 from app.note.noteService import CreateNoteService, GetNoteByID, GetAllNotesByPatientID, UpdateNoteService, DeleteNoteService
@@ -30,6 +31,7 @@ async def create_note(
             db,
             error_stack
         )
+    
 
 # rename this to something more checking if a patient is actually a user's
 @router.get("/{note_id}")
@@ -46,6 +48,7 @@ async def get_note(
             error_stack
         )
 
+
 @router.get("/patient/{patient_id}")
 async def get_all_notes_by_patient_id(
         patient_id: str,
@@ -59,6 +62,7 @@ async def get_all_notes_by_patient_id(
             db,
             error_stack
         )
+
 
 @router.patch("/{note_id}")
 async def update_note(

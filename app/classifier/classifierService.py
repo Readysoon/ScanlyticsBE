@@ -1,9 +1,11 @@
 from fastapi import status
+from starlette.responses import JSONResponse
+
 
 from app.auth.authService import ReturnAccessTokenHelper
 
 from app.statement.statementSchema import Statement
-from app.statement.statementService import SearchStatementService
+from app.statement.statementHelper import SearchStatementHelper
 
 from app.error.errorHelper import ExceptionHelper
 
@@ -23,25 +25,34 @@ async def ClassifyService(image_array, current_user_id, db, error_stack):
         searchin.section = ''
 
         try:
-            results_SearchStatementService = await SearchStatementService(searchin, current_user_id, db, error_stack)
+            results_SearchStatementService = await SearchStatementHelper(searchin, current_user_id, db, error_stack)
 
         except Exception as e:
             error_stack.add_error(
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "SearchStatementService.",
+                "SearchStatementHelper.",
                 e,
                 ClassifyService
             )
         try: 
-            statements = results_SearchStatementService[1]
+            statements = results_SearchStatementService
 
             statement_id_list = []
 
             for statement in statements:
                 statement_id = statement['id'], statement['text']
                 statement_id_list.append(statement_id)
-
-            return ReturnAccessTokenHelper(current_user_id, error_stack), statement_id_list
+            
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Classified image(s)."
+                    },
+                    statement_id_list,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
         
         except Exception as e:
             error_stack.add_error(
@@ -52,5 +63,5 @@ async def ClassifyService(image_array, current_user_id, db, error_stack):
             )
     
     except Exception as e:
-        ExceptionHelper(ClassifyService, error_stack, e)
+        ExceptionHelper(ClassifyService, e, error_stack)
 

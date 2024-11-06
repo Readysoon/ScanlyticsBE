@@ -3,7 +3,7 @@ from surrealdb import Surreal
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 
-from app.image.imageService import UploadImageService, GetImagesByPatient, GetImageByID, DeleteImageByID, UpdateImageService
+from app.image.imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from app.image.imageSchema import Image
 
 from app.error.errorHelper import ErrorStack
@@ -34,6 +34,7 @@ async def upload_image(
             error_stack
         )
 
+
 '''to do: get all images service'''
 @router.get("/patient/{patient_id}")
 async def get_images_by_patient(
@@ -42,13 +43,12 @@ async def get_images_by_patient(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    response = await GetImagesByPatient(
+    return await GetImagesByPatientService(
             patient_id,
             current_user_id,
             db,
             error_stack
         )
-    return JSONResponse(status_code=200, content=response)
 
 
 @router.get("/{image_id}")
@@ -58,12 +58,13 @@ async def get_image(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await GetImageByID(
+    return await GetImageByIDService(
             image_id,
             current_user_id,
             db,
             error_stack
         )
+
 
 @router.delete("/{image_id}")
 async def delete_image(
@@ -72,12 +73,13 @@ async def delete_image(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await DeleteImageByID(
+    return await DeleteImageByIDService(
             image_id,
             current_user_id,
             db,
             error_stack
         )
+
 
 @router.patch("/{image_id}")
 async def update_patient(

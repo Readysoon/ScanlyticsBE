@@ -2,8 +2,9 @@ from fastapi import HTTPException, status
 from starlette.responses import JSONResponse
 
 from app.auth.authService import ReturnAccessTokenHelper
-from app.statement.statementService import GetStatementByIDService
+from app.statement.statementHelper import GetStatementByIDHelper
 
+from app.report.reportHelper import GetAllReportsByPatientIDHelper, GetReportByIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 
@@ -44,25 +45,6 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
                 e,
                 CreateReportService
             )
-        
-        try:
-            # extract body_part from Statement
-            body_part_query_result = await db.query(
-                    f"SELECT body_part FROM Statement "
-                    f"WHERE id = {reportin.statement_id_array[0]}"
-                )
-
-            DatabaseErrorHelper(body_part_query_result, error_stack)
-
-            reportin.body_part = body_part_query_result[0]['result'][0]['body_part']
-        
-        except Exception as e:
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                f"extract body_part from Statement query error: {body_part_query_result}",
-                e,
-                CreateReportService
-            )
 
         # verify patient is users
         try:
@@ -92,11 +74,28 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
             while len(statement_location_list) > 0 and len(reportin.statement_id_array) > 0:
                 last_statement_location = statement_location_list.pop()
 
-                last_statement = reportin.statement_id_array.pop()
-                only_statement_UUID = last_statement[10:]
+                try:
+                    last_statement = reportin.statement_id_array.pop()
+                    only_statement_UUID = last_statement[10:]
+                except Exception as e:
+                    error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "1.",
+                        e,
+                        CreateReportService
+                    )
+                
+                try:
+                    GetStatementByIDService_result = await GetStatementByIDHelper(only_statement_UUID, current_user_id, db, error_stack)
+                    statement_text = GetStatementByIDService_result[0]['text']
+                except Exception as e:
+                    error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "2.",
+                        e,
+                        CreateReportService
+                    )
 
-                GetStatementByIDService_result = await GetStatementByIDService(only_statement_UUID, current_user_id, db)
-                statement_text = GetStatementByIDService_result[1][0]['text']
                 text_with_replaced_statement = text_with_replaced_statement[:last_statement_location] + f"{statement_text}" + text_with_replaced_statement[last_statement_location+32:]
 
             text_with_patient_data = f"{patient_data['name']}\n{patient_data['address']}\n{patient_data['contact_number']}\n\n{text_with_replaced_statement}"
@@ -114,7 +113,7 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
         '''patient has to be users - check'''
         '''change in db body_type to body_part - check'''
         '''condition muss als Parameter bei Reports raus!! - check'''
-        # create the report
+        # create the report in the database 
         try: 
             create_query_result = await db.query(
                 f"CREATE Report "
@@ -170,12 +169,21 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
                 e,
                 CreateReportService
             )
-        
-        '''return here something proper'''
-        return ReturnAccessTokenHelper(current_user_id, error_stack), text_with_patient_data, create_query_result[0]['result'][0]
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Created report '{report_id}'."
+                    }, 
+                    text_with_patient_data,
+                    create_query_result[0]['result'][0],
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(CreateReportService, error_stack, e)    
+        ExceptionHelper(CreateReportService, e, error_stack)    
 
 # braucht gar keine patient_id, da anhand der current_user_id geschaut werden kann, welche patienten 
 # der Arzt hat und ob ein Report mit der angegebenen ID auch einen dieser Patienten listet
@@ -193,101 +201,20 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def GetReportByIDService(report_id, current_user_id, db, error_stack):
     try:
-        # get the patient_id from the report
-        try: 
-            query_result = await db.query(
-                f"SELECT * FROM Report WHERE id = Report:{report_id};"
-            )
+        report = await GetReportByIDHelper(report_id, current_user_id, db, error_stack)
 
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "Getting patient id from report query error.",
-                e,
-                GetReportByIDService
-            )
-
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "No record was found for this Report.",
-                "None",
-                GetReportByIDService
-            )
-        
-        try:
-            patient_id = query_result[0]['result'][0]['patient']
-        except Exception as e:
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "Query conversion error.",
-                e,
-                GetReportByIDService
-            )
-        
-        # check which patients the doctor has
-        try: 
-            query_result = await db.query(
-                f"SELECT * FROM Treated_By WHERE out = {current_user_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "check which patients the doctor has - query error.",
-                e,
-                GetReportByIDService
-            )
-        
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "No record was found for this Report.",
-                "None",
-                GetReportByIDService
-            )
-        
-        # look for matches
-        try: 
-            for relation in query_result[0]['result']:
-                try:
-                    if patient_id == relation['in']:
-                        try:
-                            final_query_result = await db.query(
-                                f"SELECT * FROM Report WHERE id = Report:{report_id};"
-                            )
-
-                            DatabaseErrorHelper(final_query_result, error_stack)
-
-                            return ReturnAccessTokenHelper(current_user_id, error_stack), final_query_result[0]['result'][0]
-                            
-                        except Exception as e:
-                            error_stack.add_error(
-                                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                "Error in 'SELECT * FROM Report WHERE id = Report:report_id'",
-                                e,
-                                GetReportByIDService
-                            )
-                except Exception as e:
-                    error_stack.add_error(
-                                status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                "Error in 'patient_id == relation['in']'",
-                                e,
-                                GetReportByIDService
-                            )
-        except Exception as e:
-            error_stack.add_error(
-                        status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        "Error in 'for relation in query_result[0]['result']'",
-                        e,
-                        GetReportByIDService
-                    )                
+        return JSONResponse(
+        status_code=200, 
+        content=[
+            {
+                "message": f"Fetched report '{report_id}'."
+            }, 
+            report,
+            ReturnAccessTokenHelper(current_user_id, error_stack)
+            ]
+        )         
     except Exception as e:
-        ExceptionHelper(GetReportByIDService, error_stack, e) 
+        ExceptionHelper(GetReportByIDService, e, error_stack) 
 
 '''
 # Suggested:
@@ -299,25 +226,27 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def UpdateReportService(reportin, report_id, current_user_id, db, error_stack):
     try:
-        checked_report_query_result = await GetReportByIDService(report_id, current_user_id, db)
-        checked_report_id = checked_report_query_result[1]["id"]
+        checked_report_query_result = await GetReportByIDHelper(report_id, current_user_id, db, error_stack)
+
+        checked_report_id = checked_report_query_result[0]["result"][0]['id']
+
     except Exception as e:
         error_stack.add_error(
                         status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        "Checking if the report is the users didnt work",
+                        f"GetReportByIDHelper: {checked_report_query_result}",
                         e,
                         UpdateReportService
                     )      
     try:
         try:
-            body_type = reportin.body_type
+            body_type = reportin.body_part
             condition = reportin.condition
             report_text = reportin.report_text
             set_string = "SET "
 
             # elongate the update_string
             if body_type:
-                set_string += f"body_type = '{body_type}', "
+                set_string += f"body_part = '{body_type}', "
             if condition:
                 set_string += f"condition = '{condition}', "
             if report_text:
@@ -349,12 +278,21 @@ async def UpdateReportService(reportin, report_id, current_user_id, db, error_st
                     "Query error.",
                     e,
                     UpdateReportService
-                )    
-
-        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result']
+                )  
+            
+        return JSONResponse(
+            status_code=200, 
+            content=[
+                {
+                    "message": f"Created report '{report_id}'."
+                }, 
+                query_result[0]['result'],
+                ReturnAccessTokenHelper(current_user_id, error_stack)
+                ]
+            )
 
     except Exception as e:
-        ExceptionHelper(UpdateReportService, error_stack, e) 
+        ExceptionHelper(UpdateReportService, e, error_stack) 
 
 
 # in order to get all reports of a patient, i have to:
@@ -368,33 +306,24 @@ status.HTTP_403_FORBIDDEN  # when user doesn't have permission
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def GetAllReportsByPatientIDService(patient_id, current_user_id, db, error_stack):
-    try: 
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM "
-                f"Report WHERE "
-                f"patient = "
-                f"(SELECT * FROM "
-                f"Treated_By WHERE "
-                f"in = Patient:{patient_id} AND "
-                f"out = {current_user_id}"
-                f")[0].in;"
+
+    report_list = await GetAllReportsByPatientIDHelper(patient_id, current_user_id, db, error_stack)
+
+    try:
+
+        return JSONResponse(
+            status_code=200, 
+            content=[
+                {
+                    "message": f"Fetched all reports about patient '{patient_id}'."
+                }, 
+                report_list,
+                ReturnAccessTokenHelper(current_user_id, error_stack)
+                ]
             )
-
-            DatabaseErrorHelper(query_result, error_stack)
-
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    GetAllReportsByPatientIDService
-                ) 
-
-        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result']
         
     except Exception as e: 
-        ExceptionHelper(GetAllReportsByPatientIDService, error_stack, e)    
+        ExceptionHelper(GetAllReportsByPatientIDService, e, error_stack)    
 
 '''add Report deletion to patient deletion'''
 '''
@@ -426,9 +355,20 @@ async def DeleteReportService(report_id, current_user_id, db, error_stack):
                     DeleteReportService
                 ) 
             
+        print(query_result)
+            
         try:
-            if query_result[0] == '':
-                return JSONResponse(status_code=200, content={"message": "Report was deleted successfully."})
+            if not query_result[0]['result']:
+
+                return JSONResponse(
+                    status_code=200, 
+                    content=[
+                        {
+                            "message": f"Deleted report '{report_id}'."
+                        }, 
+                        ReturnAccessTokenHelper(current_user_id, error_stack)
+                        ]
+                    )
             
         except Exception as e:
             error_stack.add_error(
@@ -439,4 +379,4 @@ async def DeleteReportService(report_id, current_user_id, db, error_stack):
                 ) 
             
     except Exception as e:
-        ExceptionHelper(GetAllReportsByPatientIDService, error_stack, e)  
+        ExceptionHelper(GetAllReportsByPatientIDService, e, error_stack)  

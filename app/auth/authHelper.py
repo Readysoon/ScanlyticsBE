@@ -69,7 +69,7 @@ def CreateAccessTokenHelper(data: dict, error_stack):
             )
 
 
-# takes current_user_id only in the format without 'User:' ?! still needs to checked if actually true
+# takes current_user_id only in the format without 'User:'
 def ReturnAccessTokenHelper(current_user_id, error_stack):
     try:
         # = {'sub': 'User:jvoqozcbojb3yjmdcmzu'}
@@ -170,7 +170,7 @@ async def GetCurrentUserIDHelper(
                     f"WHERE id = 'User:{user_id}'"
                     f").id)[0];"
                 )
-            
+                        
             select_user_result = DatabaseErrorHelper(query_result[0]['result'], error_stack)
 
             if select_user_result == None:
@@ -192,4 +192,4 @@ async def GetCurrentUserIDHelper(
                 )
         
     except Exception as e:
-        ExceptionHelper(GetCurrentUserIDHelper, error_stack, e)
+        ExceptionHelper(GetCurrentUserIDHelper, e, error_stack)

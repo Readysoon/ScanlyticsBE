@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 
 from functools import lru_cache
 
+from app.auth.authService import ReturnAccessTokenHelper
+
 from app.error.errorHelper import ExceptionHelper
 
 
@@ -44,7 +46,17 @@ async def RetrieveModelService(model_name, current_user_id, db, error_stack):
                     e,
                     RetrieveModelService
                 )
+            
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Model found."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
            
     except Exception as e:
-        ExceptionHelper(RetrieveModelService, error_stack, e)
+        ExceptionHelper(RetrieveModelService, e, error_stack)
 

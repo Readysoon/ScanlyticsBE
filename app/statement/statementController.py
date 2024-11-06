@@ -35,15 +35,19 @@ async def create_statement(
             error_stack
         )
 
+
 @router.post("/initialize")
 async def initialize_statements(
-        db: Surreal = Depends(get_db),
+        current_user_id = Depends(GetCurrentUserIDHelper),
+        db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
     return await InitializeStatementsService(
+            current_user_id,
             db,
             error_stack
         )
+
 
 '''gets scanlytics statements by categories and user statements by categories'''
 @router.get("/search")
@@ -60,6 +64,7 @@ async def search_statements(
             error_stack
         )
 
+
 '''gets a single statement'''
 @router.get("/{statement_id}")
 async def get_statement(
@@ -75,6 +80,7 @@ async def get_statement(
             error_stack
         )
 
+
 '''gets all users statements'''
 @router.get("/")
 async def get_all_statement(
@@ -87,6 +93,7 @@ async def get_all_statement(
             db,
             error_stack
         )
+
 
 '''updating adding a new text to the array or changing the other parameters'''
 @router.patch("/{statement_id}")
@@ -104,6 +111,7 @@ async def update_statement(
             db,
             error_stack
         )
+
 
 '''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
 @router.delete("/{statement_id}")

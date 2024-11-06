@@ -57,7 +57,7 @@ class ErrorStack:
         return error_str.strip()
 
 
-def ExceptionHelper(function_name, error_stack, e):
+def ExceptionHelper(function_name, e, error_stack):
 
     if callable(function_name):
         function_name = function_name.__name__  
@@ -99,7 +99,7 @@ def ExceptionHelper(function_name, error_stack, e):
         )
     
 def DatabaseErrorHelper(query_result, error_stack):
-    try: 
+    try:
         if query_result is None:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR, 
@@ -107,8 +107,8 @@ def DatabaseErrorHelper(query_result, error_stack):
                     "None", 
                     DatabaseErrorHelper
                 )
-        
-        if 'status' not in query_result[0]:
+            
+        elif 'status' not in query_result[0]:
             return query_result
         
         elif query_result[0]['status'] == 'ERR':
@@ -121,13 +121,12 @@ def DatabaseErrorHelper(query_result, error_stack):
                     "None",
                     DatabaseErrorHelper
                 )
-        return query_result
-
     except Exception as e:
-         error_stack.add_error(
+        error_stack.add_error(
                 status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                f"Other error.", 
+                f"Other error: {query_result}", 
                 e, 
                 DatabaseErrorHelper
             )
+
         

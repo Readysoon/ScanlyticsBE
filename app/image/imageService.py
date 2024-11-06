@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 from fastapi import status
 from starlette.responses import JSONResponse
 
-from app.auth.authService import ReturnAccessTokenHelper
+from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
 
+from app.auth.authHelper import ReturnAccessTokenHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 
@@ -65,7 +66,7 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     UploadImageService
                 ) 
             # end of patient ownership verification part - maybe own function?
-    
+
             try:
                 file.filename = file.filename.replace(" ", "_")
 
@@ -94,6 +95,7 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     "None",
                     UploadImageService
                 )
+
             try:
                 # Upload the file to S3
                 s3_client.upload_fileobj(file.file, S3_BUCKET, file.filename)
@@ -132,13 +134,15 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     UploadImageService
                 ) 
 
-            # return JSONResponse(status_code=200, content={"message": "Image has been uploaded"}), ReturnAccessTokenHelper(current_user_id, error_stack)
-            return [
-            {
-                "message": "Image has been uploaded"
-            },
-            ReturnAccessTokenHelper(current_user_id, error_stack)
-            ]
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Image '{file.filename}' has been uploaded."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
 
         except NoCredentialsError as e:
             error_stack.add_error(
@@ -149,7 +153,7 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                 ) 
     
     except Exception as e:
-        ExceptionHelper(UploadImageService, error_stack, e)
+        ExceptionHelper(UploadImageService, e, error_stack)
     
 '''
 # Suggested
@@ -158,29 +162,29 @@ status.HTTP_403_FORBIDDEN  # when user doesn't have access to patient's images
 status.HTTP_200_OK  # for successful retrieval (add this)
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
-async def GetImagesByPatient(patient_id, current_user_id, db, error_stack):
+async def GetImagesByPatientService(patient_id, current_user_id, db, error_stack):
     try:
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM Image WHERE "
-                f"user = '{current_user_id}' "
-                f"AND patient = 'Patient:{patient_id}';"
-            )
 
-            DatabaseErrorHelper(query_result, error_stack)
+        image_list = await GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
 
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    GetImagesByPatient
-                ) 
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result']
+        image_count = 0
+
+        for image in image_list:
+            image_count += 1
+            
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetched {image_count} image(s) for patient '{patient_id}'."
+                    }, 
+                    image_list,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
 
     except Exception as e:
-        ExceptionHelper(GetImagesByPatient, error_stack, e)
+        ExceptionHelper(GetImagesByPatientService, e, error_stack)
 
 '''
 # Suggested:
@@ -189,7 +193,7 @@ status.HTTP_403_FORBIDDEN  # when user doesn't have access to the image
 status.HTTP_200_OK  # for successful retrieval (add this)
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
-async def GetImageByID(image_id, current_user_id, db, error_stack):
+async def GetImageByIDService(image_id, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
@@ -205,52 +209,23 @@ async def GetImageByID(image_id, current_user_id, db, error_stack):
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "Query error.",
                     e,
-                    GetImageByID
+                    GetImageByIDService
                 ) 
         
-        return ReturnAccessTokenHelper(current_user_id, error_stack), query_result[0]['result'][0]
-
-    except Exception as e:
-        ExceptionHelper(GetImageByID, error_stack, e)
-    
-
-'''
-#Suggested:
-status.HTTP_204_NO_CONTENT  # for successful deletion
-status.HTTP_404_NOT_FOUND  # when image not found
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
-'''
-async def DeleteImageByID(image_id, current_user_id, db, error_stack):
-    try:
-        try: 
-            query_result = await db.query(
-                    f"DELETE Image WHERE "
-                    f"user = '{current_user_id}' "
-                    f"AND id = 'Image:{image_id}';"
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetched image '{image_id}'."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
                 )
-            
-            DatabaseErrorHelper(query_result, error_stack)
 
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    DeleteImageByID
-                ) 
-        
-        if query_result[0] == '':
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Image was deleted successfully.",
-                    "None",
-                    DeleteImageByID
-                ) 
-    
     except Exception as e:
-        ExceptionHelper(DeleteImageByID, error_stack, e)
-    
+        ExceptionHelper(GetImageByIDService, e, error_stack)
+
+
 '''
 status.HTTP_200_OK  # for successful update
 status.HTTP_404_NOT_FOUND  # when image not found
@@ -281,7 +256,7 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "Set-string creation failed.",
                     e,
-                    DeleteImageByID
+                    UpdateImageService
                 ) 
 
             try: 
@@ -301,10 +276,49 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "Query error.",
                     e,
-                    DeleteImageByID
+                    UpdateImageService
                 )
-            
-            return ReturnAccessTokenHelper(current_user_id, error_stack)
+
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Updating image '{image_id}' successfull."
+                    }, 
+                    query_result[0]['result'],
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
 
         except Exception as e:
-            ExceptionHelper(UpdateImageService, error_stack, e)
+            ExceptionHelper(UpdateImageService, e, error_stack)
+    
+
+'''Delete it in the storage'''
+'''
+#Suggested:
+status.HTTP_204_NO_CONTENT  # for successful deletion
+status.HTTP_404_NOT_FOUND  # when image not found
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+'''
+async def DeleteImageByIDService(image_id, current_user_id, db, error_stack):
+    try:
+
+        deleted = await DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
+
+        print(deleted)
+            
+        if deleted == True:
+            return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Image deletion successfull."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
+    
+    except Exception as e:
+        ExceptionHelper(DeleteImageByIDService, e, error_stack)

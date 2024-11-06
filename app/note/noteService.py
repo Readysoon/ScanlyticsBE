@@ -1,4 +1,5 @@
 from fastapi import status
+from starlette.responses import JSONResponse
 
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 from app.auth.authHelper import ReturnAccessTokenHelper
@@ -30,17 +31,26 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db, error_stac
         except Exception as e: 
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
+                    f"Query error: {query_result}",
                     e,
                     CreateNoteService
                 ) 
         
         result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+
+        return JSONResponse(
+                status_code=201, 
+                content=[
+                    {
+                        "message": f"Note created."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(CreateNoteService, error_stack, e)
+        ExceptionHelper(CreateNoteService, e, error_stack)
 
 '''
 # Suggested:
@@ -77,11 +87,21 @@ async def GetNoteByID(note_id, current_user_id, db, error_stack):
                 ) 
         
         result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Fetched note."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(GetNoteByID, error_stack, e)
+        ExceptionHelper(GetNoteByID, e, error_stack)
 
 '''
 # Suggested:
@@ -118,11 +138,25 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
                 ) 
         
         result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+
+        note_count = 0
+
+        for note in result_without_status:
+            note_count += 1
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Found {note_count} Note(s) for patient '{patient_id}'."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(GetNoteByID, error_stack, e)
+        ExceptionHelper(GetNoteByID, e, error_stack)
 
 
 '''find a solution for updating parameter "patient" properly, maybe doctor just has to delete it?'''
@@ -191,11 +225,20 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db, error_stack):
                 ) 
         
         result_without_status = query_result[0]['result']
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack), result_without_status
+
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Updated note '{note_id}'."
+                    }, 
+                    result_without_status,
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(UpdateNoteService, error_stack, e)
+        ExceptionHelper(UpdateNoteService, e, error_stack)
     
     
 '''
@@ -228,10 +271,18 @@ async def DeleteNoteService(note_id, current_user_id, db, error_stack):
                     e,
                     DeleteNoteService
                 ) 
-        
-        return ReturnAccessTokenHelper(current_user_id, error_stack)
+            
+        return JSONResponse(
+                status_code=200, 
+                content=[
+                    {
+                        "message": f"Deleted note '{note_id}'."
+                    }, 
+                    ReturnAccessTokenHelper(current_user_id, error_stack)
+                    ]
+                )
             
     except Exception as e:
-        ExceptionHelper(DeleteNoteService, error_stack, e)
+        ExceptionHelper(DeleteNoteService, e, error_stack)
 
 

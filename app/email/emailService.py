@@ -66,7 +66,14 @@ async def EmailVerificationService(email, token, first_name, error_stack):
         fm = FastMail(conf)
         await fm.send_message(message)
 
-        return JSONResponse(status_code=200, content={"message": "email has been sent"})
+        return JSONResponse(
+            status_code=200, 
+            content=[
+                {
+                    "message": f"Email has been sent."
+                }
+                ]
+            )
     
     except Exception as e:
-        ExceptionHelper(EmailVerificationService, error_stack, e)
+        ExceptionHelper(EmailVerificationService, e, error_stack)

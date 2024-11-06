@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
+from starlette.responses import JSONResponse
 
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
@@ -30,6 +31,7 @@ async def create_report(
             error_stack
         )
 
+
 @router.get("/{report_id}")
 async def get_report(
         report_id: str,
@@ -43,6 +45,7 @@ async def get_report(
             db,
             error_stack
         )
+
 
 '''update to handle the new schema'''
 @router.patch("/{report_id}")
@@ -61,7 +64,8 @@ async def update_report(
             error_stack
         )
 
-@router.get("/all/{patient_id}")
+
+@router.get("/patient/{patient_id}")
 async def get_all_reports_by_patient_and_user(
         patient_id: str,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -74,6 +78,7 @@ async def get_all_reports_by_patient_and_user(
             db,
             error_stack
         )
+
 
 @router.delete("/{report_id}")
 async def delete_patient(
