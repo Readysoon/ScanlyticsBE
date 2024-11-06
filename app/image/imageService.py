@@ -234,6 +234,8 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
 
             DatabaseErrorHelper(query_result, error_stack)
 
+            image_data = query_result[0]['result'][0]
+
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -256,6 +258,7 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
                     {
                         "message": f"Fetched image '{image_id}'."
                     }, 
+                    image_data,
                     ReturnAccessTokenHelper(current_user_id, error_stack)
                     ]
                 )
@@ -265,14 +268,63 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
 
 
 '''
-status.HTTP_200_OK  # for successful update
-status.HTTP_404_NOT_FOUND  # when image not found
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission to update
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful update - check
+status.HTTP_404_NOT_FOUND  # when image not found - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to update  - check
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data - to be done in schema checking
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors -check
 '''
 async def UpdateImageService(image_in, image_id, current_user_id, db, error_stack):
         try:
+            try:
+                query_result = await db.query(
+                    f"SELECT * FROM Image WHERE "
+                    f"id = Image:{image_id};"
+                )
+
+                DatabaseErrorHelper(query_result, error_stack)
+
+            except Exception as e:
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Query 1 error.",
+                        e,
+                        GetImageByIDService
+                    ) 
+            
+            if not query_result[0]['result']:
+                error_stack.add_error(
+                        status.HTTP_404_NOT_FOUND,
+                        f"No Image found for ID '{image_id}'.",
+                        "None",
+                        GetImageByIDService
+                    )
+                
+            try:
+                query_result = await db.query(
+                    f"SELECT * FROM Image WHERE "
+                    f"user = '{current_user_id}' "
+                    f"AND id = 'Image:{image_id}';"
+                )
+
+                DatabaseErrorHelper(query_result, error_stack)
+
+            except Exception as e:
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Query 2 error.",
+                        e,
+                        GetImageByIDService
+                    ) 
+            
+            if not query_result[0]['result']:
+                error_stack.add_error(
+                        status.HTTP_401_UNAUTHORIZED,
+                        f"You are not authorized to view image '{image_id}'.",
+                        "None",
+                        GetImageByIDService
+                    )
+
             try:
                 image_name = image_in.image_name
                 body_part = image_in.body_part
@@ -321,7 +373,7 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
                 status_code=200, 
                 content=[
                     {
-                        "message": f"Updating image '{image_id}' successfull."
+                        "message": f"Updated image '{image_id}'."
                     }, 
                     query_result[0]['result'],
                     ReturnAccessTokenHelper(current_user_id, error_stack)
