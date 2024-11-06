@@ -3,7 +3,7 @@ from surrealdb import Surreal
 from starlette.responses import JSONResponse
 
 from app.note.noteSchema import Note
-from app.note.noteService import CreateNoteService, GetNoteByID, GetAllNotesByPatientID, UpdateNoteService, DeleteNoteService
+from app.note.noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
@@ -41,7 +41,7 @@ async def get_note(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await GetNoteByID(
+    return await GetNoteByIDService(
             note_id, 
             current_user_id, 
             db,
@@ -56,7 +56,7 @@ async def get_all_notes_by_patient_id(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await GetAllNotesByPatientID(
+    return await GetAllNotesByPatientIDService(
             patient_id,
             current_user_id, 
             db,

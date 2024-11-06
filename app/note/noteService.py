@@ -2,6 +2,7 @@ from fastapi import status
 from starlette.responses import JSONResponse
 
 from app.patient.patientHelper import GetPatientByIDHelper
+from app.note.noteHelper import GetNoteByIDHelper
 
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 from app.auth.authHelper import ReturnAccessTokenHelper
@@ -63,35 +64,9 @@ status.HTTP_404_NOT_FOUND  # when note doesn't exist (change from 500) - check
 status.HTTP_403_FORBIDDEN  # when user doesn't have permission to access the note - check
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
-async def GetNoteByID(note_id, current_user_id, db, error_stack):
+async def GetNoteByIDService(note_id, current_user_id, db, error_stack):
     try:
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id} "
-                f"AND user_owner = {current_user_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    GetNoteByID
-                ) 
-        
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    "No Note found.",
-                    "None",
-                    GetNoteByID
-                ) 
-        
-        result_without_status = query_result[0]['result']
-
+        note = await GetNoteByIDHelper(note_id, current_user_id, db, error_stack)
 
         return JSONResponse(
                 status_code=200, 
@@ -99,13 +74,13 @@ async def GetNoteByID(note_id, current_user_id, db, error_stack):
                     {
                         "message": f"Fetched note."
                     }, 
-                    result_without_status,
+                    note,
                     ReturnAccessTokenHelper(current_user_id, error_stack)
                     ]
                 )
             
     except Exception as e:
-        ExceptionHelper(GetNoteByID, e, error_stack)
+        ExceptionHelper(GetNoteByIDService, e, error_stack)
 
 '''
 # Suggested:
@@ -114,7 +89,7 @@ status.HTTP_404_NOT_FOUND  # if patient doesn't exist - check
 status.HTTP_403_FORBIDDEN  # if user doesn't have permission to view patient's notes -check
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors -check
 '''
-async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
+async def GetAllNotesByPatientIDService(patient_id, current_user_id, db, error_stack):
     try:
         patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
 
@@ -132,7 +107,7 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "Query error.",
                     e,
-                    GetNoteByID
+                    GetAllNotesByPatientIDService
                 ) 
         
         if not query_result[0]['result']:
@@ -140,7 +115,7 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "No Note was found for this patient.",
                     "None",
-                    GetNoteByID
+                    GetAllNotesByPatientIDService
                 ) 
         
         result_without_status = query_result[0]['result']
@@ -162,7 +137,7 @@ async def GetAllNotesByPatientID(patient_id, current_user_id, db, error_stack):
                 )
             
     except Exception as e:
-        ExceptionHelper(GetNoteByID, e, error_stack)
+        ExceptionHelper(GetAllNotesByPatientIDService, e, error_stack)
 
 
 '''find a solution for updating parameter "patient" properly, maybe doctor just has to delete it?'''
@@ -177,54 +152,7 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def UpdateNoteService(note_in, note_id, current_user_id, db, error_stack):
     try:
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    UpdateNoteService
-                ) 
-        
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    "No Note was found for this patient.",
-                    "None",
-                    UpdateNoteService
-                )
-            
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id} AND "
-                f"AND user_owner = {current_user_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_403_FORBIDDEN,
-                    "Query error.",
-                    e,
-                    UpdateNoteService
-                ) 
-            
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    "You have no access to this note.",
-                    "None",
-                    UpdateNoteService
-                )
+        note = await GetNoteByIDHelper(note_id, current_user_id, db, error_stack)
 
         try:
             symptoms = note_in.symptoms
@@ -305,54 +233,7 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 ''' 
 async def DeleteNoteService(note_id, current_user_id, db, error_stack):
     try:
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    DeleteNoteService
-                ) 
-        
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    "No Note was found for this patient.",
-                    "None",
-                    DeleteNoteService
-                )
-            
-        try:
-            query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id} AND "
-                f"AND user_owner = {current_user_id};"
-            )
-
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_403_FORBIDDEN,
-                    "Query error.",
-                    e,
-                    DeleteNoteService
-                ) 
-            
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    "You have no access to this note.",
-                    "None",
-                    DeleteNoteService
-                )
+        note = await GetNoteByIDHelper(note_id, current_user_id, db, error_stack)
 
         try:
             query_result = await db.query(
@@ -372,15 +253,23 @@ async def DeleteNoteService(note_id, current_user_id, db, error_stack):
                     DeleteNoteService
                 ) 
             
-        return JSONResponse(
-                status_code=204, 
-                content=[
-                    {
-                        "message": f"Deleted note '{note_id}'."
-                    }, 
-                    ReturnAccessTokenHelper(current_user_id, error_stack)
-                    ]
-                )
+        if not query_result[0]['result']:
+            return JSONResponse(
+                    status_code=204, 
+                    content=[
+                        {
+                            "message": f"Deleted note '{note_id}'."
+                        }, 
+                        ReturnAccessTokenHelper(current_user_id, error_stack)
+                        ]
+                    )
+        else:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Deletion error.",
+                    "None",
+                    DeleteNoteService
+                ) 
             
     except Exception as e:
         ExceptionHelper(DeleteNoteService, e, error_stack)

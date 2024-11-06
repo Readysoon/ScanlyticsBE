@@ -108,11 +108,6 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
                 CreateReportService
             )
 
-
-        '''seperate concerns to relate after creating - check'''
-        '''patient has to be users - check'''
-        '''change in db body_type to body_part - check'''
-        '''condition muss als Parameter bei Reports raus!! - check'''
         # create the report in the database 
         try: 
             create_query_result = await db.query(

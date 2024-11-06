@@ -113,9 +113,9 @@ async def GetPatientByIDService(patient_id, current_user_id, db, error_stack):
 
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval (even with empty array)
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval (even with empty array) -check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - redundant
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetAllPatientsByUserIDService(current_user_id, db, error_stack):
 
@@ -145,7 +145,7 @@ async def GetAllPatientsByUserIDService(current_user_id, db, error_stack):
 
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful update
+status.HTTP_200_OK  # for successful update 
 status.HTTP_404_NOT_FOUND  # when patient doesn't exist
 status.HTTP_403_FORBIDDEN  # when user doesn't have permission to update
 status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
@@ -153,6 +153,8 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def UpdatePatientService(patientin, patient_id, current_user_id, db, error_stack):
         try:
+            patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
+
             try:
                 name = patientin.patient_name
                 date_of_birth = patientin.date_of_birth
@@ -225,12 +227,15 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db, error
 '''
 # Suggested:
 status.HTTP_204_NO_CONTENT  # for successful deletion
-status.HTTP_404_NOT_FOUND  # when patient doesn't exist
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
-status.HTTP_409_CONFLICT  # when patient can't be deleted (has dependencies)
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist -check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete -check
+status.HTTP_409_CONFLICT  # when patient can't be deleted (has dependencies) - doesnt make sense
 status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def DeletePatientService(patient_id, current_user_id, db, error_stack):
+
+    patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
+
     try:
         # Delete Images
         try:
@@ -247,6 +252,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
             for image in image_list:
                 image_id = image['id']
                 DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
+
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -299,7 +305,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
         
         if not query_result[0]['result'] and query_result[0]['status'] == 'OK':
             return JSONResponse(
-                status_code=200, 
+                status_code=204, 
                 content=[
                     {
                         "message": f"Deleted patient '{patient_id}'."
