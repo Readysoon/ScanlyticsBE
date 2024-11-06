@@ -13,13 +13,35 @@ from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper
 
 '''
 # Suggested:
-status.HTTP_201_CREATED  # for successful creation
-status.HTTP_400_BAD_REQUEST  # for invalid patient data
-status.HTTP_409_CONFLICT  # if patient already exists
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_201_CREATED  # for successful creation - check
+status.HTTP_400_BAD_REQUEST  # for invalid patient data - to be done in schema check
+status.HTTP_409_CONFLICT  # if patient already exists - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def CreatePatientService(patientin, current_user_id, db, error_stack):
     try:
+        try: 
+            query_result = await db.query(
+                f"SELECT * FROM Patient "
+                f"WHERE name = '{patientin.patient_name}';"
+            )
+
+        except Exception as e: 
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query error.",
+                    e,
+                    CreatePatientService
+                ) 
+            
+        if query_result[0]['result']:
+            error_stack.add_error(
+                    status.HTTP_409_CONFLICT,
+                    f"A patient with the name '{patientin.patient_name}' already exists.",
+                    "None",
+                    CreatePatientService
+                ) 
+            
         try:
             # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
             query_result = await db.query(
