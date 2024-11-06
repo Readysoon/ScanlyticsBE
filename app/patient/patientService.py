@@ -8,7 +8,7 @@ from app.report.reportService import DeleteReportService
 from app.report.reportHelper import GetAllReportsByPatientIDHelper
 
 from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
-from app.patient.patientHelper import GetAllPatientsByUserIDHelper
+from app.patient.patientHelper import GetAllPatientsByUserIDHelper, GetPatientByIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 '''
@@ -88,42 +88,14 @@ async def CreatePatientService(patientin, current_user_id, db, error_stack):
 # with the id and returns information about the patient
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval
-status.HTTP_404_NOT_FOUND  # when patient doesn't exist (change from 500)
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission to access patient
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval -check
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist (change from 500) - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to access patient - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors -check 
 '''
-async def GetPatientByID(patient_id, current_user_id, db, error_stack):
-    # Checking if patient is user's patient
+async def GetPatientByIDService(patient_id, current_user_id, db, error_stack):
     try:
-        try: 
-            query_result = await db.query(
-                f"SELECT * FROM ("
-                f"SELECT * FROM "
-                f"Treated_By WHERE "
-                f"in = 'Patient:{patient_id}' "
-                f"AND out = '{current_user_id}'"
-                f").in;"
-            )
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    GetPatientByID
-                ) 
-        
-        if not query_result[0]['result']:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "No record was found for this patient.",
-                    "Null",
-                    GetPatientByID
-                ) 
-        
-        result_without_status = query_result[0]['result']
+        patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
 
         return JSONResponse(
                 status_code=200, 
@@ -131,13 +103,13 @@ async def GetPatientByID(patient_id, current_user_id, db, error_stack):
                     {
                         "message": f"Fetched patient data."
                     }, 
-                    result_without_status,
+                    patient,
                     ReturnAccessTokenHelper(current_user_id, error_stack)
                     ]
                 )
     
     except Exception as e:
-        ExceptionHelper(CreatePatientService, e, error_stack)
+        ExceptionHelper(GetPatientByIDService, e, error_stack)
 
 '''
 # Suggested:

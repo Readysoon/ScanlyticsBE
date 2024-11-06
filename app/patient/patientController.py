@@ -2,7 +2,7 @@ from surrealdb import Surreal
 from fastapi import APIRouter, Depends
 from starlette.responses import JSONResponse
 
-from .patientService import CreatePatientService, GetPatientByID, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
+from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
 
 from app.error.errorHelper import ErrorStack
@@ -38,7 +38,7 @@ async def get_patient(
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()
-    return await GetPatientByID(
+    return await GetPatientByIDService(
             patient_id, 
             current_user_id, 
             db,
