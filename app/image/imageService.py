@@ -394,14 +394,11 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def DeleteImageByIDService(image_id, current_user_id, db, error_stack):
     try:
-
         deleted = await DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
-
-        print(deleted)
             
         if deleted == True:
             return JSONResponse(
-                status_code=200, 
+                status_code=204,
                 content=[
                     {
                         "message": f"Image deletion successfull."
