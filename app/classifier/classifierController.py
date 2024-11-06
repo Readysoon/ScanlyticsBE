@@ -17,7 +17,7 @@ router = APIRouter(
         tags=["classify"],
     )
 
-# rename this to something more checking if a patient is actually a user's
+
 @router.get("/")
 async def classify(
         image_array: Images,

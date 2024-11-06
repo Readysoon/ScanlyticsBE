@@ -70,7 +70,7 @@ async def EmailVerificationService(email, token, first_name, error_stack):
             status_code=200, 
             content=[
                 {
-                    "message": f"Email has been sent."
+                    "message": f"Email has been sent to {email}."
                 }
                 ]
             )

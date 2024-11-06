@@ -353,10 +353,7 @@ async def DeleteReportService(report_id, current_user_id, db, error_stack):
                     "Query error.",
                     e,
                     DeleteReportService
-                ) 
-            
-        print(query_result)
-            
+                )             
         try:
             if not query_result[0]['result']:
 

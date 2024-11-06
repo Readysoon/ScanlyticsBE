@@ -7,6 +7,7 @@ from fastapi import status
 from starlette.responses import JSONResponse
 
 from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
+from app.patient.patientHelper import GetAllPatientsByUserIDHelper
 
 from app.auth.authHelper import ReturnAccessTokenHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
@@ -36,6 +37,7 @@ ALLOWED_FILE_TYPES: Set[str] = {
     'webp'
 }
 
+'''error: patient not found'''
 async def UploadImageService(file, patient_id, current_user_id, db, error_stack):   
     try:
         try:
@@ -126,6 +128,8 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
 
                 DatabaseErrorHelper(query_result, error_stack)
 
+                image_data = query_result[0]['result'][0]
+
             except Exception as e:
                 error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -140,6 +144,7 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
                     {
                         "message": f"Image '{file.filename}' has been uploaded."
                     }, 
+                    image_data,
                     ReturnAccessTokenHelper(current_user_id, error_stack)
                     ]
                 )
@@ -157,10 +162,10 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
     
 '''
 # Suggested
-status.HTTP_404_NOT_FOUND  # when no images found for patient
-status.HTTP_403_FORBIDDEN  # when user doesn't have access to patient's images
-status.HTTP_200_OK  # for successful retrieval (add this)
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_404_NOT_FOUND  # when no images found for patient - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have access to patient's images -check
+status.HTTP_200_OK  # for successful retrieval (add this) - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors -check
 '''
 async def GetImagesByPatientService(patient_id, current_user_id, db, error_stack):
     try:
@@ -186,15 +191,40 @@ async def GetImagesByPatientService(patient_id, current_user_id, db, error_stack
     except Exception as e:
         ExceptionHelper(GetImagesByPatientService, e, error_stack)
 
+
 '''
 # Suggested:
-status.HTTP_404_NOT_FOUND  # when image not found
-status.HTTP_403_FORBIDDEN  # when user doesn't have access to the image
-status.HTTP_200_OK  # for successful retrieval (add this)
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_404_NOT_FOUND  # when image not found - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have access to the image - check
+status.HTTP_200_OK  # for successful retrieval (add this) - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors -check 
 '''
 async def GetImageByIDService(image_id, current_user_id, db, error_stack):
     try:
+        try:
+            query_result = await db.query(
+                f"SELECT * FROM Image WHERE "
+                f"id = Image:{image_id};"
+            )
+
+            DatabaseErrorHelper(query_result, error_stack)
+
+        except Exception as e:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Query 1 error.",
+                    e,
+                    GetImageByIDService
+                ) 
+        
+        if not query_result[0]['result']:
+            error_stack.add_error(
+                    status.HTTP_404_NOT_FOUND,
+                    f"No Image found for ID '{image_id}'.",
+                    "None",
+                    GetImageByIDService
+                )
+            
         try:
             query_result = await db.query(
                 f"SELECT * FROM Image WHERE "
@@ -207,10 +237,18 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
+                    "Query 2 error.",
                     e,
                     GetImageByIDService
                 ) 
+        
+        if not query_result[0]['result']:
+            error_stack.add_error(
+                    status.HTTP_404_NOT_FOUND,
+                    f"You are not authorized to view image '{image_id}'.",
+                    "None",
+                    GetImageByIDService
+                )
         
         return JSONResponse(
                 status_code=200, 

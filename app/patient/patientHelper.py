@@ -3,7 +3,6 @@ from fastapi import status
 from app.error.errorHelper import DatabaseErrorHelper 
 
 
-
 async def GetAllPatientsByUserIDHelper(current_user_id, db, error_stack):
         try: 
             query_result = await db.query(
