@@ -4,6 +4,7 @@ from starlette.responses import JSONResponse
 from app.auth.authService import ReturnAccessTokenHelper
 from app.statement.statementHelper import GetStatementByIDHelper
 
+from app.patient.patientHelper import GetPatientByIDHelper
 from app.report.reportHelper import GetAllReportsByPatientIDHelper, GetReportByIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
@@ -11,13 +12,13 @@ from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper
 '''-> get body_part(check), condition (deleted), patient_id (ceck) from statements and images - check'''
 # maybe change this row of create/relate statements to one connected query so it also gets automatically deleted 
 '''
-# Suggested:
-status.HTTP_201_CREATED  # for successful creation
-status.HTTP_400_BAD_REQUEST  # for invalid report data
-status.HTTP_404_NOT_FOUND  # when referenced patient/statement not found
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid statement format
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+# Suggested: 
+status.HTTP_201_CREATED  # for successful creation - check 
+status.HTTP_400_BAD_REQUEST  # for invalid report data - to be done in schemas
+status.HTTP_404_NOT_FOUND  # when referenced patient/statement not found - check 
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check (for upper status)
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid statement format - not necessary
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check 
 '''
 async def CreateReportService(reportin, current_user_id, db, error_stack):
     try:
@@ -189,10 +190,10 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
 # siehe auch update report
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval
-status.HTTP_404_NOT_FOUND  # when report doesn't exist
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval - check
+status.HTTP_404_NOT_FOUND  # when report doesn't exist - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetReportByIDService(report_id, current_user_id, db, error_stack):
     try:
@@ -213,11 +214,11 @@ async def GetReportByIDService(report_id, current_user_id, db, error_stack):
 
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful update
-status.HTTP_404_NOT_FOUND  # when report doesn't exist
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful update - check
+status.HTTP_404_NOT_FOUND  # when report doesn't exist - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data - to be done in schemas
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def UpdateReportService(reportin, report_id, current_user_id, db, error_stack):
     try:
@@ -295,12 +296,14 @@ async def UpdateReportService(reportin, report_id, current_user_id, db, error_st
 # 2. return all reports where the patient matches 
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval (even with empty array)
-status.HTTP_404_NOT_FOUND  # when patient doesn't exist
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval (even with empty array) - check
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetAllReportsByPatientIDService(patient_id, current_user_id, db, error_stack):
+
+    patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
 
     report_list = await GetAllReportsByPatientIDHelper(patient_id, current_user_id, db, error_stack)
 
@@ -330,6 +333,9 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 '''
 async def DeleteReportService(report_id, current_user_id, db, error_stack):
     try:
+
+        report = await GetReportByIDHelper(report_id, current_user_id, db, error_stack)
+
         try: 
             query_result = await db.query(
                     f"DELETE ("
@@ -353,7 +359,7 @@ async def DeleteReportService(report_id, current_user_id, db, error_stack):
             if not query_result[0]['result']:
 
                 return JSONResponse(
-                    status_code=200, 
+                    status_code=204, 
                     content=[
                         {
                             "message": f"Deleted report '{report_id}'."

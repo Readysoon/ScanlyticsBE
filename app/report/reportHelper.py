@@ -2,6 +2,14 @@ from fastapi import status
 
 from app.error.errorHelper import DatabaseErrorHelper 
 
+
+'''
+# Suggested:
+status.HTTP_200_OK  # for successful retrieval (even with empty array) - check
+status.HTTP_404_NOT_FOUND  # when patient doesn't exist - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
+'''
 async def GetAllReportsByPatientIDHelper(patient_id, current_user_id, db, error_stack):
     try:
         query_result = await db.query(
@@ -26,7 +34,10 @@ async def GetAllReportsByPatientIDHelper(patient_id, current_user_id, db, error_
             ) 
     return query_result[0]['result']
 
+
+
 async def GetReportByIDHelper(report_id, current_user_id, db, error_stack):
+
     # get report by the report_id
     try: 
         query_result = await db.query(
@@ -90,7 +101,6 @@ async def GetReportByIDHelper(report_id, current_user_id, db, error_stack):
         for relation in query_result[0]['result']:
             try:
                 if patient_id == relation['in']:
-                    print("AAA")
                     try:
                         final_query_result = await db.query(
                             f"SELECT * FROM Report WHERE id = Report:{report_id};"
@@ -121,3 +131,11 @@ async def GetReportByIDHelper(report_id, current_user_id, db, error_stack):
                     e,
                     GetReportByIDHelper
                 )    
+        
+    if not final_query_result[0]['result']:
+        error_stack.add_error(
+                    status.HTTP_404_NOT_FOUND,
+                    "You dont have permission to view this report",
+                    e,
+                    GetReportByIDHelper
+                )  

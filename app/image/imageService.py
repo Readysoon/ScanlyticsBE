@@ -387,10 +387,10 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
 '''Delete it in the storage'''
 '''
 #Suggested:
-status.HTTP_204_NO_CONTENT  # for successful deletion
-status.HTTP_404_NOT_FOUND  # when image not found
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_204_NO_CONTENT  # for successful deletion - check 
+status.HTTP_404_NOT_FOUND  # when image not found - check 
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission to delete - check 
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check 
 '''
 async def DeleteImageByIDService(image_id, current_user_id, db, error_stack):
     try:
