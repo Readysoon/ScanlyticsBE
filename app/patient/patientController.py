@@ -1,6 +1,5 @@
 from surrealdb import Surreal
 from fastapi import APIRouter, Depends
-from starlette.responses import JSONResponse
 
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient

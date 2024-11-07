@@ -1,7 +1,6 @@
 from fastapi import status
 from starlette.responses import JSONResponse
 
-
 from app.auth.authService import ReturnAccessTokenHelper
 
 from app.statement.statementSchema import Statement

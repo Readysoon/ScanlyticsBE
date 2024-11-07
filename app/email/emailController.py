@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from starlette.responses import JSONResponse
 
 from app.email.emailSchema import EmailSchema
 from app.email.emailService import EmailVerificationService

@@ -1,7 +1,6 @@
-from fastapi import UploadFile, File, HTTPException, APIRouter, Depends
+from fastapi import UploadFile, File, APIRouter, Depends
 from surrealdb import Surreal
 from fastapi import APIRouter
-from starlette.responses import JSONResponse
 
 from app.image.imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from app.image.imageSchema import Image

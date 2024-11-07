@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
-from starlette.responses import JSONResponse
 
 from app.note.noteSchema import Note
 from app.note.noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService

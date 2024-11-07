@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import status
 from passlib.context import CryptContext
 
 from fastapi.security import OAuth2PasswordBearer

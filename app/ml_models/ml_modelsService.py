@@ -1,7 +1,7 @@
 import os
 import boto3
 
-from fastapi import HTTPException, status
+from fastapi import status
 from botocore.exceptions import ClientError
 from fastapi.responses import JSONResponse
 

@@ -22,13 +22,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 '''
 
 
-# make this proper; you cant just claim a not found when theres a main exception
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval
-status.HTTP_404_NOT_FOUND  # when user not found
-status.HTTP_401_UNAUTHORIZED  # when token is invalid
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval - check
+status.HTTP_404_NOT_FOUND  # when user not found - check - done via GetCurrentUserIDService
+status.HTTP_401_UNAUTHORIZED  # when token is invalid - check - done via GetCurrentUserIDService
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetCurrentUserService(current_user_id, db, error_stack):
     try:
@@ -65,11 +64,11 @@ async def GetCurrentUserService(current_user_id, db, error_stack):
     
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful update
-status.HTTP_400_BAD_REQUEST  # for invalid input data
-status.HTTP_409_CONFLICT  # for email already in use
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful update - check
+status.HTTP_400_BAD_REQUEST  # for invalid input data - to be done via schemas
+status.HTTP_409_CONFLICT  # for email already in use - check
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors - to be done in schemas
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 '''patching mail should send new verification and set account to unverified'''
 async def PatchUserService(userin, current_user_id, db, error_stack):
@@ -244,7 +243,7 @@ async def DeleteUserService(current_user_id, db, error_stack):
         try:
             if not query_result[0]['result']:
                 return JSONResponse(
-                    status_code=200, 
+                    status_code=204, 
                     content=[
                         {
                             "message": f"User deletion successful."

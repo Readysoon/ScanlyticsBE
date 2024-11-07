@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import status
 from starlette.responses import JSONResponse
 
 from app.auth.authService import ReturnAccessTokenHelper

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
-from starlette.responses import JSONResponse
 
 from app.ml_models.ml_modelsService import RetrieveModelService
 from .ml_modelsSchema import Model_IN
