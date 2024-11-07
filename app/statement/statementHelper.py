@@ -135,13 +135,13 @@ async def SearchStatementHelper(search_in, current_user_id, db, error_stack):
     except Exception as e:
         ExceptionHelper(SearchStatementHelper, e, error_stack)
 
+
 async def GetStatementByIDHelper(statement_id, current_user_id, db, error_stack):
+
     try: 
         query_result = await db.query(
             f"SELECT * FROM Statement "
             f"WHERE id = 'Statement:{statement_id}' "
-            f"AND (user_owner = {current_user_id} "
-            f"OR user_owner = 'User:1');"
         )
         DatabaseErrorHelper(query_result, error_stack)
         
@@ -160,12 +160,37 @@ async def GetStatementByIDHelper(statement_id, current_user_id, db, error_stack)
             "None",
             GetStatementByIDHelper
         )
-    
-    last_element_number = await GetLastStatementTextElementHelper(query_result[0]['result'][0]['id'], db, error_stack)
 
     try: 
         query_result = await db.query(
-            f"SELECT text[{last_element_number}],* "
+        f"SELECT * FROM Statement "
+        f"WHERE id = 'Statement:{statement_id}' "
+        f"AND (user_owner = {current_user_id} "
+        f"OR user_owner = 'User:1');"
+        )
+        DatabaseErrorHelper(query_result, error_stack)
+        
+    except Exception as e: 
+        error_stack.add_error(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"First Database operation didnt work (Statement:{statement_id})",
+            e,
+            GetStatementByIDHelper
+        )
+    
+    if not query_result[0]['result']:
+        error_stack.add_error(
+            status.HTTP_404_NOT_FOUND,
+            f"You are not allowed to view this statement.",
+            "None",
+            GetStatementByIDHelper
+        )
+    
+    last_text_element_number = await GetLastStatementTextElementHelper(query_result[0]['result'][0]['id'], db, error_stack)
+
+    try: 
+        query_result = await db.query(
+            f"SELECT text[{last_text_element_number}],* "
             f"FROM Statement WHERE "
             f"id = '{query_result[0]['result'][0]['id']}';"
         )

@@ -12,10 +12,10 @@ from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper
 
 '''
 # Suggested:
-status.HTTP_201_CREATED  # for successful creation
-status.HTTP_400_BAD_REQUEST  # for invalid statement data
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_201_CREATED  # for successful creation - check
+status.HTTP_400_BAD_REQUEST  # for invalid statement data - to be done in schema
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for validation errors - ?? isnt it the same
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def CreateStatementService(statement_in, current_user_id, db, error_stack):
     try:
@@ -44,7 +44,7 @@ async def CreateStatementService(statement_in, current_user_id, db, error_stack)
         if current_user_id != "User:1":
 
             return JSONResponse(
-                status_code=200, 
+                status_code=201, 
                 content=[
                     {
                         "message": f"Created statement."
@@ -60,9 +60,9 @@ async def CreateStatementService(statement_in, current_user_id, db, error_stack)
 
 
 '''
-status.HTTP_201_CREATED  # for successful initialization
-status.HTTP_409_CONFLICT  # when statements already exist
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_201_CREATED  # for successful initialization - check
+status.HTTP_409_CONFLICT  # when statements already exist - too much for now
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
@@ -142,7 +142,7 @@ async def InitializeStatementsService(current_user_id, db, error_stack):
                                 )
         
         return JSONResponse(
-            status_code=200, 
+            status_code=201, 
             content=[
                 {
                     "message": f"Statements initialized."
@@ -158,10 +158,10 @@ async def InitializeStatementsService(current_user_id, db, error_stack):
 '''works with last array elements'''
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful search (even with empty results)
-status.HTTP_400_BAD_REQUEST  # for invalid search parameters
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for malformed search criteria
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors‚
+status.HTTP_200_OK  # for successful search (even with empty results) - check
+status.HTTP_400_BAD_REQUEST  # for invalid search parameters - to be done in schema
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for malformed search criteria - isnt it the same???
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors  - check
 '''
 async def SearchStatementService(search_in, current_user_id, db, error_stack):
     try:
@@ -190,10 +190,10 @@ async def SearchStatementService(search_in, current_user_id, db, error_stack):
 '''works with last array elements'''
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful retrieval
-status.HTTP_404_NOT_FOUND  # keep this
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful retrieval  - check
+status.HTTP_404_NOT_FOUND  # keep this  - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission  - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetStatementByIDService(statement_id, current_user_id, db, error_stack):
     try:
@@ -218,11 +218,11 @@ async def GetStatementByIDService(statement_id, current_user_id, db, error_stack
 '''works with last array elements'''
 '''
 # Suggested:
-status.HTTP_200_OK  # for successful update
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission (instead of 401)
-status.HTTP_404_NOT_FOUND  # keep this
-status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_200_OK  # for successful update - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission (instead of 401) - redundant
+status.HTTP_404_NOT_FOUND  # keep this - check
+status.HTTP_422_UNPROCESSABLE_ENTITY  # for invalid update data - to be done in schemas
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def GetAllStatementsByUserService(current_user_id, db, error_stack):
     try:
@@ -243,7 +243,7 @@ async def GetAllStatementsByUserService(current_user_id, db, error_stack):
         
         if not query_result[0]['result']:
             error_stack.add_error(
-                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status.HTTP_404_NOT_FOUND,
                 f"No record was found for this user.",
                 "None",
                 GetAllStatementsByUserService
@@ -296,13 +296,16 @@ async def GetAllStatementsByUserService(current_user_id, db, error_stack):
 '''not tested after implementing User:1/other user differentation'''
 '''
 # Suggested:
-status.HTTP_204_NO_CONTENT  # for successful deletion (more appropriate)
-status.HTTP_403_FORBIDDEN  # when user doesn't have permission
-status.HTTP_404_NOT_FOUND  # when statement doesn't exist
-status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
+status.HTTP_204_NO_CONTENT  # for successful deletion (more appropriate) - check
+status.HTTP_403_FORBIDDEN  # when user doesn't have permission - check
+status.HTTP_404_NOT_FOUND  # when statement doesn't exist - check
+status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 '''
 async def UpdateStatementService(statement_id, statement_in, current_user_id, db, error_stack):
     try:
+
+        statement = GetStatementByIDHelper(statement_id, current_user_id, db, error_stack)
+
         # collect the update information
         try:
             section = statement_in.section
@@ -469,11 +472,14 @@ async def UpdateStatementService(statement_id, statement_in, current_user_id, db
     except Exception as e:
         ExceptionHelper(UpdateStatementService, e, error_stack)
     
-
-'''check: implement checking if deletion worked'''
-'''implement removing all additional texts in arrays when deleting a scanlytics statement'''
+# continue from here
+'''check: implement checking if deletion worked - check '''
+'''implement removing all additional texts in arrays when deleting a scanlytics statement -  check'''
 async def DeleteOrResetStatementService(statement_id, current_user_id, db, error_stack):
     try:
+
+        statement = GetStatementByIDHelper(statement_id, current_user_id, db, error_stack)
+
         try: 
             query_result = await db.query(
                 f"SELECT * FROM Statement WHERE "
@@ -576,24 +582,53 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
 
                 DatabaseErrorHelper(query_result, error_stack)
                 
-                if not query_result[0]['result']:
-                    return JSONResponse(
-                        status_code=200, 
-                        content=[
-                            {
-                                "message": f"Statement '{statement_id}' was deleted successfully."
-                            }, 
-                            ReturnAccessTokenHelper(current_user_id, error_stack)
-                            ]
-                        )
         
             except Exception as e: 
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Deletion query didnt work.",
+                        e,
+                        DeleteOrResetStatementService
+                    )  
+                
+
+            try:
+                query_result = await db.query(
+                    f"SELECT * FROM Statement "
+                    f"WHERE id = Statement:{statement_id};"
+                )
+
+                DatabaseErrorHelper(query_result, error_stack)
+
+            except Exception as e:
                 error_stack.add_error(
                         status.HTTP_500_INTERNAL_SERVER_ERROR,
                         "Determining successful deletion didnt work.",
                         e,
                         DeleteOrResetStatementService
-                    )  
+                    )
+                
+            try:
+                if not query_result[0]['result']:
+                    return JSONResponse(
+                        status_code=200, 
+                        content=[
+                            {
+                                "message": f"Statement '{statement_id}' deletion was successful."
+                            }, 
+                            ReturnAccessTokenHelper(current_user_id, error_stack)
+                            ]
+                        )
+
+            except Exception as e:
+                error_stack.add_error(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        "Returning JSON Response for successful deletion didnt work.",
+                        e,
+                        DeleteOrResetStatementService
+                    )
+
+
                 
     except Exception as e:
         ExceptionHelper(UpdateStatementService, e, error_stack)
