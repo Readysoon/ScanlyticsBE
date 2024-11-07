@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from app.email.emailSchema import EmailSchema
-from app.email.emailService import EmailVerificationService
+from .emailSchema import EmailSchema
+from .emailService import EmailVerificationService
 
 from app.error.errorHelper import ErrorStack
 

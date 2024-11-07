@@ -4,12 +4,13 @@ import os
 from surrealdb import Surreal
 
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
-
+from fastapi import Depends, status
 
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 from app.db.database import get_db
+
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 

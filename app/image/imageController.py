@@ -2,8 +2,8 @@ from fastapi import UploadFile, File, APIRouter, Depends
 from surrealdb import Surreal
 from fastapi import APIRouter
 
-from app.image.imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
-from app.image.imageSchema import Image
+from .imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
+from .imageSchema import Image
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
@@ -34,7 +34,6 @@ async def upload_image(
         )
 
 
-'''to do: get all images service'''
 @router.get("/patient/{patient_id}")
 async def get_images_by_patient(
         patient_id: str,

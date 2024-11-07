@@ -1,9 +1,9 @@
 from fastapi import status
 from starlette.responses import JSONResponse
 
-from app.patient.patientHelper import GetPatientByIDHelper
-from app.note.noteHelper import GetNoteByIDHelper
+from .noteHelper import GetNoteByIDHelper
 
+from app.patient.patientHelper import GetPatientByIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 from app.auth.authHelper import ReturnAccessTokenHelper
 

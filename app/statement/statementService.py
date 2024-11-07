@@ -1,13 +1,11 @@
 import os
-
 from starlette.responses import JSONResponse
-
 from fastapi import HTTPException, status
 
-from app.auth.authService import ReturnAccessTokenHelper
-from app.statement.statementSchema import Statement
+from .statementSchema import Statement
+from .statementHelper import GetLastStatementTextElementHelper, SearchStatementHelper, GetStatementByIDHelper
 
-from app.statement.statementHelper import GetLastStatementTextElementHelper, SearchStatementHelper, GetStatementByIDHelper
+from app.auth.authService import ReturnAccessTokenHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 '''

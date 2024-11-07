@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.user.userSchema import User
-from app.user.userService import GetCurrentUserService, DeleteUserService, PatchUserService
+from .userSchema import User
+from .userService import GetCurrentUserService, DeleteUserService, PatchUserService
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper

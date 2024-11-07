@@ -34,6 +34,7 @@ async def GetAllPatientsByUserIDHelper(current_user_id, db, error_stack):
                     GetAllPatientsByUserIDHelper
                 ) 
             
+            
 async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
     try: 
         query_result = await db.query(

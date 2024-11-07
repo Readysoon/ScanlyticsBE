@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.statement.statementService import CreateStatementService, InitializeStatementsService, SearchStatementService, GetStatementByIDService, GetAllStatementsByUserService, UpdateStatementService, DeleteOrResetStatementService
-from app.statement.statementSchema import Statement
+from .statementService import CreateStatementService, InitializeStatementsService, SearchStatementService, GetStatementByIDService, GetAllStatementsByUserService, UpdateStatementService, DeleteOrResetStatementService
+from .statementSchema import Statement
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper

@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.db.database import get_db
-
-from app.user.userSchema import UserOrga, User
 from .authSchema import Login, Email, Password, Token
-
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
 
+from app.user.userSchema import UserOrga, User
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
+
+from app.db.database import get_db
 
 
 '''	1.	Login - check

@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.db.database import get_db
-
-from app.classifier.classifierService import ClassifyService
-from app.classifier.classifierSchema import Images
+from .classifierService import ClassifyService
+from .classifierSchema import Images
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
+
+
+from app.db.database import get_db
+
 
 '''"Analyzes" an image and returns a set of categories which then are used in get_statements_by category to pregenerate a report"'''
 

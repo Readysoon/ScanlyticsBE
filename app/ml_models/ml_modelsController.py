@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.ml_models.ml_modelsService import RetrieveModelService
+from .ml_modelsService import RetrieveModelService
 from .ml_modelsSchema import Model_IN
 
 from app.error.errorHelper import ErrorStack
@@ -15,6 +15,7 @@ router = APIRouter(
         prefix="/ml_models",
         tags=["ml_models"],
         )
+
 
 @router.post("/")
 async def retrieve_model(

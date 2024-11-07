@@ -1,6 +1,7 @@
 from fastapi import status
 from starlette.responses import JSONResponse
 
+from .patientHelper import GetAllPatientsByUserIDHelper, GetPatientByIDHelper
 
 from app.auth.authService import ReturnAccessTokenHelper
 
@@ -8,7 +9,6 @@ from app.report.reportService import DeleteReportService
 from app.report.reportHelper import GetAllReportsByPatientIDHelper
 
 from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
-from app.patient.patientHelper import GetAllPatientsByUserIDHelper, GetPatientByIDHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 '''

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from app.note.noteSchema import Note
-from app.note.noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService
+from .noteSchema import Note
+from .noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService
 
 from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
@@ -32,7 +32,6 @@ async def create_note(
         )
     
 
-# rename this to something more checking if a patient is actually a user's
 @router.get("/{note_id}")
 async def get_note(
         note_id: str,

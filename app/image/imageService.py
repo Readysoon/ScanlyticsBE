@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import status
 from starlette.responses import JSONResponse
 
-from app.image.imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
+from .imageHelper import GetImagesByPatientHelper, DeleteImageByIDHelper
 
 from app.auth.authHelper import ReturnAccessTokenHelper
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
