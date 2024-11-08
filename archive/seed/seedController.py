@@ -11,6 +11,6 @@ router = APIRouter(
     tags=["seed"],
 )
 
-@router.post("/orga_user", response_model=Token)
+@router.post("/orga_user")
 async def seed_user(db: Surreal = Depends(get_db)):
     return await SeedUserService(db)

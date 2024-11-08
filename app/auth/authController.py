@@ -40,7 +40,7 @@ async def check_mail(
 
 
 '''first user of a organization has to sign up for the organization too'''
-@router.post("/orga_signup", response_model=Token)
+@router.post("/orga_signup")
 async def orga_signup(
         user_in: UserOrga, 
         db: Surreal = Depends(get_db)
@@ -53,7 +53,7 @@ async def orga_signup(
         )
 
 
-@router.post("/user_signup", response_model=Token)
+@router.post("/user_signup")
 async def user_signup(
         user_in: User,
         db: Surreal = Depends(get_db)

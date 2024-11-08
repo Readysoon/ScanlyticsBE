@@ -3,7 +3,7 @@ from app.auth.authSchema import Token
 from app.auth.authService import signup_service
 from app.user.userSchema import UserSignup
 
-async def SeedUserService(db: Surreal, response_model=Token):
+async def SeedUserService(db: Surreal):
     # Seed user information
     seed_user_data = UserSignup(
         user_email="admin@example.com",
