@@ -20,9 +20,61 @@ from app.ml_models.ml_modelsController import router as ml_models
 
 
 
+from fastapi import FastAPI, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
+
+
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    error_messages = []
+
+    print(errors)
+    
+    for error in errors:
+        error_location = " -> ".join(str(loc) for loc in error["loc"])
+        error_messages.append({
+            "location": error_location,
+            "message": error["msg"],
+            "type": error["type"]
+        })
+        
+        # Special handling for email validation errors
+        if "email" in error_location.lower() and error["type"] == "value_error":
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={
+                    "message": "Invalid email format",
+                    "detail": "Please provide a valid email address",
+                    "errors": error_messages
+                }
+            )
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "message": "Validation error",
+            "detail": "One or more fields failed validation",
+            "errors": error_messages
+        }
+    )
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "message": "Data validation error",
+            "detail": exc.errors(),
+        }
+    )
 
 
 app.include_router(surrealdb_router)
