@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from surrealdb import Surreal
 
-from .authSchema import Login, Email, Password, Token
+from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
 
 from app.user.userSchema import UserOrga, User

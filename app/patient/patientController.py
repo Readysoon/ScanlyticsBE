@@ -1,5 +1,7 @@
 from surrealdb import Surreal
 from fastapi import APIRouter, Depends
+from typing import Annotated
+from fastapi import Path
 
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
@@ -32,7 +34,7 @@ async def create_patient(
 
 @router.get("/{patient_id}")
 async def get_patient(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -61,7 +63,7 @@ async def get_all_patients(
 @router.patch("/{patient_id}")
 async def update_patient(
         patient_in: CreatePatient,
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -77,7 +79,7 @@ async def update_patient(
 
 @router.delete("/{patient_id}")
 async def delete_patient(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):

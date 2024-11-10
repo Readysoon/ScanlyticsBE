@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
+from typing import Annotated
+
 
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
@@ -33,7 +35,7 @@ async def create_report(
 
 @router.get("/{report_id}")
 async def get_report(
-        report_id: str,
+        report_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -50,7 +52,7 @@ async def get_report(
 @router.patch("/{report_id}")
 async def update_report(
         report_in: Report,
-        report_id: str,
+        report_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -66,7 +68,7 @@ async def update_report(
 
 @router.get("/patient/{patient_id}")
 async def get_all_reports_by_patient_and_user(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -81,7 +83,7 @@ async def get_all_reports_by_patient_and_user(
 
 @router.delete("/{report_id}")
 async def delete_patient(
-        report_id: str,
+        report_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db),
     ):

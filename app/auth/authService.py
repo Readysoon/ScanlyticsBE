@@ -10,8 +10,6 @@ from app.email.emailService import EmailVerificationService
 from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
 
 
-
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
@@ -172,7 +170,7 @@ async def UserSignupService(user_in, db, error_stack):
 
         first_name = user_in.user_name.split()[0]
     
-        testing = True
+        testing = False
 
         if testing == False:
             try:

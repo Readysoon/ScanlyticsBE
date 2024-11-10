@@ -1,6 +1,7 @@
 from fastapi import UploadFile, File, APIRouter, Depends
 from surrealdb import Surreal
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
+from typing import Annotated
 
 from .imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from .imageSchema import Image
@@ -19,7 +20,7 @@ router = APIRouter(
 
 @router.post("/{patient_id}")
 async def upload_image(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         file: UploadFile = File(...),
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -36,7 +37,7 @@ async def upload_image(
 
 @router.get("/patient/{patient_id}")
 async def get_images_by_patient(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -51,7 +52,7 @@ async def get_images_by_patient(
 
 @router.get("/{image_id}")
 async def get_image(
-        image_id: str,
+        image_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -66,7 +67,7 @@ async def get_image(
 
 @router.delete("/{image_id}")
 async def delete_image(
-        image_id: str,
+        image_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -82,7 +83,7 @@ async def delete_image(
 @router.patch("/{image_id}")
 async def update_patient(
         image_in: Image,
-        image_id: str,
+        image_id: Annotated[str, Path(min_length=20, max_length=20)],
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDHelper)
     ):

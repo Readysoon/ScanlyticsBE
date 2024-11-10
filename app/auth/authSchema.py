@@ -1,22 +1,15 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
+from typing import Annotated
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
 class Password(BaseModel):
-    user_password: str
-
-    @field_validator('user_password')
-    def validate_password_length(cls, v):
-        if len(v) < 10:
-            raise ValueError('Password must be at least 10 characters long')
-        if len(v) > 50:  # Optional maximum length
-            raise ValueError('Password must not exceed 50 characters')
-        return v
+    user_password: Annotated[str, Field(min_length=8, max_length=25)]
 
 class Email(BaseModel):
     user_email: EmailStr
 
 class Login(Email, Password):
     pass
+
+class SafeID(BaseModel):
+    database_id: Annotated[str, Field(min_length=20, max_length=20)]

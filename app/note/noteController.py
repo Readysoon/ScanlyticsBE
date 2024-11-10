@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
+from typing import Annotated
 
 from .noteSchema import Note
 from .noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService
@@ -17,7 +18,7 @@ router = APIRouter(
 
 @router.post("/{patient_id}")
 async def create_note(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         note_in: Note, 
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -34,7 +35,7 @@ async def create_note(
 
 @router.get("/{note_id}")
 async def get_note(
-        note_id: str,
+        note_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -49,7 +50,7 @@ async def get_note(
 
 @router.get("/patient/{patient_id}")
 async def get_all_notes_by_patient_id(
-        patient_id: str,
+        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -65,7 +66,7 @@ async def get_all_notes_by_patient_id(
 @router.patch("/{note_id}")
 async def update_note(
         note_in: Note,
-        note_id: str,
+        note_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -81,7 +82,7 @@ async def update_note(
 
 @router.delete("/{note_id}")
 async def delete_note(
-        note_id: str,
+        note_id: Annotated[str, Path(min_length=20, max_length=20)],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
