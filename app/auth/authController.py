@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
+from typing import Annotated
 
 from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
@@ -106,10 +107,9 @@ async def validate(
              error_stack
         )
 
-
 @router.get("/verify/{token}")
 async def verify(
-        token: str,
+        token: Annotated[str, Path(min_length=144, max_length=144)],
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()

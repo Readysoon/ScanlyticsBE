@@ -168,13 +168,15 @@ async def UserSignupService(user_in, db, error_stack):
 
         token = ReturnAccessTokenHelper(query_result[0]['result'][0]['id'], error_stack)
 
+        token = token['access_token']
+
         first_name = user_in.user_name.split()[0]
     
         testing = False
 
         if testing == False:
             try:
-                await EmailVerificationService(user_in.user_email, token, first_name)
+                await EmailVerificationService(user_in.user_email, token, first_name, error_stack)
                 return JSONResponse(
                         status_code=201, 
                         content={"message": f"Verification mail has been sent to {user_in.user_email}."}
