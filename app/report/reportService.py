@@ -51,10 +51,20 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
         # verify patient is users
         try:
             patient_query_result = await db.query(
-                f"SELECT * FROM Patient WHERE "
-                f"id = {reportin.patient_id} AND "
-                f"(SELECT * FROM Treated_By WHERE "
-                f"out = {current_user_id});"
+                """
+                SELECT * 
+                FROM Patient 
+                WHERE id = $patient_id 
+                AND (
+                    SELECT * 
+                    FROM Treated_By 
+                    WHERE out = $user_id
+                );
+                """,
+                {
+                    "patient_id": reportin.patient_id,
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(patient_query_result, error_stack)
@@ -113,10 +123,17 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
         # create the report in the database 
         try: 
             create_query_result = await db.query(
-                f"CREATE Report "
-                f"SET body_part = '{reportin.body_part}', "
-                f"report_text = '{reportin.report_text}', "
-                f"patient = '{reportin.patient_id}';"
+                """
+                CREATE Report SET 
+                    body_part = $body_part,
+                    report_text = $report_text,
+                    patient = $patient_id;
+                """,
+                {
+                    "body_part": reportin.body_part,
+                    "report_text": reportin.report_text,
+                    "patient_id": reportin.patient_id
+                }
             )
 
             DatabaseErrorHelper(create_query_result, error_stack)
@@ -134,10 +151,16 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
         # relate to report
         try:
             relate_query_result = await db.query(
-                f"(RELATE {current_user_id}"
-                f"->Write_Reports->"
-                f"{report_id}"
-                f")[0].out;"
+                """
+                (RELATE $user_id
+                    ->Write_Reports->
+                    $report_id
+                )[0].out;
+                """,
+                {
+                    "user_id": current_user_id,
+                    "report_id": report_id
+                }
             )
 
             DatabaseErrorHelper(relate_query_result, error_stack)
@@ -154,7 +177,15 @@ async def CreateReportService(reportin, current_user_id, db, error_stack):
         try:
             for image in reportin.image_id_array:
                 query_result = await db.query(
-                    f"RELATE {image}->Images_Reports_Join->{report_id}"
+                    """
+                    RELATE $image_id
+                        ->Images_Reports_Join->
+                        $report_id;
+                    """,
+                    {
+                        "image_id": image,
+                        "report_id": report_id
+                    }
                 )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -236,46 +267,42 @@ async def UpdateReportService(reportin, report_id, current_user_id, db, error_st
                     )      
     try:
         try:
-            body_type = reportin.body_part
-            condition = reportin.condition
-            report_text = reportin.report_text
-            set_string = "SET "
+            # Build update parameters and set parts dynamically
+            update_params = {}
+            set_parts = []
 
-            # elongate the update_string
-            if body_type:
-                set_string += f"body_part = '{body_type}', "
-            if condition:
-                set_string += f"condition = '{condition}', "
-            if report_text:
-                set_string += f"report_text = '{report_text}', "
-
-            set_string = set_string[:-2]
-
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Set-string creation failed.",
-                    e,
-                    UpdateReportService
-                )    
-
-        try: 
-            # and finally put everything together and send it
-            query_result = await db.query(
-                    f"UPDATE "
-                    f"{checked_report_id} "
-                    f"{set_string};"
-                )
+            if reportin.body_part:
+                set_parts.append("body_part = $body_part")
+                update_params["body_part"] = reportin.body_part
             
+            if reportin.condition:
+                set_parts.append("condition = $condition")
+                update_params["condition"] = reportin.condition
+            
+            if reportin.report_text:
+                set_parts.append("report_text = $report_text")
+                update_params["report_text"] = reportin.report_text
+
+            # Add the report ID parameter
+            update_params["report_id"] = checked_report_id
+
+            query_result = await db.query(
+                f"""
+                UPDATE $report_id 
+                SET {", ".join(set_parts)};
+                """,
+                update_params
+            )
+
             DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
             error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    UpdateReportService
-                )  
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Update query failed.",
+                e,
+                UpdateReportService
+            )  
             
         return JSONResponse(
             status_code=200, 
@@ -339,12 +366,18 @@ async def DeleteReportService(report_id, current_user_id, db, error_stack):
 
         try: 
             query_result = await db.query(
-                    f"DELETE ("
-                    f"SELECT * FROM "
-                    f"Write_Reports WHERE "
-                    f"in = '{current_user_id}' AND "
-                    f"out = 'Report:{report_id}'"
-                    f")[0]['out'];"
+                    """
+                    DELETE (
+                        SELECT * 
+                        FROM Write_Reports 
+                        WHERE in = $user_id 
+                        AND out = $report_id
+                    )[0]['out'];
+                    """,
+                    {
+                        "user_id": current_user_id,
+                        "report_id": f"Report:{report_id}"
+                    }
                 )
             
             DatabaseErrorHelper(query_result, error_stack)

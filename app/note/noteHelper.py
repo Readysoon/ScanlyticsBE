@@ -6,8 +6,14 @@ from app.error.errorHelper import DatabaseErrorHelper
 async def GetNoteByIDHelper(note_id, current_user_id, db, error_stack):
     try:
         query_result = await db.query(
-            f"SELECT * FROM PatientNote "
-            f"WHERE id = PatientNote:{note_id};"
+            """
+            SELECT * 
+            FROM PatientNote 
+            WHERE id = $note_id;
+            """,
+            {
+                "note_id": f"PatientNote:{note_id}"
+            }
         )
 
         DatabaseErrorHelper(query_result, error_stack)
@@ -30,9 +36,16 @@ async def GetNoteByIDHelper(note_id, current_user_id, db, error_stack):
 
     try:
         query_result = await db.query(
-            f"SELECT * FROM PatientNote "
-            f"WHERE id = PatientNote:{note_id} "
-            f"AND user_owner = {current_user_id};"
+            """
+            SELECT * 
+            FROM PatientNote 
+            WHERE id = $note_id 
+            AND user_owner = $user_id;
+            """,
+            {
+                "note_id": f"PatientNote:{note_id}",
+                "user_id": current_user_id
+            }
         )
 
         DatabaseErrorHelper(query_result, error_stack)

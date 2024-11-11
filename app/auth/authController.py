@@ -113,7 +113,7 @@ async def verify(
             min_length=144, 
             max_length=144,
             pattern=r'^[a-zA-Z0-9\.]+$',  
-            description="Token must be 144 characters long and contain only alphanumeric characters"
+            description="Token must be 144 characters long and contain only alphanumeric characters and dots"
         )],
         db: Surreal = Depends(get_db)
     ):

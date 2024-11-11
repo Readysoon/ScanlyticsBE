@@ -38,8 +38,14 @@ async def GetAllPatientsByUserIDHelper(current_user_id, db, error_stack):
 async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
     try: 
         query_result = await db.query(
-            f"SELECT * FROM Patient "
-            f"WHERE id = Patient:{patient_id};"
+            """
+            SELECT * 
+            FROM Treated_By 
+            WHERE out = $user_id;
+            """,
+            {
+                "user_id": current_user_id
+            }
         )
         DatabaseErrorHelper(query_result, error_stack)
         
@@ -61,12 +67,19 @@ async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
 
     try: 
         query_result = await db.query(
-            f"SELECT * FROM ("
-            f"SELECT * FROM "
-            f"Treated_By WHERE "
-            f"in = 'Patient:{patient_id}' "
-            f"AND out = '{current_user_id}'"
-            f").in;"
+            """
+            SELECT * 
+            FROM (
+                SELECT * 
+                FROM Treated_By 
+                WHERE in = $patient_id 
+                AND out = $user_id
+            ).in;
+            """,
+            {
+                "patient_id": f"Patient:{patient_id}",
+                "user_id": current_user_id
+            }
         )
         DatabaseErrorHelper(query_result, error_stack)
         

@@ -21,14 +21,25 @@ async def CreateNoteService(patient_id, note_in, current_user_id, db, error_stac
 
         try:
             query_result = await db.query(
-                f"Create PatientNote "
-                f"Set symptoms = '{note_in.symptoms}', "
-                f"diagnosis = '{note_in.diagnosis}', "
-                f"treatment = '{note_in.treatment}', "
-                f"severity = '{note_in.severity}', "
-                f"is_urgent = {note_in.is_urgent}, "
-                f"patient = 'Patient:{patient_id}', "
-                f"user_owner = '{current_user_id}';"
+                """
+                CREATE PatientNote SET 
+                    symptoms = $symptoms,
+                    diagnosis = $diagnosis,
+                    treatment = $treatment,
+                    severity = $severity,
+                    is_urgent = $is_urgent,
+                    patient = $patient_id,
+                    user_owner = $user_id;
+                """,
+                {
+                    "symptoms": note_in.symptoms,
+                    "diagnosis": note_in.diagnosis,
+                    "treatment": note_in.treatment,
+                    "severity": note_in.severity,
+                    "is_urgent": note_in.is_urgent,
+                    "patient_id": f"Patient:{patient_id}",
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -95,9 +106,16 @@ async def GetAllNotesByPatientIDService(patient_id, current_user_id, db, error_s
 
         try:
             query_result = await db.query(
-                f"SELECT * FROM PatientNote "
-                f"WHERE patient = Patient:{patient_id} "
-                f"AND user_owner = {current_user_id};"
+                """
+                SELECT * 
+                FROM PatientNote 
+                WHERE patient = $patient_id 
+                AND user_owner = $user_id;
+                """,
+                {
+                    "patient_id": f"Patient:{patient_id}",
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -154,58 +172,62 @@ async def UpdateNoteService(note_in, note_id, current_user_id, db, error_stack):
     try:
         note = await GetNoteByIDHelper(note_id, current_user_id, db, error_stack)
 
-        try:
-            symptoms = note_in.symptoms
-            diagnosis = note_in.diagnosis
-            treatment = note_in.treatment
-            severity = note_in.severity
-            is_urgent = note_in.is_urgent
-            patient = note_in.patient
-            set_string = "SET "
+        # Build update parameters and set parts dynamically
+        update_params = {}
+        set_parts = []
 
-            # elongate the update_string
-            if symptoms:
-                set_string += f"symptoms = '{symptoms}', "
-            if diagnosis:
-                set_string += f"diagnosis = '{diagnosis}', "
-            if treatment:
-                set_string += f"treatment = '{treatment}', "
-            if severity:
-                set_string += f"severity = '{severity}', "
-            if is_urgent:
-                set_string += f"is_urgent = '{is_urgent}', "
-            if patient:
-                set_string += f"patient = '{patient}', "
-            
-            set_string = set_string[:-2]
-
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Set-string creation failed.",
-                    e,
-                    UpdateNoteService
-                ) 
+        if note_in.symptoms:
+            set_parts.append("symptoms = $symptoms")
+            update_params["symptoms"] = note_in.symptoms
         
-        try:
-            # and finally put everything together and send it
-            query_result = await db.query(
-                    f"UPDATE ("
-                    f"SELECT * FROM PatientNote "
-                    f"WHERE id = 'PatientNote:{note_id}' "
-                    f"AND user_owner = {current_user_id}"
-                    f") {set_string};"
-                )
+        if note_in.diagnosis:
+            set_parts.append("diagnosis = $diagnosis")
+            update_params["diagnosis"] = note_in.diagnosis
+        
+        if note_in.treatment:
+            set_parts.append("treatment = $treatment")
+            update_params["treatment"] = note_in.treatment
+        
+        if note_in.severity:
+            set_parts.append("severity = $severity")
+            update_params["severity"] = note_in.severity
+        
+        if note_in.is_urgent:
+            set_parts.append("is_urgent = $is_urgent")
+            update_params["is_urgent"] = note_in.is_urgent
+        
+        if note_in.patient:
+            set_parts.append("patient = $patient")
+            update_params["patient"] = note_in.patient
 
-            DatabaseErrorHelper(query_result, error_stack)
-            
-        except Exception as e: 
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    UpdateNoteService
-                ) 
+        # Add the required WHERE clause parameters
+        update_params.update({
+            "note_id": f"PatientNote:{note_id}",
+            "user_id": current_user_id
+        })
+
+        query_result = await db.query(
+            f"""
+            UPDATE (
+                SELECT * 
+                FROM PatientNote 
+                WHERE id = $note_id 
+                AND user_owner = $user_id
+            ) SET {", ".join(set_parts)};
+            """,
+            update_params
+        )
+
+        DatabaseErrorHelper(query_result, error_stack)
+
+    except Exception as e:
+        error_stack.add_error(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Update query failed.",
+            e,
+            UpdateNoteService
+        )
+
         
         result_without_status = query_result[0]['result']
 
@@ -237,10 +259,18 @@ async def DeleteNoteService(note_id, current_user_id, db, error_stack):
 
         try:
             query_result = await db.query(
-                f"DELETE ("
-                f"SELECT * FROM PatientNote "
-                f"WHERE id = PatientNote:{note_id} "
-                f"AND user_owner = {current_user_id})"
+                """
+                DELETE (
+                    SELECT * 
+                    FROM PatientNote 
+                    WHERE id = $note_id 
+                    AND user_owner = $user_id
+                );
+                """,
+                {
+                    "note_id": f"PatientNote:{note_id}",
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)

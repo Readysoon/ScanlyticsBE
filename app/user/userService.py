@@ -33,9 +33,14 @@ async def GetCurrentUserService(current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
-                f"SELECT * FROM "
-                f"User WHERE "
-                f"id = '{current_user_id}'"
+                """
+                SELECT * 
+                FROM User 
+                WHERE id = $user_id;
+                """,
+                {
+                    "user_id": current_user_id
+                }
             )
             
             DatabaseErrorHelper(query_result, error_stack)
@@ -74,49 +79,46 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors - check
 async def PatchUserService(userin, current_user_id, db, error_stack):
     try:
         try:
-            email = userin.user_email
-            name = userin.user_name
-            password = userin.user_password
-            role = userin.user_role
-            set_string = "SET "
+            # Build update parameters and set parts dynamically
+            update_params = {}
+            set_parts = []
 
-            # elongate the update_string
-            if email:
-                set_string += f"email = '{email}', "
-            if name:
-                set_string += f"name = '{name}', "
-            if password:
-                set_string += f"date_of_birth = '{password}', "
-            if role:
-                set_string += f"gender = '{role}', "
-
-            set_string = set_string[:-2]
-
-        except Exception as e:
-            error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Set-string creation failed.",
-                    e,
-                    PatchUserService
-                )
-                    
-        try: 
-            # and finally put everything together and send it
-            query_result = await db.query(
-                    f"UPDATE "
-                    f"{current_user_id} "
-                    f"{set_string};"
-                )
+            if userin.user_email:
+                set_parts.append("email = $email")
+                update_params["email"] = userin.user_email
             
+            if userin.user_name:
+                set_parts.append("name = $name")
+                update_params["name"] = userin.user_name
+            
+            if userin.user_password:
+                set_parts.append("date_of_birth = $password")  # Note: field name seems incorrect
+                update_params["password"] = userin.user_password
+            
+            if userin.user_role:
+                set_parts.append("gender = $role")  # Note: field name seems incorrect
+                update_params["role"] = userin.user_role
+
+            # Add the user ID parameter
+            update_params["user_id"] = current_user_id
+
+            query_result = await db.query(
+                f"""
+                UPDATE $user_id 
+                SET {", ".join(set_parts)};
+                """,
+                update_params
+            )
+
             DatabaseErrorHelper(query_result, error_stack)
 
         except Exception as e:
             error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
-                    e,
-                    PatchUserService
-                )
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Update query failed.",
+                e,
+                PatchUserService
+            )
             
         if query_result is None:
             pass
@@ -164,8 +166,14 @@ status.HTTP_500_INTERNAL_SERVER_ERROR  # keep for actual server errors
 async def DeleteUserService(current_user_id, db, error_stack):
     try:
         query_result = await db.query(
-            f"SELECT * FROM User "
-            f"WHERE id = {current_user_id};"
+            """
+            SELECT * 
+            FROM User 
+            WHERE id = $user_id;
+            """,
+            {
+                "user_id": current_user_id
+            }
         )
 
         DatabaseErrorHelper(query_result, error_stack)
@@ -212,7 +220,12 @@ async def DeleteUserService(current_user_id, db, error_stack):
         
         try:
             query_result = await db.query(
-                f"DELETE {current_user_id};"
+                """
+                DELETE $user_id;
+                """,
+                {
+                    "user_id": current_user_id
+                }
             )
             DatabaseErrorHelper(query_result, error_stack)
 
@@ -226,8 +239,14 @@ async def DeleteUserService(current_user_id, db, error_stack):
 
         try:
             query_result = await db.query(
-                f"SELECT * FROM User "
-                f"WHERE id = {current_user_id};"
+                """
+                SELECT * 
+                FROM User 
+                WHERE id = $user_id;
+                """,
+                {
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)

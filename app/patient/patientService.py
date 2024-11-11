@@ -22,8 +22,14 @@ async def CreatePatientService(patientin, current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
-                f"SELECT * FROM Patient "
-                f"WHERE name = '{patientin.patient_name}';"
+                """
+                SELECT * 
+                FROM Patient 
+                WHERE name = $patient_name;
+                """,
+                {
+                    "patient_name": patientin.patient_name
+                }
             )
 
         except Exception as e: 
@@ -45,16 +51,27 @@ async def CreatePatientService(patientin, current_user_id, db, error_stack):
         try:
             # Create the Patient while relating it to the current_user then Select * from the just created patient (instead of returing the relation)
             query_result = await db.query(
-                f"SELECT * FROM (("
-                f"RELATE ("
-                f"CREATE Patient "
-                f"SET name = '{patientin.patient_name}', "
-                f"date_of_birth = '{patientin.date_of_birth}', "
-                f"gender = '{patientin.gender}', "
-                f"contact_number = '{patientin.contact_number}', "
-                f"address = '{patientin.address}'"
-                f")->Treated_By->{current_user_id}"
-                f").in)[0];"
+                """
+                SELECT * 
+                FROM ((
+                    RELATE (
+                        CREATE Patient SET 
+                            name = $name,
+                            date_of_birth = $dob,
+                            gender = $gender,
+                            contact_number = $contact,
+                            address = $address
+                    )->Treated_By->$user_id
+                ).in)[0];
+                """,
+                {
+                    "name": patientin.patient_name,
+                    "dob": patientin.date_of_birth,
+                    "gender": patientin.gender,
+                    "contact": patientin.contact_number,
+                    "address": patientin.address,
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -156,55 +173,57 @@ async def UpdatePatientService(patientin, patient_id, current_user_id, db, error
             patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
 
             try:
-                name = patientin.patient_name
-                date_of_birth = patientin.date_of_birth
-                gender = patientin.gender
-                contact_number = patientin.contact_number
-                address = patientin.address
-                set_string = "SET "
+                # Build update parameters and set parts dynamically
+                update_params = {}
+                set_parts = []
 
-                # elongate the update_string
-                if name:
-                    set_string += f"name = '{name}', "
-                if date_of_birth:
-                    set_string += f"date_of_birth = '{date_of_birth}', "
-                if gender:
-                    set_string += f"gender = '{gender}', "
-                if contact_number:
-                    set_string += f"contact_number = '{contact_number}', "
-                if address:
-                    set_string += f"address = '{address}', "
+                if patientin.patient_name:
+                    set_parts.append("name = $name")
+                    update_params["name"] = patientin.patient_name
                 
-                set_string = set_string[:-2]
+                if patientin.date_of_birth:
+                    set_parts.append("date_of_birth = $dob")
+                    update_params["dob"] = patientin.date_of_birth
+                
+                if patientin.gender:
+                    set_parts.append("gender = $gender")
+                    update_params["gender"] = patientin.gender
+                
+                if patientin.contact_number:
+                    set_parts.append("contact_number = $contact")
+                    update_params["contact"] = patientin.contact_number
+                
+                if patientin.address:
+                    set_parts.append("address = $address")
+                    update_params["address"] = patientin.address
 
-            except Exception as e:
-                error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Set-string creation failed",
-                    e,
-                    UpdatePatientService
-                ) 
+                # Add the required WHERE clause parameters
+                update_params.update({
+                    "user_id": current_user_id,
+                    "patient_id": f"Patient:{patient_id}"
+                })
 
-            try: 
-                # and finally put everything together and send it
                 query_result = await db.query(
-                        f"UPDATE ("
-                        f"SELECT * FROM Treated_By WHERE "
-                        f"out = '{current_user_id}' AND "
-                        f"in = 'Patient:{patient_id}' "
-                        f").in "
-                        f"{set_string};"
-                    )
-                
+                    f"""
+                    UPDATE (
+                        SELECT * 
+                        FROM Treated_By 
+                        WHERE out = $user_id 
+                        AND in = $patient_id
+                    ).in SET {", ".join(set_parts)};
+                    """,
+                    update_params
+                )
+
                 DatabaseErrorHelper(query_result, error_stack)
-   
+
             except Exception as e:
                 error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Query error.",
+                    "Update query failed.",
                     e,
                     UpdatePatientService
-                ) 
+                )
             
             return JSONResponse(
                 status_code=200, 
@@ -286,11 +305,18 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
  
         try: 
             query_result = await db.query(
-                    f"DELETE "
-                    f"(SELECT * FROM "
-                    f"Treated_By WHERE "
-                    f"in = {patient_id} and "
-                    f"out = {current_user_id}).in;"
+                    """
+                    DELETE (
+                        SELECT * 
+                        FROM Treated_By 
+                        WHERE in = $patient_id 
+                        AND out = $user_id
+                    ).in;
+                    """,
+                    {
+                        "patient_id": patient_id,
+                        "user_id": current_user_id
+                    }
                 )
             
             DatabaseErrorHelper(query_result, error_stack)

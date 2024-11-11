@@ -20,8 +20,14 @@ async def GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
         # check if the patient exists
         try:
             query_result = await db.query(
-                f"SELECT * FROM Patient "
-                f"WHERE id = Patient:{patient_id};"
+                """
+                SELECT * 
+                FROM Patient 
+                WHERE id = $patient_id;
+                """,
+                {
+                    "patient_id": f"Patient:{patient_id}"
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -71,9 +77,16 @@ async def GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
             
         try:
             query_result = await db.query(
-                f"SELECT * FROM Image WHERE "
-                f"user = '{current_user_id}' "
-                f"AND patient = 'Patient:{patient_id}';"
+                """
+                SELECT * 
+                FROM Image 
+                WHERE user = $user_id 
+                AND patient = $patient_id;
+                """,
+                {
+                    "user_id": current_user_id,
+                    "patient_id": f"Patient:{patient_id}"
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -110,8 +123,14 @@ async def DeleteImageByIDHelper(image_id, current_user_id, db, error_stack):
 
     try: 
         query_result = await db.query(
-                f"SELECT * FROM Image "
-                f"WHERE id = 'Image:{image_id}';"
+                """
+                SELECT * 
+                FROM Image 
+                WHERE id = $image_id;
+                """,
+                {
+                    "image_id": f"Image:{image_id}"
+                }
             )
         
         DatabaseErrorHelper(query_result, error_stack)
@@ -134,9 +153,16 @@ async def DeleteImageByIDHelper(image_id, current_user_id, db, error_stack):
         
     try: 
         query_result = await db.query(
-                f"SELECT * FROM Image "
-                f"user = '{current_user_id}' "
-                f"AND id = 'Image:{image_id}';"
+                """
+                SELECT * 
+                FROM Image 
+                WHERE user = $user_id 
+                AND id = $image_id;
+                """,
+                {
+                    "user_id": current_user_id,
+                    "image_id": f"Image:{image_id}"
+                }
             )
         
         DatabaseErrorHelper(query_result, error_stack)
@@ -159,9 +185,15 @@ async def DeleteImageByIDHelper(image_id, current_user_id, db, error_stack):
         
     try: 
         query_result = await db.query(
-                f"DELETE Image WHERE "
-                f"user = '{current_user_id}' "
-                f"AND id = 'Image:{image_id}';"
+                """
+                DELETE Image 
+                WHERE user = $user_id 
+                AND id = $image_id;
+                """,
+                {
+                    "user_id": current_user_id,
+                    "image_id": f"Image:{image_id}"
+                }
             )
         
         DatabaseErrorHelper(query_result, error_stack)

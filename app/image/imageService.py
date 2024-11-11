@@ -43,10 +43,20 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
             # first verify patient is users
             try:
                 query_result = await db.query(
-                f"SELECT * FROM Patient WHERE "
-                f"id = Patient:{patient_id} AND "
-                f"(SELECT * FROM Treated_By WHERE "
-                f"out = {current_user_id});"
+                """
+                SELECT * 
+                FROM Patient 
+                WHERE id = $patient_id 
+                AND (
+                    SELECT * 
+                    FROM Treated_By 
+                    WHERE out = $user_id
+                );
+                """,
+                {
+                    "patient_id": f"Patient:{patient_id}",
+                    "user_id": current_user_id
+                }
                 )
  
                 DatabaseErrorHelper(query_result, error_stack)
@@ -115,14 +125,25 @@ async def UploadImageService(file, patient_id, current_user_id, db, error_stack)
             # Save image metadata in SurrealDB
             try:
                 query_result = await db.query(
-                    f"CREATE Image "
-                    f"SET name = '{file.filename}', "
-                    f"path = '{s3_url}', "
-                    f"body_part = 'arm', "
-                    f"modality = 'mri', "
-                    f"file_type = '{file_type}', "
-                    f"patient = 'Patient:{patient_id}', "
-                    f"user = '{current_user_id}'"
+                    """
+                    CREATE Image SET 
+                        name = $filename,
+                        path = $url,
+                        body_part = $body_part,
+                        modality = $modality,
+                        file_type = $file_type,
+                        patient = $patient_id,
+                        user = $user_id
+                    """,
+                    {
+                        "filename": file.filename,
+                        "url": s3_url,
+                        "body_part": "arm",
+                        "modality": "mri",
+                        "file_type": file_type,
+                        "patient_id": f"Patient:{patient_id}",
+                        "user_id": current_user_id
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)
@@ -202,8 +223,14 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
-                f"SELECT * FROM Image WHERE "
-                f"id = Image:{image_id};"
+                """
+                SELECT * 
+                FROM Image 
+                WHERE id = $image_id;
+                """,
+                {
+                    "image_id": f"Image:{image_id}"
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -226,9 +253,16 @@ async def GetImageByIDService(image_id, current_user_id, db, error_stack):
             
         try:
             query_result = await db.query(
-                f"SELECT * FROM Image WHERE "
-                f"user = '{current_user_id}' "
-                f"AND id = 'Image:{image_id}';"
+                """
+                SELECT * 
+                FROM Image 
+                WHERE user = $user_id 
+                AND id = $image_id;
+                """,
+                {
+                    "user_id": current_user_id,
+                    "image_id": f"Image:{image_id}"
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -277,8 +311,14 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
         try:
             try:
                 query_result = await db.query(
-                    f"SELECT * FROM Image WHERE "
-                    f"id = Image:{image_id};"
+                    """
+                    SELECT * 
+                    FROM Image 
+                    WHERE id = $image_id;
+                    """,
+                    {
+                        "image_id": f"Image:{image_id}"
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)
@@ -301,9 +341,16 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
                 
             try:
                 query_result = await db.query(
-                    f"SELECT * FROM Image WHERE "
-                    f"user = '{current_user_id}' "
-                    f"AND id = 'Image:{image_id}';"
+                    """
+                    SELECT * 
+                    FROM Image 
+                    WHERE user = $user_id 
+                    AND id = $image_id;
+                    """,
+                    {
+                        "user_id": current_user_id,
+                        "image_id": f"Image:{image_id}"
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)
@@ -325,37 +372,33 @@ async def UpdateImageService(image_in, image_id, current_user_id, db, error_stac
                     )
 
             try:
-                image_name = image_in.image_name
-                body_part = image_in.body_part
-                modality = image_in.modality
-                set_string = "SET "
+                set_parts = []
+                update_params = {}
 
-                # elongate the update_string
-                if image_name:
-                    set_string += f"name = '{image_name}', "
-                if body_part:
-                    set_string += f"body_part = '{body_part}', "
-                if modality:
-                    set_string += f"modality = '{modality}', "
-                
-                set_string = set_string[:-2]
+                if image_in.image_name:
+                    set_parts.append("name = $image_name")
+                    update_params["image_name"] = image_in.image_name
 
-            except Exception as e:
-                error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Set-string creation failed.",
-                    e,
-                    UpdateImageService
-                ) 
+                if image_in.body_part:
+                    set_parts.append("body_part = $body_part")
+                    update_params["body_part"] = image_in.body_part
 
-            try: 
-                # and finally put everything together and send it
+                if image_in.modality:
+                    set_parts.append("modality = $modality")
+                    update_params["modality"] = image_in.modality
+
                 query_result = await db.query(
-                    f"Update Image "
-                    f"{set_string} WHERE "
-                    f"user = '{current_user_id}' "
-                    f"AND id = 'Image:{image_id}' "
-                    f";"
+                    f"""
+                    UPDATE Image 
+                    SET {", ".join(set_parts)}
+                    WHERE user = $user_id 
+                    AND id = $image_id;
+                    """,
+                    {
+                        "user_id": current_user_id,
+                        "image_id": f"Image:{image_id}",
+                        **update_params  
+                    }
                 )
                 
                 DatabaseErrorHelper(query_result, error_stack)

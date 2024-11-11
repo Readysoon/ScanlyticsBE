@@ -19,13 +19,23 @@ async def CreateStatementService(statement_in, current_user_id, db, error_stack)
     try:
         try:
             query_result = await db.query(
-                f"CREATE Statement "
-                f"SET text += '{statement_in.text}', "
-                f"body_part = '{statement_in.body_part}', "
-                f"medical_condition = '{statement_in.medical_condition}', "
-                f"modality = '{statement_in.modality}', "
-                f"section = '{statement_in.section}', "
-                f"user_owner = '{current_user_id}';"
+                """
+                CREATE Statement SET 
+                    text += $text,
+                    body_part = $body_part,
+                    medical_condition = $condition,
+                    modality = $modality,
+                    section = $section,
+                    user_owner = $user_id;
+                """,
+                {
+                    "text": statement_in.text,
+                    "body_part": statement_in.body_part,
+                    "condition": statement_in.medical_condition,
+                    "modality": statement_in.modality,
+                    "section": statement_in.section,
+                    "user_id": current_user_id
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -66,23 +76,6 @@ TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'reportTemplates')
 
 async def InitializeStatementsService(current_user_id, db, error_stack):
     try:
-        # implement checking if user is logged in - can i do it with only checking the access token in the router??
-        # try:
-        #     query_result = await db.query(
-        #         f"SELECT * FROM Statement "
-        #         f"WHERE {search_string} AND "
-        #         f"(user_owner = '{current_user_id}' OR "
-        #         f"user_owner = 'User:1');"
-        #     )
-# 
-        # except Exception as e: 
-        #     error_stack.add_error(
-        #         status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #         "Query error.",
-        #         e,
-        #         SearchStatementService
-        #     )
-
         for file_name in os.listdir(TEMPLATES_DIR):
             if file_name.endswith('.txt'):
                 file_path = os.path.join(TEMPLATES_DIR, file_name)
@@ -116,9 +109,16 @@ async def InitializeStatementsService(current_user_id, db, error_stack):
                             # find some other way to check if it already in the database
                             try:
                                 query_result = await db.query(
-                                    f"SELECT * FROM Statement "
-                                    f"WHERE text = '{statement_instance.text}' "
-                                    f"AND body_part = '{statement_instance.body_part}';"
+                                     """
+                                    SELECT * 
+                                    FROM Statement 
+                                    WHERE text = $text 
+                                    AND body_part = $body_part;
+                                    """,
+                                    {
+                                        "text": statement_instance.text,
+                                        "body_part": statement_instance.body_part
+                                    }
                                 )
                             except Exception as e:
                                 error_stack.add_error(
@@ -226,8 +226,14 @@ async def GetAllStatementsByUserService(current_user_id, db, error_stack):
     try:
         try: 
             query_result = await db.query(
-                f"SELECT * FROM Statement "
-                f"WHERE user_owner = '{current_user_id}';"
+                """
+                SELECT * 
+                FROM Statement 
+                WHERE user_owner = $user_id;
+                """,
+                {
+                    "user_id": current_user_id
+                }
             )
             DatabaseErrorHelper(query_result, error_stack)
             
@@ -255,9 +261,15 @@ async def GetAllStatementsByUserService(current_user_id, db, error_stack):
             array_last_element = len(result_dict['text']) - 1
             try: 
                 query_result = await db.query(
-                    f"SELECT text[{array_last_element}], * "
-                    f"FROM Statement WHERE "
-                    f"id = {result_dict['id']};"
+                    """
+                    SELECT text[$array_index], * 
+                    FROM Statement 
+                    WHERE id = $statement_id;
+                    """,
+                    {
+                        "array_index": array_last_element,
+                        "statement_id": result_dict['id']
+                    }
                 )
                 DatabaseErrorHelper(query_result, error_stack)
                 
@@ -480,11 +492,20 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
 
         try: 
             query_result = await db.query(
-                f"SELECT * FROM Statement WHERE "
-                f"id = Statement:{statement_id} "
-                f"AND ("
-                f"user_owner = '{current_user_id}' "
-                f"OR user_owner = 'User:1');"
+                """
+                SELECT * 
+                FROM Statement 
+                WHERE id = $statement_id 
+                AND (
+                    user_owner = $user_id 
+                    OR user_owner = $admin_id
+                );
+                """,
+                {
+                    "statement_id": f"Statement:{statement_id}",
+                    "user_id": current_user_id,
+                    "admin_id": "User:1"
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -503,11 +524,17 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
             try: 
                 # reset the array to only one element with the first element
                 query_result = await db.query(
-                    f"UPDATE ("
-                    f"SELECT * FROM "
-                    f"Statement WHERE "
-                    f"id = 'Statement:{statement_id}'"
-                    f") SET text = ['{query_result[0]['result'][0]['text'][0]}'];"
+                    """
+                    UPDATE (
+                        SELECT * 
+                        FROM Statement 
+                        WHERE id = $statement_id
+                    ) SET text = [$text];
+                    """,
+                    {
+                        "statement_id": f"Statement:{statement_id}",
+                        "text": query_result[0]['result'][0]['text'][0]
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)
@@ -523,11 +550,16 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
             try: 
                 try:
                     query_result = await db.query(
-                        f"RETURN array::len(("
-                        f"SELECT text "
-                        f"FROM Statement "
-                        f"WHERE id = 'Statement:{statement_id}'"
-                        f")[0]['text']);"
+                        """
+                        RETURN array::len((
+                            SELECT text 
+                            FROM Statement 
+                            WHERE id = $statement_id
+                        )[0]['text']);
+                        """,
+                        {
+                            "statement_id": f"Statement:{statement_id}"
+                        }
                     )
 
                     DatabaseErrorHelper(query_result, error_stack)
@@ -571,11 +603,18 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
         else: 
             try: 
                 query_result = await db.query(
-                    f"DELETE ("
-                    f"SELECT * FROM "
-                    f"Statement WHERE "
-                    f"id = Statement:{statement_id} "
-                    f"AND user_owner = '{current_user_id}');"
+                    """
+                    DELETE (
+                        SELECT * 
+                        FROM Statement 
+                        WHERE id = $statement_id 
+                        AND user_owner = $user_id
+                    );
+                    """,
+                    {
+                        "statement_id": f"Statement:{statement_id}",
+                        "user_id": current_user_id
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)
@@ -592,8 +631,14 @@ async def DeleteOrResetStatementService(statement_id, current_user_id, db, error
 
             try:
                 query_result = await db.query(
-                    f"SELECT * FROM Statement "
-                    f"WHERE id = Statement:{statement_id};"
+                    """
+                    SELECT * 
+                    FROM Statement 
+                    WHERE id = $statement_id;
+                    """,
+                    {
+                        "statement_id": f"Statement:{statement_id}"
+                    }
                 )
 
                 DatabaseErrorHelper(query_result, error_stack)

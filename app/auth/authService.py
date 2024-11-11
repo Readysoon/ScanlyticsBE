@@ -21,10 +21,15 @@ async def CheckMailService(user_email, db, error_stack):
     try:
         try: 
             query_result = await db.query(
-                    f"SELECT VALUE email "
-                    f"FROM User WHERE "
-                    f"email = '{user_email.user_email}';"
-                )
+                """
+                SELECT VALUE email 
+                FROM User 
+                WHERE email = $email;
+                """,
+                {
+                    "email": user_email.user_email
+                }
+            )
             
             DatabaseErrorHelper(query_result, error_stack)
 
@@ -71,18 +76,31 @@ async def OrgaSignupService(user_in, db, error_stack):
     try: 
         try:
             query_result = await db.query(
-                    f"CREATE User Set "
-                    f"email = '{user_in.user_email}', "
-                    f"name = '{user_in.user_name}', "
-                    f"password = '{hashed_password}', "
-                    f"role = '{user_in.user_role}', "
-                    f"organization = "
-                    f"((CREATE Organization Set "
-                    f"address = '{user_in.orga_address}', "
-                    f"name = '{user_in.orga_name}', "
-                    f"email = '{user_in.orga_email}'"
-                    f").id)[0]"
-                )
+            """
+                CREATE User SET 
+                    email = $user_email,
+                    name = $user_name,
+                    password = $password,
+                    role = $user_role,
+                    organization = (
+                        (CREATE Organization SET
+                            address = $org_address,
+                            name = $org_name,
+                            email = $org_email
+                        ).id
+                    )[0]
+                """,
+                {
+                    "user_email": user_in.user_email,
+                    "user_name": user_in.user_name,
+                    "password": hashed_password,
+                    "user_role": user_in.user_role,
+                    "org_address": user_in.orga_address,
+                    "org_name": user_in.orga_name,
+                    "org_email": user_in.orga_email
+                }
+            )
+            
             DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
    
         except Exception as e:
@@ -138,12 +156,20 @@ async def  UserSignupService(user_in, db, error_stack):
  
         try:       
             query_result = await db.query(
-                    f"CREATE User Set "
-                    f"email = '{user_in.user_email}', "
-                    f"name = '{user_in.user_name}', "
-                    f"password = '{hashed_password}', "
-                    f"role = '{user_in.user_role}', "
-                    f"organization = Organization:1"
+                    """
+                    CREATE User SET 
+                        email = $user_email,
+                        name = $user_name,
+                        password = $password,
+                        role = $user_role,
+                        organization = Organization:1
+                    """,
+                    {
+                        "user_email": user_in.user_email,
+                        "user_name": user_in.user_name,
+                        "password": hashed_password,
+                        "user_role": user_in.user_role
+                    }
                 )
             
             DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
@@ -217,9 +243,18 @@ async def LoginService(user_data, db, error_stack):
     try:
         try:
             query_result = await db.query(
-                f"SELECT id, email, password, verified "
-                f"FROM User WHERE "
-                f"email = '{user_data.user_email}';"
+                """
+                SELECT 
+                    id, 
+                    email, 
+                    password, 
+                    verified 
+                FROM User 
+                WHERE email = $email;
+                """,
+                {
+                    "email": user_data.user_email
+                }
             )
 
             DatabaseErrorHelper(query_result, error_stack)
@@ -277,11 +312,18 @@ async def UpdatePasswordService(password, current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
-                    f"UPDATE ("
-                    f"SELECT id "
-                    f"FROM User WHERE "
-                    f"id = '{current_user_id}') "
-                    f"SET password = '{hashed_password}';"
+                    """
+                    UPDATE (
+                        SELECT id 
+                        FROM User 
+                        WHERE id = $user_id
+                    ) 
+                    SET password = $new_password;
+                    """,
+                    {
+                        "user_id": current_user_id,
+                        "new_password": hashed_password
+                    }
                 )
             
             DatabaseErrorHelper(query_result, error_stack)
@@ -312,9 +354,14 @@ async def ValidateService(current_user_id, db, error_stack):
     try:
         try:
             query_result = await db.query(
-                    f"SELECT verified, id "
-                    f"FROM User WHERE "
-                    f"id = '{current_user_id}';"
+                    """
+                    SELECT verified, id 
+                    FROM User 
+                    WHERE id = $user_id;
+                    """,
+                    {
+                        "user_id": current_user_id
+                    }
                 )
             
             DatabaseErrorHelper(query_result, error_stack)
@@ -362,12 +409,17 @@ async def VerificationService(token, db, error_stack):
 
         try:
             query_result = await db.query(
-                    f"Update ("
-                    f"SELECT * "
-                    f"FROM User WHERE "
-                    f"id = 'User:{current_user_id}'"
-                    f") SET "
-                    f"verified = true;"
+                    """
+                    UPDATE (
+                        SELECT * 
+                        FROM User 
+                        WHERE id = $user_id
+                    ) 
+                    SET verified = true;
+                    """,
+                    {
+                        "user_id": f"User:{current_user_id}"
+                    }
                 )
             
             DatabaseErrorHelper(query_result, error_stack)
