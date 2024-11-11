@@ -129,13 +129,13 @@ async def OrgaSignupService(user_in, db, error_stack):
 '''A user can only join an organization if the owner acccepts'''  
 # Organization:1 is for all doctors without an practice
 # Organization should be None
-async def UserSignupService(user_in, db, error_stack):
+async def  UserSignupService(user_in, db, error_stack):
 
     DatabaseErrorHelperResultText = ""
      
     try:
         hashed_password = pwd_context.hash(user_in.user_password)
-
+ 
         try:       
             query_result = await db.query(
                     f"CREATE User Set "

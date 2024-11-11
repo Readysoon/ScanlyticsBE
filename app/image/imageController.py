@@ -20,7 +20,12 @@ router = APIRouter(
 
 @router.post("/{patient_id}")
 async def upload_image(
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         file: UploadFile = File(...),
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -37,7 +42,12 @@ async def upload_image(
 
 @router.get("/patient/{patient_id}")
 async def get_images_by_patient(
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -52,7 +62,12 @@ async def get_images_by_patient(
 
 @router.get("/{image_id}")
 async def get_image(
-        image_id: Annotated[str, Path(min_length=20, max_length=20)],
+        image_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Image ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -67,7 +82,12 @@ async def get_image(
 
 @router.delete("/{image_id}")
 async def delete_image(
-        image_id: Annotated[str, Path(min_length=20, max_length=20)],
+        image_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Image ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -83,7 +103,12 @@ async def delete_image(
 @router.patch("/{image_id}")
 async def update_patient(
         image_in: Image,
-        image_id: Annotated[str, Path(min_length=20, max_length=20)],
+        image_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Image ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         db: Surreal = Depends(get_db),
         current_user_id = Depends(GetCurrentUserIDHelper)
     ):

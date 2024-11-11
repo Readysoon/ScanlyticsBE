@@ -109,7 +109,12 @@ async def validate(
 
 @router.get("/verify/{token}")
 async def verify(
-        token: Annotated[str, Path(min_length=144, max_length=144)],
+        token: Annotated[str, Path(
+            min_length=144, 
+            max_length=144,
+            pattern=r'^[a-zA-Z0-9\.]+$',  
+            description="Token must be 144 characters long and contain only alphanumeric characters"
+        )],
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()

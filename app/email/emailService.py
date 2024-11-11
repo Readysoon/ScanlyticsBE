@@ -58,7 +58,7 @@ async def EmailVerificationService(email, token, first_name, error_stack):
         email_list.append(email)
 
         message = MessageSchema(
-            subject="Fastapi-Mail module",
+            subject="Verify your Email",
             recipients=email_list,# email.dict().get("email"), #use this if you want to send an email in json format {"email": ["fpb56915@dcobe.com"]}
             body=html,
             subtype=MessageType.html)

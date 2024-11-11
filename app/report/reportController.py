@@ -35,7 +35,12 @@ async def create_report(
 
 @router.get("/{report_id}")
 async def get_report(
-        report_id: Annotated[str, Path(min_length=20, max_length=20)],
+        report_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Report ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -52,7 +57,12 @@ async def get_report(
 @router.patch("/{report_id}")
 async def update_report(
         report_in: Report,
-        report_id: Annotated[str, Path(min_length=20, max_length=20)],
+        report_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Report ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -68,7 +78,12 @@ async def update_report(
 
 @router.get("/patient/{patient_id}")
 async def get_all_reports_by_patient_and_user(
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -83,7 +98,12 @@ async def get_all_reports_by_patient_and_user(
 
 @router.delete("/{report_id}")
 async def delete_patient(
-        report_id: Annotated[str, Path(min_length=20, max_length=20)],
+        report_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Report ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db),
     ):

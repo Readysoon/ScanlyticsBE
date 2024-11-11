@@ -69,7 +69,12 @@ async def search_statements(
 '''gets a single statement'''
 @router.get("/{statement_id}")
 async def get_statement(
-        statement_id: Annotated[str, Path(min_length=20, max_length=20)],
+        statement_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -99,7 +104,12 @@ async def get_all_statement(
 '''updating adding a new text to the array or changing the other parameters'''
 @router.patch("/{statement_id}")
 async def update_statement(
-        statement_id: Annotated[str, Path(min_length=20, max_length=20)],
+        statement_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -117,7 +127,12 @@ async def update_statement(
 '''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
 @router.delete("/{statement_id}")
 async def delete_statement(
-        statement_id: Annotated[str, Path(min_length=20, max_length=20)],
+        statement_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):

@@ -34,7 +34,12 @@ async def create_patient(
 
 @router.get("/{patient_id}")
 async def get_patient(
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -63,7 +68,12 @@ async def get_all_patients(
 @router.patch("/{patient_id}")
 async def update_patient(
         patient_in: CreatePatient,
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -79,7 +89,12 @@ async def update_patient(
 
 @router.delete("/{patient_id}")
 async def delete_patient(
-        patient_id: Annotated[str, Path(min_length=20, max_length=20)],
+        patient_id: Annotated[str, Path(
+                min_length=20, 
+                max_length=20,
+                pattern=r'^[a-zA-Z0-9]+$',  
+                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
+                )],
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
