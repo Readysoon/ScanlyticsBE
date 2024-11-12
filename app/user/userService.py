@@ -208,7 +208,7 @@ async def DeleteUserService(current_user_id, db, error_stack):
         try:
             for patient in patient_list:
                 patient_id = patient['in']
-                DeletePatientService(patient_id, db, current_user_id)
+                DeletePatientService(patient_id, db, current_user_id, error_stack)
 
         except Exception as e:
             error_stack.add_error(
@@ -262,13 +262,11 @@ async def DeleteUserService(current_user_id, db, error_stack):
         try:
             if not query_result[0]['result']:
                 return JSONResponse(
-                    status_code=204, 
-                    content=[
+                    status_code=200, 
+                    content=
                         {
                             "message": f"User deletion successful."
-                        }, 
-                        ReturnAccessTokenHelper(current_user_id, error_stack)
-                        ]
+                        }
                     )
             else: 
                 return JSONResponse(

@@ -1,5 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse
+
+import os
+
+import redis.asyncio as redis
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 
 import logging
 
@@ -94,42 +100,13 @@ app.include_router(ml_models)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis_connection)
     # await InitializeStatementsService()
 
 
-
-# from fastapi.exceptions import RequestValidationError
-# from fastapi import HTTPException, Request
-# from fastapi.responses import JSONResponse
-
-
-# # Add this at the top level of your FastAPI app
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request: Request, exc: RequestValidationError):
-#     errors = exc.errors()
-#     
-#     for error in errors:
-#         print(error)
-#         if error["type"] == "value_error":
-#             if "email" in str(error["loc"]):
-#                 return JSONResponse(
-#                     status_code=400,
-#                     content={
-#                         "message": "Invalid email format",
-#                         "detail": "Please provide a valid email address"
-#                     }
-#                 )
-#     
-#     # For other validation errors
-#     return JSONResponse(
-#         status_code=400,
-#         content={
-#             "message": "Validation error",
-#             "detail": str(exc)
-#         }
-#     )
-
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
 async def landing_page(
     ):
     html_content = f"""

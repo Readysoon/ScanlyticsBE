@@ -259,23 +259,27 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
         # Delete Images
         try:
             image_list = await GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
+
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "GetImagesByPatientHelper error",
+                    "GetImagesByPatientHelper function call error",
                     e,
                     DeletePatientService
                 ) 
             
         try:
-            for image in image_list:
-                image_id = image['id']
-                DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
+            if not image_list:
+                pass
+            else:
+                for image in image_list:
+                    image_id = image['id']
+                    DeleteImageByIDHelper(image_id, current_user_id, db, error_stack)
 
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "DeleteImageByIDHelper error",
+                    "DeleteImageByIDHelper for loop error",
                     e,
                     DeletePatientService
                 ) 
@@ -292,9 +296,13 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
                 ) 
 
         try:
-            for report in report_list:
-                report_id = report['id']
-                DeleteReportService(report_id, current_user_id, db, error_stack)
+            if not report_list:
+                pass
+            else:
+                for report in report_list:
+                    report_id = report['id']
+                    DeleteReportService(report_id, current_user_id, db, error_stack)
+
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -314,7 +322,7 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
                     ).in;
                     """,
                     {
-                        "patient_id": patient_id,
+                        "patient_id": f"Patient:{patient_id}",
                         "user_id": current_user_id
                     }
                 )
@@ -324,14 +332,20 @@ async def DeletePatientService(patient_id, current_user_id, db, error_stack):
         except Exception as e:
             error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Final Patient deletion Query error",
+                    "Patient deletion Query error",
                     e,
                     DeletePatientService
                 ) 
+            
+        # check if it was deleted
+            
+        try:
+            
+            patient = await GetPatientByIDHelper(patient_id, current_user_id, db, error_stack)
         
-        if not query_result[0]['result'] and query_result[0]['status'] == 'OK':
+        except Exception:
             return JSONResponse(
-                status_code=204, 
+                status_code=200, 
                 content=[
                     {
                         "message": f"Deleted patient '{patient_id}'."

@@ -3,17 +3,13 @@ services:
     build: .
     restart: always
     ports: 
-      - "8001:8001"  # what does it do? -> maps internal port "8001" to external port "8001"
-    # this has to be app/app because: "Volume Mounting: The volumes directive ./app:/usr/src/app is 
-    # meant to mount the app directory from your local machine into the container's /usr/src/app/ directory. 
-    # However, since your app directory on the host machine might be empty or misconfigured, it ends up 
-    # overriding what's inside /usr/src/app/ with an empty app directory in the container." 
-    # - see https://chatgpt.com/share/1d06d7e0-9f0a-4d79-9668-02416b4e8c8b
+      - "8001:8001"
     volumes:
       - ./app:/usr/src/app/app
     command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     environment:
       APP_URL: http://0.0.0.0:8001
+      REDIS_URL: redis://redis:6379
       SURREALDB_URL: ws://surrealdb:8000/rpc
       # !!! use ->http<- localhost:8000 in surrealist !!!
       SURREALDB_USER: root
@@ -24,6 +20,7 @@ services:
       - ./.env
     depends_on:
       - surrealdb
+      - redis
 
   surrealdb:
     image: surrealdb/surrealdb:v1.5.5
@@ -40,3 +37,8 @@ services:
     volumes:
       - ./surreal_data:/data
     restart: always
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"

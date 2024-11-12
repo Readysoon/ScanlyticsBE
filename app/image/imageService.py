@@ -194,6 +194,14 @@ async def GetImagesByPatientService(patient_id, current_user_id, db, error_stack
 
         image_count = 0
 
+        if not image_list:
+            error_stack.add_error(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Patient has no images",
+                    e,
+                    GetImagesByPatientHelper
+                ) 
+
         for image in image_list:
             image_count += 1
             

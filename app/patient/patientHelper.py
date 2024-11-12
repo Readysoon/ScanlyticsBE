@@ -36,18 +36,20 @@ async def GetAllPatientsByUserIDHelper(current_user_id, db, error_stack):
             
             
 async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
+
+    # Check if this patient exists
     try: 
-        query_result = await db.query(
+        first_query_result = await db.query(
             """
             SELECT * 
-            FROM Treated_By 
-            WHERE out = $user_id;
+            FROM Patient 
+            WHERE id = $patient_id;
             """,
             {
-                "user_id": current_user_id
+                "patient_id": f"Patient:{patient_id}"
             }
         )
-        DatabaseErrorHelper(query_result, error_stack)
+        DatabaseErrorHelper(first_query_result, error_stack)
         
     except Exception as e: 
         error_stack.add_error(
@@ -57,7 +59,7 @@ async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
                 GetPatientByIDHelper
             ) 
     
-    if not query_result[0]['result']:
+    if not first_query_result[0]['result']:
         error_stack.add_error(
                 status.HTTP_404_NOT_FOUND,
                 f"Patient not found under ID '{patient_id}'.",
@@ -66,22 +68,19 @@ async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
             ) 
 
     try: 
-        query_result = await db.query(
+        second_query_result = await db.query(
             """
-            SELECT * 
-            FROM (
                 SELECT * 
                 FROM Treated_By 
                 WHERE in = $patient_id 
-                AND out = $user_id
-            ).in;
+                AND out = $user_id;
             """,
             {
                 "patient_id": f"Patient:{patient_id}",
                 "user_id": current_user_id
             }
         )
-        DatabaseErrorHelper(query_result, error_stack)
+        DatabaseErrorHelper(second_query_result, error_stack)
         
     except Exception as e: 
         error_stack.add_error(
@@ -91,14 +90,14 @@ async def GetPatientByIDHelper(patient_id, current_user_id, db, error_stack):
                 GetPatientByIDHelper
             ) 
     
-    if not query_result[0]['result']:
+    if not second_query_result[0]['result']:
         error_stack.add_error(
                 status.HTTP_403_FORBIDDEN,
-                "You have to permission to view this patient.",
+                "You have no permission to view this patient.",
                 "Null",
                 GetPatientByIDHelper
             ) 
     
-    result_without_status = query_result[0]['result']
+    result_without_status = first_query_result[0]['result']
 
     return result_without_status

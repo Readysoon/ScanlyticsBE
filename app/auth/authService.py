@@ -100,7 +100,7 @@ async def OrgaSignupService(user_in, db, error_stack):
                     "org_email": user_in.orga_email
                 }
             )
-            
+
             DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
    
         except Exception as e:

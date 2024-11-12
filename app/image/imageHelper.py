@@ -39,15 +39,24 @@ async def GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
                     e,
                     GetImagesByPatientHelper
                 ) 
-                    
-        if not query_result[0]['result']:
+            
+        try:             
+            if not query_result[0]['result']:
+                error_stack.add_error(
+                        status.HTTP_404_NOT_FOUND,
+                        f"No patient was found for ID '{patient_id}'.",
+                        "None",
+                        GetImagesByPatientHelper
+                    ) 
+        except Exception as e:
             error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    f"No patient was found for ID '{patient_id}'.",
-                    "None",
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "If not query result error.",
+                    e,
                     GetImagesByPatientHelper
                 ) 
             
+
         # check if the patient is users
             
         try:
@@ -60,18 +69,27 @@ async def GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
                     GetImagesByPatientHelper
                 ) 
             
-        patient_id_list = []
+        try:
             
-        for patient in users_patient_list:
-            patient_id_list.append(patient['in'])
-            
-        if query_result[0]['result'][0]['id'] not in patient_id_list:
+            patient_id_list = []
+                
+            for patient in users_patient_list:
+                patient_id_list.append(patient['in'])
+                
+            if query_result[0]['result'][0]['id'] not in patient_id_list:
+                error_stack.add_error(
+                        status.HTTP_401_UNAUTHORIZED,
+                        "You are not authorized to view this patients images.",
+                        e,
+                        GetImagesByPatientHelper
+                    )
+        except Exception as e:
             error_stack.add_error(
-                    status.HTTP_401_UNAUTHORIZED,
-                    "You are not authorized to view this patients images.",
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Authorization check error.",
                     e,
                     GetImagesByPatientHelper
-                )
+                ) 
             
         # retrieve Images
             
@@ -99,18 +117,11 @@ async def GetImagesByPatientHelper(patient_id, current_user_id, db, error_stack)
                     GetImagesByPatientHelper
                 ) 
             
-        if not query_result[0]['result'][0]:
-             error_stack.add_error(
-                    status.HTTP_404_NOT_FOUND,
-                    f"No Image found for patient '{patient_id}'.",
-                    "None",
-                    GetImagesByPatientHelper
-                )
-        
+            
         image_list = query_result[0]['result']
             
         return image_list
-
+        
 '''
 #Suggested:
 status.HTTP_204_NO_CONTENT  # for successful deletion

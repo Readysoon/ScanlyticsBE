@@ -136,7 +136,7 @@ def VerifyAccessTokenHelper(token, error_stack):
             )
 
 
-# returns format User:hus842hjs98ou2i
+# returns user_id in the format 'User:hus842hjs98ou2i'
 async def GetCurrentUserIDHelper(
         token: str = Depends(oauth2_scheme), 
         db: Surreal = Depends(get_db),
@@ -149,7 +149,6 @@ async def GetCurrentUserIDHelper(
 
         except Exception as e:
             if str(e) == "500: Signature has expired.":
-                print("this")
                 error_stack.add_error(
                     status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "Signature has expired.",
@@ -166,32 +165,36 @@ async def GetCurrentUserIDHelper(
 
         # from the id given by VerifyAccessTokenHelper the user is selected in the database
         # can also be: (SELECT id FROM User WHERE id = 'User:bsb2xdhxgn0arxgjp8mq')[0].id
-        try: 
+        try:
             query_result = await db.query(
-                    f"((SELECT * FROM User "
-                    f"WHERE id = 'User:{user_id}'"
-                    f").id)[0];"
-                )
-                        
-            select_user_result = DatabaseErrorHelper(query_result[0]['result'], error_stack)
-
-            if select_user_result == None:
-                error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "select_user_result == None",
-                    "None",
-                    GetCurrentUserIDHelper
-                )
+                """
+                    SELECT * FROM User 
+                    WHERE id = $user_id
+                """, {
+                    "user_id": f"User:{user_id}"
+                })
             
-            return select_user_result
+            DatabaseErrorHelper(query_result, error_stack)
         
         except Exception as e:
             error_stack.add_error(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "Querry error.",
-                    e,
-                    GetCurrentUserIDHelper
-                )
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Query error",
+                e,
+                GetCurrentUserIDHelper
+            )
+
+        if not query_result[0]['result']:
+            error_stack.add_error(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "No user found for this token",
+                "None",
+                GetCurrentUserIDHelper
+            )
+                                    
+        last_user_id = query_result[0]['result'][0]['id']
+        
+        return last_user_id
         
     except Exception as e:
         ExceptionHelper(GetCurrentUserIDHelper, e, error_stack)
