@@ -8,14 +8,14 @@ services:
       - ./app:/usr/src/app/app
     command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     environment:
-      APP_URL: http://0.0.0.0:8001
-      REDIS_URL: redis://redis:6379
-      SURREALDB_URL: ws://surrealdb:8000/rpc
+      APP_URL: ${APP_URL}
+      REDIS_URL: ${REDIS_URL}
+      SURREALDB_URL: ${SURREALDB_URL}
       # !!! use ->http<- localhost:8000 in surrealist !!!
-      SURREALDB_USER: root
-      SURREALDB_PASS: root
-      SURREALDB_NAMESPACE: test
-      SURREALDB_DATABASE: test
+      SURREALDB_USER: ${SURREALDB_USER}
+      SURREALDB_PASS: ${SURREALDB_PASS}
+      SURREALDB_NAMESPACE: ${SURREALDB_NAMESPACE}
+      SURREALDB_DATABASE: ${SURREALDB_DATABASE}
     env_file:
       - ./.env
     depends_on:
@@ -28,11 +28,11 @@ services:
     ports:
       - '8000:8000'
     command:
-      - start #start the SurrealDB server
-      - --log=trace #no idea what this does :(
-      - --user=root #default user
-      - --pass=root #default password
-    # the following 3 lines are a new try to see if persistent memory is working, take it out if not
+      - start 
+      - --log=trace 
+      - --user=${SURREALDB_USER} #default user
+      - --pass=${SURREALDB_PASS} #default password
+    # the following 3 lines are for persistant memory for local development
       - file:/data/database.db
     volumes:
       - ./surreal_data:/data
