@@ -100,7 +100,7 @@ app.include_router(ml_models)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    redis_url = os.getenv("REDIS_URL")
     redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
     await FastAPILimiter.init(redis_connection)
     # await InitializeStatementsService()
