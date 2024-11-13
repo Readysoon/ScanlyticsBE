@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
 from typing import Annotated
 
+from fastapi_limiter.depends import RateLimiter
+
 from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
 
@@ -67,7 +69,7 @@ async def user_signup(
         )
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
 async def login(
         user_data: Login, 
         db: Surreal = Depends(get_db)
