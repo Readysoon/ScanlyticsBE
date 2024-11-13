@@ -5,7 +5,7 @@ from typing import Annotated
 from .statementService import CreateStatementService, InitializeStatementsService, SearchStatementService, GetStatementByIDService, GetAllStatementsByUserService, UpdateStatementService, DeleteOrResetStatementService
 from .statementSchema import Statement
 
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack, RateLimit, IDValidator
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -69,12 +69,7 @@ async def search_statements(
 '''gets a single statement'''
 @router.get("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def get_statement(
-        statement_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        statement_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -104,12 +99,7 @@ async def get_all_statement(
 '''updating adding a new text to the array or changing the other parameters'''
 @router.patch("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def update_statement(
-        statement_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        statement_id: IDValidator.ValidatedID,
         statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -127,12 +117,7 @@ async def update_statement(
 '''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
 @router.delete("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def delete_statement(
-        statement_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Statement ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        statement_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):

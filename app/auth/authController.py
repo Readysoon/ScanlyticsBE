@@ -6,7 +6,7 @@ from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
 
 from app.user.userSchema import UserOrga, User
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack, RateLimit, TokenValidator
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -109,12 +109,7 @@ async def validate(
 
 @router.get("/verify/{token}", dependencies=[RateLimit.limiter()])
 async def verify(
-        token: Annotated[str, Path(
-            min_length=144, 
-            max_length=144,
-            pattern=r'^[a-zA-Z0-9\.]+$',  
-            description="Token must be 144 characters long and contain only alphanumeric characters and dots"
-        )],
+        token: TokenValidator.ValidatedToken,
         db: Surreal = Depends(get_db)
     ):
     error_stack = ErrorStack()

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from fastapi_limiter.depends import RateLimiter
-from fastapi import Depends
-
+from fastapi import Depends, Path
+from typing import Annotated
 
 # TEMPLATE
 # raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"'error_stack'/'already contains' error.", e, UserSignupService)
@@ -138,5 +138,33 @@ class RateLimit:
     
     def limiter():
         return Depends(RateLimiter(times=RateLimit.times, seconds=RateLimit.seconds))
+    
+    
+class IDValidator:
+    min_length = 20
+    max_length = 20
+    pattern = r'^[a-zA-Z0-9]+$'
+    description = "ID must be 20 characters long and contain only alphanumeric characters"
+    
+    ValidatedID = Annotated[str, Path(
+        min_length=min_length,
+        max_length=max_length,
+        pattern=pattern,
+        description=description
+    )]
+
+
+class TokenValidator:
+    min_length = 144
+    max_length = 144
+    pattern = r'^[a-zA-Z0-9.-]+$', 
+    description = "Token must be 144 characters long and contain only alphanumeric characters, dots and hyphens"
+    
+    ValidatedToken = Annotated[str, Path(
+        min_length=min_length,
+        max_length=max_length,
+        pattern=pattern,
+        description=description
+    )]
 
         

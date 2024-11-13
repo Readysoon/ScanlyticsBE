@@ -45,7 +45,7 @@ async def CreateStatementService(statement_in, current_user_id, db, error_stack)
                 status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "Query error.",
                 e,
-                GetLastStatementTextElementHelper
+                CreateStatementService
             )
         
         # differentiate between a statement writen by the user and by the initialization

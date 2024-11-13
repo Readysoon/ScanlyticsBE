@@ -6,7 +6,7 @@ from fastapi import Path
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
 
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack, RateLimit, IDValidator
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -34,12 +34,7 @@ async def create_patient(
 
 @router.get("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def get_patient(
-        patient_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -68,12 +63,7 @@ async def get_all_patients(
 @router.patch("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def update_patient(
         patient_in: CreatePatient,
-        patient_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):
@@ -89,12 +79,7 @@ async def update_patient(
 
 @router.delete("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def delete_patient(
-        patient_id: Annotated[str, Path(
-                min_length=20, 
-                max_length=20,
-                pattern=r'^[a-zA-Z0-9]+$',  
-                description="Patient ID must be 20 characters long and contain only alphanumeric characters"
-                )],
+        patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
     ):

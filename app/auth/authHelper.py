@@ -6,7 +6,7 @@ from surrealdb import Surreal
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, status
 
-from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper 
+from app.error.errorHelper import ExceptionHelper, DatabaseErrorHelper, TokenValidator
 
 from app.db.database import get_db
 
@@ -138,7 +138,7 @@ def VerifyAccessTokenHelper(token, error_stack):
 
 # returns user_id in the format 'User:hus842hjs98ou2i'
 async def GetCurrentUserIDHelper(
-        token: str = Depends(oauth2_scheme), 
+        token: TokenValidator.ValidatedToken, 
         db: Surreal = Depends(get_db),
     ):
     error_stack = ErrorStack()
