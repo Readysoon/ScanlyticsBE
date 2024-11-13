@@ -157,7 +157,7 @@ class IDValidator:
 class TokenValidator:
     min_length = 144
     max_length = 144
-    pattern = r'^[a-zA-Z0-9.-]+$', 
+    pattern = r'^[a-zA-Z0-9.-]+$'
     description = "Token must be 144 characters long and contain only alphanumeric characters, dots and hyphens"
     
     ValidatedToken = Annotated[str, Path(

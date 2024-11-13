@@ -35,7 +35,7 @@ async def upload_image(
         )
 
 
-@router.get("/patient/{patient_id}")
+@router.get("/patient/{patient_id}", dependencies=[RateLimit.limiter()])
 async def get_images_by_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -50,7 +50,7 @@ async def get_images_by_patient(
         )
 
 
-@router.get("/{image_id}")
+@router.get("/{image_id}", dependencies=[RateLimit.limiter()])
 async def get_image(
         image_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -65,7 +65,7 @@ async def get_image(
         )
 
 
-@router.delete("/{image_id}")
+@router.delete("/{image_id}", dependencies=[RateLimit.limiter()])
 async def delete_image(
         image_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -80,7 +80,7 @@ async def delete_image(
         )
 
 
-@router.patch("/{image_id}")
+@router.patch("/{image_id}", dependencies=[RateLimit.limiter()])
 async def update_patient(
         image_in: Image,
         image_id: IDValidator.ValidatedID,
