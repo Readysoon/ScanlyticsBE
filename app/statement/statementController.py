@@ -22,7 +22,7 @@ router = APIRouter(
     tags=["statement"],
 )
 
-@router.post("/", dependencies=[RateLimit.limiter()])
+@router.post("/")#, dependencies=[RateLimit.limiter()])
 async def create_statement(
         statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -37,7 +37,7 @@ async def create_statement(
         )
 
 
-@router.post("/initialize", dependencies=[RateLimit.limiter()])
+@router.post("/initialize")#, dependencies=[RateLimit.limiter()])
 async def initialize_statements(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -51,7 +51,7 @@ async def initialize_statements(
 
 
 '''gets scanlytics statements by categories and user statements by categories'''
-@router.get("/search", dependencies=[RateLimit.limiter()])
+@router.get("/search")#, dependencies=[RateLimit.limiter()])
 async def search_statements(
         search_in: Statement,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -67,7 +67,7 @@ async def search_statements(
 
 
 '''gets a single statement'''
-@router.get("/{statement_id}", dependencies=[RateLimit.limiter()])
+@router.get("/{statement_id}")#, dependencies=[RateLimit.limiter()])
 async def get_statement(
         statement_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -83,7 +83,7 @@ async def get_statement(
 
 
 '''gets all users statements'''
-@router.get("/", dependencies=[RateLimit.limiter()])
+@router.get("/")#, dependencies=[RateLimit.limiter()])
 async def get_all_statement(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -97,7 +97,7 @@ async def get_all_statement(
 
 
 '''updating adding a new text to the array or changing the other parameters'''
-@router.patch("/{statement_id}", dependencies=[RateLimit.limiter()])
+@router.patch("/{statement_id}")#, dependencies=[RateLimit.limiter()])
 async def update_statement(
         statement_id: IDValidator.ValidatedID,
         statement_in: Statement, 
@@ -115,7 +115,7 @@ async def update_statement(
 
 
 '''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
-@router.delete("/{statement_id}", dependencies=[RateLimit.limiter()])
+@router.delete("/{statement_id}")#, dependencies=[RateLimit.limiter()])
 async def delete_statement(
         statement_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),

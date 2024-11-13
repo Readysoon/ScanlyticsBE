@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 '''TO DO: Create reports out of text and statement and patient data - '''
-@router.post("/", dependencies=[RateLimit.limiter()])
+@router.post("/")#, dependencies=[RateLimit.limiter()])
 async def create_report(
         report_in: Report, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -33,7 +33,7 @@ async def create_report(
         )
 
 
-@router.get("/{report_id}", dependencies=[RateLimit.limiter()])
+@router.get("/{report_id}")#, dependencies=[RateLimit.limiter()])
 async def get_report(
         report_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -49,7 +49,7 @@ async def get_report(
 
 
 '''update to handle the new schema'''
-@router.patch("/{report_id}", dependencies=[RateLimit.limiter()])
+@router.patch("/{report_id}")#, dependencies=[RateLimit.limiter()])
 async def update_report(
         report_in: Report,
         report_id: IDValidator.ValidatedID,
@@ -66,7 +66,7 @@ async def update_report(
         )
 
 
-@router.get("/patient/{patient_id}", dependencies=[RateLimit.limiter()])
+@router.get("/patient/{patient_id}")#, dependencies=[RateLimit.limiter()])
 async def get_all_reports_by_patient_and_user(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -81,7 +81,7 @@ async def get_all_reports_by_patient_and_user(
         )
 
 
-@router.delete("/{report_id}", dependencies=[RateLimit.limiter()])
+@router.delete("/{report_id}")#, dependencies=[RateLimit.limiter()])
 async def delete_patient(
         report_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),

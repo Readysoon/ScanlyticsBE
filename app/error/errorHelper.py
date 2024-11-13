@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from fastapi_limiter.depends import RateLimiter
 from fastapi import Depends, Path
 from typing import Annotated
+import os
 
 from datetime import datetime
 import logging
@@ -9,7 +10,7 @@ from pathlib import Path as PathLib
 
 
 
-# Claude Sonnet code:
+# Error Logging by Claude Sonnet:
 
 # Create logs directory if it doesn't exist
 LOGS_DIR = PathLib("logs")
@@ -192,6 +193,11 @@ class RateLimit:
     seconds = 5
     
     def limiter():
+        
+        if os.getenv("TESTING"):
+            # Return empty list of dependencies when testing
+            return []
+        
         return Depends(RateLimiter(times=RateLimit.times, seconds=RateLimit.seconds))
     
     
@@ -212,8 +218,8 @@ class IDValidator:
 class TokenValidator:
     min_length = 144
     max_length = 144
-    pattern = r'^[a-zA-Z0-9.-]+$'
-    description = "Token must be 144 characters long and contain only alphanumeric characters, dots and hyphens"
+    pattern = r'^[a-zA-Z0-9._-]+$'
+    description = f"Token must be 144 characters long"
     
     ValidatedToken = Annotated[str, Path(
         min_length=min_length,

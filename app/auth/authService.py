@@ -1,5 +1,6 @@
 from fastapi import status
 from passlib.context import CryptContext
+from os import getenv
 
 from fastapi.security import OAuth2PasswordBearer
 from starlette.responses import JSONResponse
@@ -198,7 +199,7 @@ async def  UserSignupService(user_in, db, error_stack):
 
         first_name = user_in.user_name.split()[0]
     
-        testing = False
+        testing = getenv('TESTING', 'False').lower() == 'true'
 
         if testing == False:
             try:

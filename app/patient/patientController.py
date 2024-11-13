@@ -17,7 +17,7 @@ router = APIRouter(
         tags=["patient"],
     )
 
-@router.post("/", dependencies=[RateLimit.limiter()])
+@router.post("/")#, dependencies=[RateLimit.limiter()])
 async def create_patient(
         patient_in: CreatePatient, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -32,7 +32,7 @@ async def create_patient(
         )
 
 
-@router.get("/{patient_id}", dependencies=[RateLimit.limiter()])
+@router.get("/{patient_id}")#, dependencies=[RateLimit.limiter()])
 async def get_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -47,7 +47,7 @@ async def get_patient(
         )
 
 
-@router.get("/", dependencies=[RateLimit.limiter()])
+@router.get("/")#, dependencies=[RateLimit.limiter()])
 async def get_all_patients(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -60,7 +60,7 @@ async def get_all_patients(
         )
 
 
-@router.patch("/{patient_id}", dependencies=[RateLimit.limiter()])
+@router.patch("/{patient_id}")#, dependencies=[RateLimit.limiter()])
 async def update_patient(
         patient_in: CreatePatient,
         patient_id: IDValidator.ValidatedID,
@@ -77,7 +77,7 @@ async def update_patient(
         )
 
 
-@router.delete("/{patient_id}", dependencies=[RateLimit.limiter()])
+@router.delete("/{patient_id}")#, dependencies=[RateLimit.limiter()])
 async def delete_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),

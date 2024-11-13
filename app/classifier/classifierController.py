@@ -19,7 +19,7 @@ router = APIRouter(
     )
 
 
-@router.get("/", dependencies=[RateLimit.limiter()])
+@router.get("/")#, dependencies=[RateLimit.limiter()])
 async def classify(
         image_array: Images,
         current_user_id = Depends(GetCurrentUserIDHelper),

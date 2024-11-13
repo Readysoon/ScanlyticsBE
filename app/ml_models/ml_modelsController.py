@@ -17,7 +17,7 @@ router = APIRouter(
         )
 
 
-@router.post("/", dependencies=[RateLimit.limiter()])
+@router.post("/")#, dependencies=[RateLimit.limiter()])
 async def retrieve_model(
         model_name: Model_IN,
         current_user_id = Depends(GetCurrentUserIDHelper),

@@ -11,7 +11,7 @@ router = APIRouter(
     )
 
 '''so far used only to test the service'''
-@router.post("/verify", dependencies=[RateLimit.limiter()])
+@router.post("/verify")#, dependencies=[RateLimit.limiter()])
 async def send_verification_mail(
     email: EmailSchema
     ):

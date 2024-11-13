@@ -1,11 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
+import os
+os.environ["TESTING"] = "1"
+
 from app.main import app
 
 client = TestClient(app)
-
-'''with pytest.raises(Exception)'''
 
 # base user data
 @pytest.fixture

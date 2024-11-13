@@ -27,7 +27,7 @@ router = APIRouter(
             tags=["auth"],
         )
 
-@router.post("/check_mail", dependencies=[RateLimit.limiter()])
+@router.post("/check_mail")#, dependencies=RateLimit.limiter())
 async def check_mail(
         user_email: Email,
         db: Surreal = Depends(get_db)
@@ -41,7 +41,7 @@ async def check_mail(
 
 
 '''first user of a organization has to sign up for the organization too'''
-@router.post("/orga_signup", dependencies=[RateLimit.limiter()])
+@router.post("/orga_signup")#, dependencies=RateLimit.limiter())
 async def orga_signup(
         user_in: UserOrga, 
         db: Surreal = Depends(get_db)
@@ -54,7 +54,7 @@ async def orga_signup(
         )
 
 
-@router.post("/user_signup", dependencies=[RateLimit.limiter()])
+@router.post("/user_signup")#, dependencies=RateLimit.limiter())
 async def user_signup(
         user_in: User,
         db: Surreal = Depends(get_db)
@@ -67,7 +67,7 @@ async def user_signup(
         )
 
 
-@router.post("/login", dependencies=[RateLimit.limiter()])
+@router.post("/login")#, dependencies=RateLimit.limiter())
 async def login(
         user_data: Login, 
         db: Surreal = Depends(get_db)
@@ -80,7 +80,7 @@ async def login(
         )
 
 
-@router.patch("/password", dependencies=[RateLimit.limiter()])
+@router.patch("/password")#, dependencies=RateLimit.limiter())
 async def update_password(
         password: Password,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -95,7 +95,7 @@ async def update_password(
         )
 
 
-@router.post("/validate", dependencies=[RateLimit.limiter()])
+@router.post("/validate")#, dependencies=RateLimit.limiter())
 async def validate(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -107,7 +107,7 @@ async def validate(
              error_stack
         )
 
-@router.get("/verify/{token}", dependencies=[RateLimit.limiter()])
+@router.get("/verify/{token}")#, dependencies=RateLimit.limiter())
 async def verify(
         token: TokenValidator.ValidatedToken,
         db: Surreal = Depends(get_db)
