@@ -3,12 +3,55 @@ from fastapi_limiter.depends import RateLimiter
 from fastapi import Depends, Path
 from typing import Annotated
 
+from datetime import datetime
+import logging
+from pathlib import Path as PathLib
+
+
+
+# Claude Sonnet code:
+
+# Create logs directory if it doesn't exist
+LOGS_DIR = PathLib("logs")
+LOGS_DIR.mkdir(exist_ok=True)
+
+def get_logger():
+    """Configure and return a logger instance for the current day"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    log_file = LOGS_DIR / f"error_log_{today}.log"
+    
+    # Create a new logger
+    logger = logging.getLogger(f'app_logger_{today}')
+    
+    # Only add handler if logger doesn't already have handlers
+    if not logger.handlers:
+        logger.setLevel(logging.ERROR)
+        
+        # Create file handler
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.ERROR)
+        
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(formatter)
+        
+        # Add handler to logger
+        logger.addHandler(file_handler)
+    
+    return logger
+
+
 # TEMPLATE
 # raise error_stack.add_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"'error_stack'/'already contains' error.", e, UserSignupService)
 
 class ErrorStack:
     def __init__(self):
         self.errors = []
+        # Initialize logger in constructor
+        self.logger = get_logger()
 
     def add_error(self, code, detail, e, function_name=None):
         if callable(function_name):
@@ -29,6 +72,11 @@ class ErrorStack:
             "function": function_name
         }
         self.errors.append(error)
+
+        # Log the error with structured information
+        self.logger.error(
+            f"Error in {function_name} - Code: {code} - Description: {detail} - Exception: {exception_detail}"
+        )
 
         # Raise a new HTTPException with the original error detail
         raise HTTPException(
@@ -61,14 +109,21 @@ class ErrorStack:
 
 def ExceptionHelper(function_name, e, error_stack):
 
+    # Get logger instance at function start
+    logger = get_logger()
+
     if callable(function_name):
         function_name = function_name.__name__  
     else:
         function_name = str(function_name)
 
+    # Log that ExceptionHelper was called
+    logger.error(f"ExceptionHelper called for function: {function_name}")
+
     print("ExceptionHelper: ")
     # First check if error_stack exists
     if not error_stack:
+        logger.error(error_msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error stack is None: {str(e)}"
