@@ -5,7 +5,7 @@ from typing import Annotated
 from .statementService import CreateStatementService, InitializeStatementsService, SearchStatementService, GetStatementByIDService, GetAllStatementsByUserService, UpdateStatementService, DeleteOrResetStatementService
 from .statementSchema import Statement
 
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -22,7 +22,7 @@ router = APIRouter(
     tags=["statement"],
 )
 
-@router.post("/")
+@router.post("/", dependencies=[RateLimit.limiter()])
 async def create_statement(
         statement_in: Statement, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -37,7 +37,7 @@ async def create_statement(
         )
 
 
-@router.post("/initialize")
+@router.post("/initialize", dependencies=[RateLimit.limiter()])
 async def initialize_statements(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -51,7 +51,7 @@ async def initialize_statements(
 
 
 '''gets scanlytics statements by categories and user statements by categories'''
-@router.get("/search")
+@router.get("/search", dependencies=[RateLimit.limiter()])
 async def search_statements(
         search_in: Statement,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -67,7 +67,7 @@ async def search_statements(
 
 
 '''gets a single statement'''
-@router.get("/{statement_id}")
+@router.get("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def get_statement(
         statement_id: Annotated[str, Path(
                 min_length=20, 
@@ -88,7 +88,7 @@ async def get_statement(
 
 
 '''gets all users statements'''
-@router.get("/")
+@router.get("/", dependencies=[RateLimit.limiter()])
 async def get_all_statement(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -102,7 +102,7 @@ async def get_all_statement(
 
 
 '''updating adding a new text to the array or changing the other parameters'''
-@router.patch("/{statement_id}")
+@router.patch("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def update_statement(
         statement_id: Annotated[str, Path(
                 min_length=20, 
@@ -125,7 +125,7 @@ async def update_statement(
 
 
 '''delete added array<string> but you cannot delete Scanlytics statements (because theyre anyways not yours)'''
-@router.delete("/{statement_id}")
+@router.delete("/{statement_id}", dependencies=[RateLimit.limiter()])
 async def delete_statement(
         statement_id: Annotated[str, Path(
                 min_length=20, 

@@ -1,4 +1,6 @@
 from fastapi import HTTPException, status
+from fastapi_limiter.depends import RateLimiter
+from fastapi import Depends
 
 
 # TEMPLATE
@@ -128,5 +130,13 @@ def DatabaseErrorHelper(query_result, error_stack):
                 e, 
                 DatabaseErrorHelper
             )
+        
+        
+class RateLimit:
+    times = 2
+    seconds = 5
+    
+    def limiter():
+        return Depends(RateLimiter(times=RateLimit.times, seconds=RateLimit.seconds))
 
         

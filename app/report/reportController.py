@@ -6,7 +6,7 @@ from typing import Annotated
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
 
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 '''TO DO: Create reports out of text and statement and patient data - '''
-@router.post("/")
+@router.post("/", dependencies=[RateLimit.limiter()])
 async def create_report(
         report_in: Report, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -33,7 +33,7 @@ async def create_report(
         )
 
 
-@router.get("/{report_id}")
+@router.get("/{report_id}", dependencies=[RateLimit.limiter()])
 async def get_report(
         report_id: Annotated[str, Path(
                 min_length=20, 
@@ -54,7 +54,7 @@ async def get_report(
 
 
 '''update to handle the new schema'''
-@router.patch("/{report_id}")
+@router.patch("/{report_id}", dependencies=[RateLimit.limiter()])
 async def update_report(
         report_in: Report,
         report_id: Annotated[str, Path(
@@ -76,7 +76,7 @@ async def update_report(
         )
 
 
-@router.get("/patient/{patient_id}")
+@router.get("/patient/{patient_id}", dependencies=[RateLimit.limiter()])
 async def get_all_reports_by_patient_and_user(
         patient_id: Annotated[str, Path(
                 min_length=20, 
@@ -96,7 +96,7 @@ async def get_all_reports_by_patient_and_user(
         )
 
 
-@router.delete("/{report_id}")
+@router.delete("/{report_id}", dependencies=[RateLimit.limiter()])
 async def delete_patient(
         report_id: Annotated[str, Path(
                 min_length=20, 

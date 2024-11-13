@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from .userSchema import User
 from .userService import GetCurrentUserService, DeleteUserService, PatchUserService
 
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -27,7 +27,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/", dependencies=[RateLimit.limiter()])
 async def get_user(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -40,7 +40,7 @@ async def get_user(
         )
 
 
-@router.patch("/")
+@router.patch("/", dependencies=[RateLimit.limiter()])
 async def patch_user(
         user_in: User,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -55,7 +55,7 @@ async def patch_user(
         )
 
 
-@router.delete("/")
+@router.delete("/", dependencies=[RateLimit.limiter()])
 async def delete_user(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)

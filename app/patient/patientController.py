@@ -6,7 +6,7 @@ from fastapi import Path
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
 
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -17,7 +17,7 @@ router = APIRouter(
         tags=["patient"],
     )
 
-@router.post("/")
+@router.post("/", dependencies=[RateLimit.limiter()])
 async def create_patient(
         patient_in: CreatePatient, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -32,7 +32,7 @@ async def create_patient(
         )
 
 
-@router.get("/{patient_id}")
+@router.get("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def get_patient(
         patient_id: Annotated[str, Path(
                 min_length=20, 
@@ -52,7 +52,7 @@ async def get_patient(
         )
 
 
-@router.get("/")
+@router.get("/", dependencies=[RateLimit.limiter()])
 async def get_all_patients(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -65,7 +65,7 @@ async def get_all_patients(
         )
 
 
-@router.patch("/{patient_id}")
+@router.patch("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def update_patient(
         patient_in: CreatePatient,
         patient_id: Annotated[str, Path(
@@ -87,7 +87,7 @@ async def update_patient(
         )
 
 
-@router.delete("/{patient_id}")
+@router.delete("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def delete_patient(
         patient_id: Annotated[str, Path(
                 min_length=20, 

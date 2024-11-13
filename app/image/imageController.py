@@ -6,7 +6,7 @@ from typing import Annotated
 from .imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from .imageSchema import Image
 
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -18,7 +18,7 @@ router = APIRouter(
     )
 
 
-@router.post("/{patient_id}")
+@router.post("/{patient_id}", dependencies=[RateLimit.limiter()])
 async def upload_image(
         patient_id: Annotated[str, Path(
                 min_length=20, 

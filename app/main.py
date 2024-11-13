@@ -1,11 +1,10 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 import os
 
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
-from fastapi_limiter.depends import RateLimiter
 
 import logging
 
@@ -23,6 +22,8 @@ from app.note.noteController import router as note_router
 from app.email.emailController import router as email_router
 from app.classifier.classifierController import router as classifier_router
 from app.ml_models.ml_modelsController import router as ml_models
+
+from app.error.errorHelper import RateLimit
 
 
 
@@ -104,9 +105,9 @@ async def startup_event():
     redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
     await FastAPILimiter.init(redis_connection)
     # await InitializeStatementsService()
+    
 
-
-@app.get("/", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
+@app.get("/", dependencies=[RateLimit.limiter()])
 async def landing_page(
     ):
     html_content = f"""

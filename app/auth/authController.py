@@ -2,13 +2,11 @@ from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
 from typing import Annotated
 
-from fastapi_limiter.depends import RateLimiter
-
 from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService
 
 from app.user.userSchema import UserOrga, User
-from app.error.errorHelper import ErrorStack
+from app.error.errorHelper import ErrorStack, RateLimit
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -29,7 +27,7 @@ router = APIRouter(
             tags=["auth"],
         )
 
-@router.post("/check_mail")
+@router.post("/check_mail", dependencies=[RateLimit.limiter()])
 async def check_mail(
         user_email: Email,
         db: Surreal = Depends(get_db)
@@ -43,7 +41,7 @@ async def check_mail(
 
 
 '''first user of a organization has to sign up for the organization too'''
-@router.post("/orga_signup")
+@router.post("/orga_signup", dependencies=[RateLimit.limiter()])
 async def orga_signup(
         user_in: UserOrga, 
         db: Surreal = Depends(get_db)
@@ -56,7 +54,7 @@ async def orga_signup(
         )
 
 
-@router.post("/user_signup")
+@router.post("/user_signup", dependencies=[RateLimit.limiter()])
 async def user_signup(
         user_in: User,
         db: Surreal = Depends(get_db)
@@ -69,7 +67,7 @@ async def user_signup(
         )
 
 
-@router.post("/login", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
+@router.post("/login", dependencies=[RateLimit.limiter()])
 async def login(
         user_data: Login, 
         db: Surreal = Depends(get_db)
@@ -82,7 +80,7 @@ async def login(
         )
 
 
-@router.patch("/password")
+@router.patch("/password", dependencies=[RateLimit.limiter()])
 async def update_password(
         password: Password,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -97,7 +95,7 @@ async def update_password(
         )
 
 
-@router.post("/validate")
+@router.post("/validate", dependencies=[RateLimit.limiter()])
 async def validate(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -109,7 +107,7 @@ async def validate(
              error_stack
         )
 
-@router.get("/verify/{token}")
+@router.get("/verify/{token}", dependencies=[RateLimit.limiter()])
 async def verify(
         token: Annotated[str, Path(
             min_length=144, 
