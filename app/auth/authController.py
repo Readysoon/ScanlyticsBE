@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Path
 from surrealdb import Surreal
+from fastapi_limiter import FastAPILimiter
 from typing import Annotated
 
 from .authSchema import Login, Email, Password

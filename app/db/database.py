@@ -2,7 +2,6 @@ import os
 import logging
 from surrealdb import Surreal
 from dotenv import load_dotenv
-from fastapi import status
 
 # Load environment variables from the .env file
 load_dotenv()

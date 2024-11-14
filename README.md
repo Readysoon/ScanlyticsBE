@@ -58,11 +58,64 @@ To install and run the project on your local machine, please follow these steps:
      
      ```
 
-Architecture/Security:
+## Architecture/Security
 
-https://miro.com/app/board/uXjVLYDG24o=/?share_link_id=101772163535
+View the architecture diagram here: https://miro.com/app/board/uXjVLYDG24o=/?share_link_id=101772163535
 
-API End Point explanation:
+## API Endpoints
 
+### Authentication Routes (/auth)
+- POST `/auth/check_mail` - Check if email exists
+- POST `/auth/orga_signup` - Register first user of an organization
+- POST `/auth/user_signup` - Register a new user
+- POST `/auth/login` - User login
+- PATCH `/auth/password` - Update password
+- POST `/auth/validate` - Validate user session
+- GET `/auth/verify/{token}` - Verify email address
+
+### Image Routes (/image)
+- POST `/image/{patient_id}` - Upload an image for a patient
+- GET `/image/patient/{patient_id}` - Get all images for a patient
+- GET `/image/{image_id}` - Get specific image
+- DELETE `/image/{image_id}` - Delete an image
+- PATCH `/image/{image_id}` - Update image details
+
+### ML Models Routes (/ml_models)
+- POST `/ml_models/` - Retrieve ML model predictions
+
+### Note Routes (/note)
+- POST `/note/{patient_id}` - Create a note for a patient
+- GET `/note/{note_id}` - Get specific note
+- GET `/note/patient/{patient_id}` - Get all notes for a patient
+- PATCH `/note/{note_id}` - Update a note
+- DELETE `/note/{note_id}` - Delete a note
+
+### Patient Routes (/patient)
+- POST `/patient/` - Create a new patient
+- GET `/patient/{patient_id}` - Get specific patient
+- GET `/patient/` - Get all patients
+- PATCH `/patient/{patient_id}` - Update patient information
+- DELETE `/patient/{patient_id}` - Delete a patient
+
+### Report Routes (/report)
+- POST `/report/` - Create a new report
+- GET `/report/{report_id}` - Get specific report
+- PATCH `/report/{report_id}` - Update a report
+- GET `/report/patient/{patient_id}` - Get all reports for a patient
+- DELETE `/report/{report_id}` - Delete a report
+
+### Statement Routes (/statement)
+- POST `/statement/` - Create a new statement
+- POST `/statement/initialize` - Initialize default statements
+- GET `/statement/search` - Search statements by category
+- GET `/statement/{statement_id}` - Get specific statement
+- GET `/statement/` - Get all user statements
+- PATCH `/statement/{statement_id}` - Update a statement
+- DELETE `/statement/{statement_id}` - Delete/reset a statement
+
+### User Routes (/user)
+- GET `/user/` - Get current user profile
+- PATCH `/user/` - Update user profile
+- DELETE `/user/` - Delete user account
 
 

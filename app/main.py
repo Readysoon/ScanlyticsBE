@@ -107,7 +107,7 @@ async def startup_event():
     # await InitializeStatementsService()
     
 
-@app.get("/", dependencies=RateLimit.limiter())
+@app.get("/")# , dependencies=[Depends(RateLimiter(times=2, seconds=5))])
 async def landing_page(
     ):
     html_content = f"""
