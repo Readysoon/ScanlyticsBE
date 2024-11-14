@@ -141,8 +141,6 @@ async def landing_page(
         </head>
         <body>
             <h1>Welcome to Scanlytics</h1>
-            <p>To checkout the database itself, visit:</p>
-            <a href="/surrealdb">SurrealDB</a>
             <h2>Signup</h2>
             <form onsubmit="signup(event)">
                 <label for="user_email">Email:</label><br>
