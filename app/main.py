@@ -34,8 +34,10 @@ from slowapi.errors import RateLimitExceeded
 logging.basicConfig(level=logging.INFO)
 
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["10/minute"])
 app = FastAPI()
+
+# global slowapi rate limiting
+limiter = Limiter(key_func=get_remote_address, default_limits=["30/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
