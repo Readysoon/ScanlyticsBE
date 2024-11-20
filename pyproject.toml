@@ -5,8 +5,10 @@ description = ""
 authors = ["Readysoon <p.gallaschik@gmail.com>"]
 readme = "README.md"
 
+package-mode = false
+
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "3.12.7"
 annotated-types = "0.7.0"
 anyio = "4.4.0"
 certifi = "2024.7.4"
@@ -53,6 +55,7 @@ fastapi-mail = "^1.4.1"
 pytest = "^8.3.3"
 fastapi-limiter = "^0.1.6"
 redis = "^5.2.0"
+slowapi = "^0.1.9"
 
 
 [tool.poetry.group.dev.dependencies]

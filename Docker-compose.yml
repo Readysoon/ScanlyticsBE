@@ -9,7 +9,6 @@ services:
     command: /app/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     environment:
       APP_URL: ${APP_URL}
-      REDIS_URL: ${REDIS_URL}
       SURREALDB_URL: ${SURREALDB_URL}
       # !!! use ->http<- localhost:8000 in surrealist !!!
       SURREALDB_USER: ${SURREALDB_USER}
@@ -20,7 +19,6 @@ services:
       - ./.env
     depends_on:
       - surrealdb
-      - redis
 
   surrealdb:
     image: surrealdb/surrealdb:v1.5.5
@@ -37,8 +35,3 @@ services:
     volumes:
       - ./surreal_data:/data
     restart: always
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"

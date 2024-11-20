@@ -198,7 +198,7 @@ async def  UserSignupService(user_in, db, error_stack):
 
         first_name = user_in.user_name.split()[0]
     
-        testing = getenv('TESTING', 'False').lower() == 'true'
+        testing = getenv('TESTING')
 
         if testing == False:
             try:
