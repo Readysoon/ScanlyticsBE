@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Depends
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 
 import os
 
@@ -42,8 +45,6 @@ app = FastAPI()
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
     error_messages = []
-
-    print(errors)
     
     for error in errors:
         error_location = " -> ".join(str(loc) for loc in error["loc"])
@@ -107,7 +108,7 @@ async def startup_event():
     # await InitializeStatementsService()
     
 
-@app.get("/")# , dependencies=[Depends(RateLimiter(times=2, seconds=5))])
+@app.get("/", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
 async def landing_page(
     ):
     html_content = f"""

@@ -138,14 +138,15 @@ def VerifyAccessTokenHelper(token, error_stack):
 
 # returns user_id in the format 'User:hus842hjs98ou2i'
 async def GetCurrentUserIDHelper(
-        token: TokenValidator.ValidatedToken, 
+        raw_token: str = Depends(oauth2_scheme), 
         db: Surreal = Depends(get_db),
     ):
     error_stack = ErrorStack()
-
     try:
         try:
-            user_id = VerifyAccessTokenHelper(token, error_stack)
+            validated_token: TokenValidator.ValidatedToken = raw_token
+            
+            user_id = VerifyAccessTokenHelper(validated_token, error_stack)
 
         except Exception as e:
             if str(e) == "500: Signature has expired.":
