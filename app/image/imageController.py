@@ -6,7 +6,7 @@ from typing import Annotated
 from .imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from .imageSchema import Image
 
-from app.error.errorHelper import ErrorStack, RateLimit, IDValidator
+from app.error.errorHelper import ErrorStack, IDValidator
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -18,7 +18,7 @@ router = APIRouter(
     )
 
 
-@router.post("/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.post("/{patient_id}")
 async def upload_image(
         patient_id: IDValidator.ValidatedID,
         file: UploadFile = File(...),
@@ -35,7 +35,7 @@ async def upload_image(
         )
 
 
-@router.get("/patient/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.get("/patient/{patient_id}")
 async def get_images_by_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -50,7 +50,7 @@ async def get_images_by_patient(
         )
 
 
-@router.get("/{image_id}")#, dependencies=[RateLimit.limiter()])
+@router.get("/{image_id}")
 async def get_image(
         image_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -65,7 +65,7 @@ async def get_image(
         )
 
 
-@router.delete("/{image_id}")#, dependencies=[RateLimit.limiter()])
+@router.delete("/{image_id}")
 async def delete_image(
         image_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -80,7 +80,7 @@ async def delete_image(
         )
 
 
-@router.patch("/{image_id}")#, dependencies=[RateLimit.limiter()])
+@router.patch("/{image_id}")
 async def update_patient(
         image_in: Image,
         image_id: IDValidator.ValidatedID,

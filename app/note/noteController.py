@@ -5,7 +5,7 @@ from typing import Annotated
 from .noteSchema import Note
 from .noteService import CreateNoteService, GetNoteByIDService, GetAllNotesByPatientIDService, UpdateNoteService, DeleteNoteService
 
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -16,7 +16,7 @@ router = APIRouter(
         tags=["note"],
     )
 
-@router.post("/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.post("/{patient_id}")
 async def create_note(
         patient_id: Annotated[str, Path(
                 min_length=20, 
@@ -38,7 +38,7 @@ async def create_note(
         )
     
 
-@router.get("/{note_id}")#, dependencies=[RateLimit.limiter()])
+@router.get("/{note_id}")
 async def get_note(
         note_id: Annotated[str, Path(
                 min_length=20, 
@@ -58,7 +58,7 @@ async def get_note(
         )
 
 
-@router.get("/patient/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.get("/patient/{patient_id}")
 async def get_all_notes_by_patient_id(
         patient_id: Annotated[str, Path(
                 min_length=20, 
@@ -78,7 +78,7 @@ async def get_all_notes_by_patient_id(
         )
 
 
-@router.patch("/{note_id}")#, dependencies=[RateLimit.limiter()])
+@router.patch("/{note_id}")
 async def update_note(
         note_in: Note,
         note_id: Annotated[str, Path(
@@ -100,7 +100,7 @@ async def update_note(
         )
 
 
-@router.delete("/{note_id}")#, dependencies=[RateLimit.limiter()])
+@router.delete("/{note_id}")
 async def delete_note(
         note_id: Annotated[str, Path(
                 min_length=20, 

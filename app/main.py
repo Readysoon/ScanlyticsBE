@@ -1,13 +1,10 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, Depends
-from fastapi_limiter import FastAPILimiter
-from fastapi_limiter.depends import RateLimiter
 
-import os
-
-import redis.asyncio as redis
-from fastapi_limiter import FastAPILimiter
+# from slowapi import Limiter
+# from slowapi.util import get_remote_address
+# from slowapi.errors import RateLimitExceeded
 
 import logging
 
@@ -25,10 +22,6 @@ from app.note.noteController import router as note_router
 from app.email.emailController import router as email_router
 from app.classifier.classifierController import router as classifier_router
 from app.ml_models.ml_modelsController import router as ml_models
-
-from app.error.errorHelper import RateLimit
-
-
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -53,17 +46,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error["msg"],
             "type": error["type"]
         })
-        
-        # Special handling for email validation errors
-        if "email" in error_location.lower() and error["type"] == "value_error":
-            return JSONResponse(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                content={
-                    "message": "Invalid email format",
-                    "detail": "Please provide a valid email address",
-                    "errors": error_messages
-                }
-            )
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -71,16 +53,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": "Validation error",
             "detail": "One or more fields failed validation",
             "errors": error_messages
-        }
-    )
-
-@app.exception_handler(ValidationError)
-async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
-            "message": "Data validation error",
-            "detail": exc.errors(),
         }
     )
 
@@ -102,13 +74,10 @@ app.include_router(ml_models)
 @app.on_event("startup")
 async def startup_event():
     await initializedb()
-    redis_url = os.getenv("REDIS_URL")
-    redis_connection = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
-    await FastAPILimiter.init(redis_connection)
     # await InitializeStatementsService()
     
 
-@app.get("/", dependencies=[Depends(RateLimiter(times=2, seconds=5))])
+@app.get("/")
 async def landing_page(
     ):
     html_content = f"""

@@ -1,5 +1,4 @@
 from fastapi import HTTPException, status
-from fastapi_limiter.depends import RateLimiter
 from fastapi import Depends, Path
 from typing import Annotated
 import os
@@ -186,19 +185,6 @@ def DatabaseErrorHelper(query_result, error_stack):
                 e, 
                 DatabaseErrorHelper
             )
-        
-        
-class RateLimit:
-    times = 2
-    seconds = 5
-    
-    def limiter():
-        
-        if os.getenv("TESTING"):
-            # Return empty list of dependencies when testing
-            return []
-        
-        return Depends(RateLimiter(times=RateLimit.times, seconds=RateLimit.seconds))
     
     
 class IDValidator:

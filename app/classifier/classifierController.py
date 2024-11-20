@@ -4,7 +4,7 @@ from surrealdb import Surreal
 from .classifierService import ClassifyService
 from .classifierSchema import Images
 
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 
@@ -19,7 +19,7 @@ router = APIRouter(
     )
 
 
-@router.get("/")#, dependencies=[RateLimit.limiter()])
+@router.get("/")
 async def classify(
         image_array: Images,
         current_user_id = Depends(GetCurrentUserIDHelper),

@@ -16,7 +16,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")  
 
 
-'''potential security risk'''
 # before creating an account the mail should be checked so the user doesnt fill out the whole signup form just to be rejected
 async def CheckMailService(user_email, db, error_stack):
     try:

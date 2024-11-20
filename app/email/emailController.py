@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from .emailSchema import EmailSchema
 from .emailService import EmailVerificationService
 
-from app.error.errorHelper import ErrorStack, RateLimit
+from app.error.errorHelper import ErrorStack
 
 router = APIRouter(
         prefix="/email",
@@ -11,7 +11,7 @@ router = APIRouter(
     )
 
 '''so far used only to test the service'''
-@router.post("/verify")#, dependencies=[RateLimit.limiter()])
+@router.post("/verify")
 async def send_verification_mail(
     email: EmailSchema
     ):

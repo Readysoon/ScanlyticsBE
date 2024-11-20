@@ -6,7 +6,7 @@ from fastapi import Path
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient
 
-from app.error.errorHelper import ErrorStack, RateLimit, IDValidator
+from app.error.errorHelper import ErrorStack, IDValidator
 from app.auth.authHelper import GetCurrentUserIDHelper
 
 from app.db.database import get_db
@@ -17,7 +17,7 @@ router = APIRouter(
         tags=["patient"],
     )
 
-@router.post("/")#, dependencies=[RateLimit.limiter()])
+@router.post("/")
 async def create_patient(
         patient_in: CreatePatient, 
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -32,7 +32,7 @@ async def create_patient(
         )
 
 
-@router.get("/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.get("/{patient_id}")
 async def get_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
@@ -47,7 +47,7 @@ async def get_patient(
         )
 
 
-@router.get("/")#, dependencies=[RateLimit.limiter()])
+@router.get("/")
 async def get_all_patients(
         current_user_id = Depends(GetCurrentUserIDHelper),
         db: Surreal = Depends(get_db)
@@ -60,7 +60,7 @@ async def get_all_patients(
         )
 
 
-@router.patch("/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.patch("/{patient_id}")
 async def update_patient(
         patient_in: CreatePatient,
         patient_id: IDValidator.ValidatedID,
@@ -77,7 +77,7 @@ async def update_patient(
         )
 
 
-@router.delete("/{patient_id}")#, dependencies=[RateLimit.limiter()])
+@router.delete("/{patient_id}")
 async def delete_patient(
         patient_id: IDValidator.ValidatedID,
         current_user_id = Depends(GetCurrentUserIDHelper),
