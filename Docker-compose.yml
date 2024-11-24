@@ -35,3 +35,18 @@ services:
     volumes:
       - ./surreal_data:/data
     restart: always
+
+  test_surrealdb:
+    image: surrealdb/surrealdb:v1.5.5
+    container_name: test_surrealdb
+    ports:
+      - '8004:8000'
+    command:
+      - start 
+      - --log=trace 
+      - --user=test
+      - --pass=test
+      - --allow-all
+    volumes:
+      - ./test_surreal_data:/data
+    restart: always

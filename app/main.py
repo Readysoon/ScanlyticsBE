@@ -1,6 +1,7 @@
 import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi import FastAPI, Depends
 
 import logging
@@ -19,11 +20,6 @@ from app.note.noteController import router as note_router
 from app.email.emailController import router as email_router
 from app.classifier.classifierController import router as classifier_router
 from app.ml_models.ml_modelsController import router as ml_models
-
-from fastapi import FastAPI, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -45,7 +41,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 # handling validation exceptions more beautifull
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(exc: RequestValidationError):
     errors = exc.errors()
     error_messages = []
     
