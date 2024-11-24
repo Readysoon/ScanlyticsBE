@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status
-from fastapi import Depends, Path
+from fastapi import Path
 from typing import Annotated
-import os
 
 from datetime import datetime
 import logging

@@ -1,6 +1,5 @@
 import pytest
 from fastapi.testclient import TestClient
-from surrealdb import Surreal
 from app.main import app
 from app.db.database import get_db
 from app.db.testdb import test_db

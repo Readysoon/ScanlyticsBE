@@ -1,7 +1,6 @@
 from fastapi import UploadFile, File, APIRouter, Depends
 from surrealdb import Surreal
-from fastapi import APIRouter, Path
-from typing import Annotated
+from fastapi import APIRouter
 
 from .imageService import UploadImageService, GetImagesByPatientService, GetImageByIDService, DeleteImageByIDService, UpdateImageService
 from .imageSchema import Image

@@ -1,7 +1,5 @@
 from surrealdb import Surreal
 from fastapi import APIRouter, Depends
-from typing import Annotated
-from fastapi import Path
 
 from .patientService import CreatePatientService, GetPatientByIDService, UpdatePatientService, GetAllPatientsByUserIDService, DeletePatientService
 from .patientSchema import CreatePatient

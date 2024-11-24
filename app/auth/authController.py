@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from surrealdb import Surreal
-from fastapi_limiter import FastAPILimiter
-from typing import Annotated
 
 from .authSchema import Login, Email, Password
 from .authService import CheckMailService, OrgaSignupService, LoginService, UserSignupService, ValidateService, UpdatePasswordService, VerificationService

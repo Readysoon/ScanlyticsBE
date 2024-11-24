@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from surrealdb import Surreal
-from typing import Annotated
 
 from .statementService import CreateStatementService, InitializeStatementsService, SearchStatementService, GetStatementByIDService, GetAllStatementsByUserService, UpdateStatementService, DeleteOrResetStatementService
 from .statementSchema import Statement

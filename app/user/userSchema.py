@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 
 from app.auth.authSchema import Password, Email
 

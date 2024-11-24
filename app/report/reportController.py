@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from surrealdb import Surreal
-from typing import Annotated
-
 
 from .reportService import CreateReportService, GetReportByIDService, UpdateReportService, GetAllReportsByPatientIDService, DeleteReportService
 from .reportSchema import Report
