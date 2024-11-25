@@ -6,7 +6,6 @@ TEST_SURREAL_URL = "ws://localhost:8004/rpc"
 TEST_DB_NAME = "test_db"
 TEST_NAMESPACE = "test_namespace"
 
-
 async def test_db():
     """Fixture to set up and tear down test database"""
     db = Surreal(TEST_SURREAL_URL)
@@ -16,6 +15,4 @@ async def test_db():
     
     yield db
     
-    # Cleanup after tests
-    await db.query(f"REMOVE DATABASE {TEST_DB_NAME}")
     await db.close()

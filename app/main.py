@@ -2,7 +2,8 @@ import uvicorn
 from fastapi import FastAPI, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
+from fastapi import Request
 
 import logging
 
@@ -41,7 +42,12 @@ app.add_middleware(SlowAPIMiddleware)
 
 # handling validation exceptions more beautifull
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+
+    print("Request:", request)
+    print("Exception:", exc)
+    print("Exception errors:", exc.errors())
+
     errors = exc.errors()
     error_messages = []
     

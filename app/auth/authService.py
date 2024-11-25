@@ -147,7 +147,7 @@ async def OrgaSignupService(user_in, db, error_stack):
 '''A user can only join an organization if the owner acccepts'''  
 # Organization:1 is for all doctors without an practice
 # Organization should be None
-async def  UserSignupService(user_in, db, error_stack):
+async def UserSignupService(user_in, db, error_stack):
 
     DatabaseErrorHelperResultText = ""
      
@@ -217,6 +217,25 @@ async def  UserSignupService(user_in, db, error_stack):
                 )
         else: 
             try:
+                # in the test mode verify the user imediately
+                query_result = await db.query(
+                    """
+                    UPDATE (
+                        SELECT id 
+                        FROM User 
+                        WHERE email = $user_email
+                    ) 
+                    SET verified = true;
+                    """,
+                    {
+                        "user_email": user_in.user_email
+                    }
+                )
+
+                DatabaseErrorHelperResultText = DatabaseErrorHelper(query_result, error_stack)
+
+                print(DatabaseErrorHelperResultText)
+
                 return JSONResponse(
                     status_code=201, 
                     content=[
