@@ -118,4 +118,22 @@ View the architecture diagram here: https://miro.com/app/board/uXjVLYDG24o=/?sha
 - PATCH `/user/` - Update user profile
 - DELETE `/user/` - Delete user account
 
+## Testing
+
+1. Start docker
+
+     ```
+     docker compose build && docker compose up
+     
+     ```
+2. Run the tests
+   Either via the left panel and then "Testing" and "Run tests" on the left top or simply
+   
+     ```
+     pytest -s
+     
+     ```
+   (to also see the print statements)
+
+
 
