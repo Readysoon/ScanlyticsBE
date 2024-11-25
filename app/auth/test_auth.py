@@ -27,15 +27,29 @@ def user_data_signup(user_data_login):
     })
     return user_data
 
+@pytest.fixture
+def user_data_orga_signup(user_data_signup):
+    return {
+        **user_data_signup,
+        "orga_address": "123 Main St",
+        "orga_email": "org@example.com",
+        "orga_name": "Test Organization"
+    }
+
+
+def test_check_mail_new_email():
+    res = client.post("/auth/check_mail", json={"user_email": "new@example.com"})
+    assert res.status_code == 200
+
+
+def test_orga_signup_success(user_data_orga_signup):
+    res = client.post("/auth/orga_signup", json=user_data_orga_signup)
+    assert res.status_code == 201
+
 
 def test_UserSignup(user_data_signup):
     res = client.post("/auth/user_signup", json=user_data_signup)
     assert res.status_code == 201
-
-def test_UserLogin(user_data_login): 
-    res = client.post("/auth/login", json=user_data_login)
-    assert res.status_code == 200
-
 
 # Parametrized tests for signup failures
 @pytest.mark.parametrize("invalid_data,expected_status_code", [
@@ -61,6 +75,12 @@ def test_UserLogin(user_data_login):
 def test_UserSignup_invalid_data(invalid_data, expected_status_code):
     res = client.post("/auth/user_signup", json=invalid_data)
     assert res.status_code == expected_status_code
+
+
+
+def test_UserLogin(user_data_login): 
+    res = client.post("/auth/login", json=user_data_login)
+    assert res.status_code == 200
 
 # Parametrized tests for login failures
 @pytest.mark.parametrize("invalid_login,expected_status_code,expected_error", [
