@@ -289,7 +289,7 @@ async def LoginService(user_data, db, error_stack):
         if not query_result or not query_result[0]['result']:
             error_stack.add_error(
                     status.HTTP_401_UNAUTHORIZED,
-                    "Invalid Credentials.", 
+                    "Wrong email.", 
                     "None",
                     LoginService
                 )
@@ -305,7 +305,7 @@ async def LoginService(user_data, db, error_stack):
             if not pwd_context.verify(user_data.user_password, query_result[0]['result'][0]['password']):
                 error_stack.add_error(
                     status.HTTP_401_UNAUTHORIZED,
-                    "Invalid Credentials.", 
+                    "Wrong password.", 
                     "None",
                     LoginService
                 )

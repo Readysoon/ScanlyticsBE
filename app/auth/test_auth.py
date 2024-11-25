@@ -42,6 +42,7 @@ def test_check_mail_new_email():
     assert res.status_code == 200
 
 
+
 def test_orga_signup(user_data_orga_signup):
     res = client.post("/auth/orga_signup", json=user_data_orga_signup)
     assert res.status_code == 201
@@ -69,6 +70,7 @@ def test_orga_signup(user_data_orga_signup):
 def test_OrgaSignup_invalid_data(invalid_data, expected_status_code):
     res = client.post("/auth/orga_signup", json=invalid_data)
     assert res.status_code == expected_status_code
+
 
 
 def test_UserSignup(user_data_signup):
@@ -106,6 +108,8 @@ def test_UserLogin(user_data_login):
     res = client.post("/auth/login", json=user_data_login)
     assert res.status_code == 200
 
+
+
 # Parametrized tests for login failures
 @pytest.mark.parametrize("invalid_login,expected_status_code,expected_error", [
     # Missing fields
@@ -130,3 +134,83 @@ def test_UserLogin_invalid_data(invalid_login, expected_status_code, expected_er
     # If you're returning error messages in the response
     if res.status_code != 200:
         assert "detail" in res.json()
+
+
+
+@pytest.fixture
+def test_UserLogin_fixture(user_data_login): 
+    res = client.post("/auth/login", json=user_data_login)
+
+    print(f"Status Code: {res.status_code}")
+    print(f"Response Body: {res.json()}")
+    print(res.json()[1])
+    print(res.json()[1]['access_token'])
+
+    return {
+        'access_token': res.json()[1]['access_token'],
+        'token_type': res.json()[1]['token_type']
+    }
+
+def test_update_password(test_UserLogin_fixture):
+    new_password = {"user_password": "newpassword123"}
+    
+    res = client.patch(
+        "/auth/password",
+        json=new_password,
+        headers={
+            "Authorization": f"{test_UserLogin_fixture['token_type']} {test_UserLogin_fixture['access_token']}"
+        }
+    )
+
+    assert res.status_code == 200
+
+    old_password = {"user_password": "password123"}
+    
+    res = client.patch(
+        "/auth/password",
+        json=old_password,
+        headers={
+            "Authorization": f"{test_UserLogin_fixture['token_type']} {test_UserLogin_fixture['access_token']}"
+        }
+    )
+    
+    assert res.status_code == 200
+
+
+@pytest.mark.parametrize("password,expected_status", [
+    ({"user_password": ""}, 422),  # Empty
+    ({"user_password": "123"}, 422),  # Too short
+    ("invalid_json", 422),  # Invalid JSON
+    ({"wrong_key": "password123"}, 422),  # Wrong key
+    (None, 422)  # None
+])
+def test_update_password_invalid(test_UserLogin_fixture, password, expected_status):
+    res = client.patch(
+        "/auth/password",
+        json=password,
+        headers={
+            "Authorization": f"{test_UserLogin_fixture['token_type']} {test_UserLogin_fixture['access_token']}"
+        }
+    )
+    assert res.status_code == expected_status
+
+
+def test_validate(test_UserLogin_fixture):
+    res = client.post(
+        "/auth/validate",
+        headers={
+            "Authorization": f"{test_UserLogin_fixture['token_type']} {test_UserLogin_fixture['access_token']}"
+        }
+    )
+    assert res.status_code == 200
+
+
+def test_verify(test_UserLogin_fixture):
+    res = client.get(
+        f"/auth/verify/{test_UserLogin_fixture['access_token']}"
+    )
+    assert res.status_code == 200
+
+
+
+

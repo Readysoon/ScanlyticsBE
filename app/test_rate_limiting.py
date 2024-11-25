@@ -9,7 +9,6 @@ client = TestClient(app)
 def test_rate_limiting():
     for n in range(29):
         res = client.get("/")
-        print(f"{n}: res.status_code: {res.status_code}")
+        # print(f"{n}: res.status_code: {res.status_code}")
         if n == 29:
-            print("HAHA")
             assert res.status_code == 429
