@@ -42,9 +42,33 @@ def test_check_mail_new_email():
     assert res.status_code == 200
 
 
-def test_orga_signup_success(user_data_orga_signup):
+def test_orga_signup(user_data_orga_signup):
     res = client.post("/auth/orga_signup", json=user_data_orga_signup)
     assert res.status_code == 201
+
+@pytest.mark.parametrize("invalid_data,expected_status_code", [
+    # Missing required fields
+    ({"user_email": "test@example.com", "user_password": "pass123"}, 422),  # Missing name and role
+    ({"user_name": "John", "user_email": "test@example.com"}, 422),  # Missing password and role
+    
+    # Invalid email formats
+    ({"user_email": "invalid-email", "user_password": "pass123", "user_name": "John", "user_role": "admin"}, 422),
+    ({"user_email": "@example.com", "user_password": "pass123", "user_name": "John", "user_role": "admin"}, 422),
+    
+    # Invalid password (assuming there's a minimum length requirement)
+    ({"user_email": "test@example.com", "user_password": "123", "user_name": "John", "user_role": "admin"}, 422),
+    
+    # Invalid role
+    ({"user_email": "test@example.com", "user_password": "pass123", "user_name": "John", "user_role": "superuser"}, 422),
+    
+    # Empty fields
+    ({"user_email": "", "user_password": "pass123", "user_name": "John", "user_role": "admin"}, 422),
+    ({"user_email": "test@example.com", "user_password": "", "user_name": "John", "user_role": "admin"}, 422),
+    ({"user_email": "test@example.com", "user_password": "pass123", "user_name": "", "user_role": "admin"}, 422),
+])
+def test_OrgaSignup_invalid_data(invalid_data, expected_status_code):
+    res = client.post("/auth/orga_signup", json=invalid_data)
+    assert res.status_code == expected_status_code
 
 
 def test_UserSignup(user_data_signup):
