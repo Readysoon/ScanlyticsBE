@@ -141,11 +141,6 @@ def test_UserLogin_invalid_data(invalid_login, expected_status_code, expected_er
 def test_UserLogin_fixture(user_data_login): 
     res = client.post("/auth/login", json=user_data_login)
 
-    print(f"Status Code: {res.status_code}")
-    print(f"Response Body: {res.json()}")
-    print(res.json()[1])
-    print(res.json()[1]['access_token'])
-
     return {
         'access_token': res.json()[1]['access_token'],
         'token_type': res.json()[1]['token_type']
