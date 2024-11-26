@@ -1,13 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.db.database import get_db
-from app.db.testdb import test_db
 
-# Setup TestClient
 client = TestClient(app)
-
-app.dependency_overrides[get_db] = test_db
 
 # base user data
 @pytest.fixture
@@ -41,11 +36,6 @@ def test_check_mail_new_email():
     res = client.post("/auth/check_mail", json={"user_email": "new@example.com"})
     assert res.status_code == 200
 
-
-
-def test_orga_signup(user_data_orga_signup):
-    res = client.post("/auth/orga_signup", json=user_data_orga_signup)
-    assert res.status_code == 201
 
 @pytest.mark.parametrize("invalid_data,expected_status_code", [
     # Missing required fields

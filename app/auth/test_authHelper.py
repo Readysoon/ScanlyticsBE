@@ -5,8 +5,6 @@ from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 from app.main import app
 
-from app.db.testdb import test_db
-
 from app.error.errorHelper import ErrorStack
 from .authHelper import CreateAccessTokenHelper, VerifyAccessTokenHelper, GetCurrentUserIDHelper
 
@@ -59,7 +57,6 @@ def test_UserLogin_fixture(user_data_login):
         'token_type': res.json()[1]['token_type']
     }
 
-
 from unittest.mock import Mock, AsyncMock
 
 @pytest.fixture
@@ -76,6 +73,7 @@ def mock_oauth2_scheme():
 def mock_verify_token(monkeypatch):
     def mock_verify(*args, **kwargs):
         return "test_user_id"
+    # Update the path to match your actual project structure
     monkeypatch.setattr("app.auth.authHelper.VerifyAccessTokenHelper", mock_verify)
     return mock_verify
 
