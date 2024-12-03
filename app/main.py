@@ -44,10 +44,6 @@ app.add_middleware(SlowAPIMiddleware)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
 
-    print("Request:", request)
-    print("Exception:", exc)
-    print("Exception errors:", exc.errors())
-
     errors = exc.errors()
     error_messages = []
     
@@ -69,7 +65,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-app.include_router(surrealdb_router)
+# app.include_router(surrealdb_router)
 app.include_router(user_router)
 app.include_router(patient_router)
 app.include_router(auth_router)
