@@ -48,6 +48,28 @@ To install and run the project on your local machine, please follow these steps:
      ```
      exit
      ```
+4. Create the ".env" file in the root directory:
+
+     ```
+     TESTING=True
+
+     # OFFLINE
+     SURREALDB_URL=ws://surrealdb:8000/rpc
+     SURREALDB_USER=root
+     SURREALDB_PASS=root
+     SURREALDB_NAMESPACE=test
+     SURREALDB_DATABASE=test
+      
+     APP_URL=http://0.0.0.0:8001
+      
+     secret_key=placeholder
+      
+     MAIL_USERNAME = Placeholder
+     MAIL_PASSWORD = Placeholder
+     MAIL_FROM = Placeholder@Placeholder.com
+     MAIL_SERVER = placeholder
+     ```
+
 
 4. Make sure to have the Docker application up and ready (free of any containers/images with the same name)
 
