@@ -82,7 +82,7 @@ To install and run the project on your local machine, please follow these steps:
 
 ## Architecture/Security
 
-View the architecture diagram here: https://miro.com/app/board/uXjVLYDG24o=/?share_link_id=101772163535
+View the architecture diagram here: [https://miro.com/app/board/uXjVLYDG24o=/?share_link_id=101772163535](https://miro.com/app/board/uXjVIB1jUu4=/?share_link_id=159659664741)
 
 ## API Endpoints
 
